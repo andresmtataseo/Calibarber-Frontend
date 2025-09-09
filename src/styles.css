@@ -1,0 +1,4 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: lofi --default, lofi --prefersdark, cupcake, dracula, night;
+}
