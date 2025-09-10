@@ -113,3 +113,16 @@
     </div>
   </div>
 </header>
+
+<!-- Mobile Sidebar Component -->
+<app-mobile-sidebar
+  [isOpen]="isMobileSidebarOpen"
+  [isAuthenticated]="isAuthenticated"
+  [currentUser]="currentUser"
+  [navigationItems]="navigationItems"
+  (closeDrawer)="closeMobileSidebar()"
+  (menuItemClick)="onMenuItemClick($event)"
+  (userAction)="onUserAction($event)"
+  (loginClick)="onLogin()"
+  (registerClick)="onRegister()">
+</app-mobile-sidebar>

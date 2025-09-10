@@ -1,10 +1,11 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { MobileSidebarComponent } from '../mobile-sidebar';
 
 /**
  * Componente Header reutilizable
- * 
+ *
  * Este componente implementa la barra de navegación principal de la aplicación
  * siguiendo el diseño proporcionado. Incluye:
  * - Logo de la empresa
@@ -15,12 +16,12 @@ import { RouterModule } from '@angular/router';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, MobileSidebarComponent],
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css']
 })
 export class HeaderComponent {
-  
+
   /**
    * Configuración del componente
    */
@@ -39,6 +40,11 @@ export class HeaderComponent {
   };
 
   /**
+   * Estado del mobile sidebar
+   */
+  isMobileSidebarOpen: boolean = false;
+
+  /**
    * Items del menú de navegación
    */
   navigationItems = [
@@ -51,12 +57,17 @@ export class HeaderComponent {
   ];
 
   /**
-   * Función placeholder para el botón hamburguesa
-   * Se utilizará para activar el sidebar en el futuro
+   * Alterna el estado del mobile sidebar
    */
   toggleMobileMenu(): void {
-    // TODO: Implementar funcionalidad del sidebar
-    console.log('Botón hamburguesa presionado - Sidebar pendiente de implementación');
+    this.isMobileSidebarOpen = !this.isMobileSidebarOpen;
+  }
+
+  /**
+   * Cierra el mobile sidebar
+   */
+  closeMobileSidebar(): void {
+    this.isMobileSidebarOpen = false;
   }
 
   /**
