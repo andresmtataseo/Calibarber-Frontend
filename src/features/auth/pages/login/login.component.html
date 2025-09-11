@@ -9,29 +9,29 @@
     <div class="card-body lg:w-2/3">
       <h2 class="card-title text-2xl mb-6 justify-center">Iniciar Sesión</h2>
 
-      <form class="space-y-6">
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
         <label class="floating-label">
            <span>Correo electrónico</span>
            <input
              type="email"
-                          placeholder="Correo electrónico"
-             class="input input-md w-full"
-             required />
+             formControlName="email"
+             placeholder="Correo electrónico"
+             class="input input-md w-full" />
          </label>
 
          <label class="floating-label">
            <span>Contraseña</span>
            <input
              type="password"
+             formControlName="password"
              placeholder="Contraseña"
-             class="input input-md w-full"
-             required />
+             class="input input-md w-full" />
          </label>
         <div class="text-right">
           <a href="#" class="link link-primary text-sm">¿Olvidaste tu contraseña?</a>
         </div>
         <div class="form-control mt-6">
-          <button type="submit" class="btn btn-primary w-full">Continuar</button>
+          <button type="submit" class="btn btn-primary w-full" [disabled]="loginForm.invalid">Continuar</button>
         </div>
       </form>
 
@@ -40,7 +40,7 @@
       <div class="text-center space-y-2">
         <p class="text-sm">
           ¿No tienes cuenta?
-          <a href="#" class="link link-primary">Regístrate aquí.</a>
+          <a routerLink="/register" class="link link-primary">Regístrate aquí.</a>
         </p>
       </div>
     </div>

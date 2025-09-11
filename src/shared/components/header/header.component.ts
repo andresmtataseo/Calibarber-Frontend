@@ -114,7 +114,6 @@ export class HeaderComponent {
    * Maneja el clic en el botón de registro
    */
   onRegister(): void {
-    // TODO: Implementar navegación a registro cuando esté disponible
-    console.log('Ir a registro');
+    this.router.navigate(['/register']);
   }
 }
