@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { HomeComponent } from '../features/home';
 import { LoginComponent } from '../features/auth/pages';
 import { RegisterComponent } from '../features/auth/pages/register';
+import { ForgotPasswordComponent } from '../features/auth/pages/forgot-password';
 
 export const routes: Routes = [
   {
@@ -18,6 +19,11 @@ export const routes: Routes = [
     path: 'register',
     component: RegisterComponent,
     title: 'Registro - CaliBarber'
+  },
+  {
+    path: 'forgot-password',
+    component: ForgotPasswordComponent,
+    title: 'Restablecer Contraseña - CaliBarber'
   },
   {
     path: '**',
