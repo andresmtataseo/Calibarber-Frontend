@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { MobileSidebarComponent } from '../mobile-sidebar';
 
 /**
@@ -28,6 +28,8 @@ export class HeaderComponent {
   @Input() isAuthenticated: boolean = false; // Por defecto false para mostrar botones de auth
   @Input() showAuthButtons: boolean = true;
   @Input() showUserDropdown: boolean = true;
+
+  constructor(private router: Router) {}
 
   /**
    * Información del usuario actual
@@ -105,15 +107,14 @@ export class HeaderComponent {
    * Maneja el clic en el botón de login
    */
   onLogin(): void {
-    // TODO: Implementar navegación a login o abrir modal
-    console.log('Ir a login');
+    this.router.navigate(['/login']);
   }
 
   /**
    * Maneja el clic en el botón de registro
    */
   onRegister(): void {
-    // TODO: Implementar navegación a registro o abrir modal
+    // TODO: Implementar navegación a registro cuando esté disponible
     console.log('Ir a registro');
   }
 }
