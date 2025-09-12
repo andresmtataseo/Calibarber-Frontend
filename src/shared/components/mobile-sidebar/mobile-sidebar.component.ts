@@ -1,6 +1,7 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { UrlService } from '../../../core/services/url.service';
 
 /**
  * Componente Mobile Sidebar
@@ -17,6 +18,8 @@ import { RouterModule } from '@angular/router';
   styleUrls: ['./mobile-sidebar.component.css']
 })
 export class MobileSidebarComponent {
+
+  private urlService = inject(UrlService);
 
   /**
    * Props de entrada del componente
@@ -79,5 +82,12 @@ export class MobileSidebarComponent {
    */
   onOverlayClick(): void {
     this.onCloseDrawer();
+  }
+
+  /**
+   * Genera una URL de avatar usando el servicio centralizado
+   */
+  getAvatarUrl(name: string, size: number = 48): string {
+    return this.urlService.generateAvatarUrl(name, '570df8', 'fff', size);
   }
 }

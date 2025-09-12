@@ -12,13 +12,14 @@ import {
   UserDto,
   CheckAuthResponseDto
 } from '../../shared/models/auth.models';
+import { UrlService } from './url.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly API_BASE_URL = 'http://localhost:8080/api/v1/auth';
+  private readonly urlService = inject(UrlService);
   private readonly TOKEN_KEY = 'calibarber_token';
   private readonly USER_KEY = 'calibarber_user';
 
@@ -56,7 +57,7 @@ export class AuthService {
    */
   signIn(credentials: SignInRequestDto): Observable<AuthResponseDto> {
     return this.http.post<ApiResponseDto<AuthResponseDto>>(
-      `${this.API_BASE_URL}/sign-in`,
+      this.urlService.getAuthUrl('SIGN_IN'),
       credentials
     ).pipe(
       map(response => {
@@ -75,7 +76,7 @@ export class AuthService {
    */
   signUp(userData: SignUpRequestDto): Observable<AuthResponseDto> {
     return this.http.post<ApiResponseDto<AuthResponseDto>>(
-      `${this.API_BASE_URL}/sign-up`,
+      this.urlService.getAuthUrl('SIGN_UP'),
       userData
     ).pipe(
       map(response => {
@@ -94,7 +95,7 @@ export class AuthService {
    */
   checkAuth(): Observable<CheckAuthResponseDto> {
     return this.http.get<ApiResponseDto<CheckAuthResponseDto>>(
-      `${this.API_BASE_URL}/check-auth`
+      this.urlService.getAuthUrl('CHECK_AUTH')
     ).pipe(
       map(response => {
         if (response.data) {

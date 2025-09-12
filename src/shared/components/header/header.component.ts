@@ -1,7 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { MobileSidebarComponent } from '../mobile-sidebar';
+import { UrlService } from '../../../core/services/url.service';
 
 /**
  * Componente Header reutilizable
@@ -28,6 +29,8 @@ export class HeaderComponent {
   @Input() isAuthenticated: boolean = false; // Por defecto false para mostrar botones de auth
   @Input() showAuthButtons: boolean = true;
   @Input() showUserDropdown: boolean = true;
+
+  private urlService = inject(UrlService);
 
   constructor(private router: Router) {}
 
@@ -115,5 +118,12 @@ export class HeaderComponent {
    */
   onRegister(): void {
     this.router.navigate(['/register']);
+  }
+
+  /**
+   * Genera una URL de avatar usando el servicio centralizado
+   */
+  getAvatarUrl(name: string, size: number = 40): string {
+    return this.urlService.generateAvatarUrl(name, '570df8', 'fff', size);
   }
 }

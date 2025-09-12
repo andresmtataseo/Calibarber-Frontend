@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { UrlService } from '../../../core/services/url.service';
 import { RouterModule } from '@angular/router';
 
 /**
@@ -21,6 +22,8 @@ import { RouterModule } from '@angular/router';
   styleUrls: ['./footer.component.css']
 })
 export class FooterComponent {
+
+  private urlService = inject(UrlService);
 
   /**
    * Año actual para el copyright
@@ -90,13 +93,13 @@ export class FooterComponent {
   onSocialClick(platform: string): void {
     switch (platform) {
       case 'instagram':
-        window.open('https://instagram.com/calibarber', '_blank');
+        window.open(this.urlService.getSocialMediaUrl('INSTAGRAM'), '_blank');
         break;
       case 'facebook':
-        window.open('https://facebook.com/calibarber', '_blank');
+        window.open(this.urlService.getSocialMediaUrl('FACEBOOK'), '_blank');
         break;
       case 'twitter':
-        window.open('https://twitter.com/calibarber', '_blank');
+        window.open(this.urlService.getSocialMediaUrl('TWITTER'), '_blank');
         break;
     }
   }
