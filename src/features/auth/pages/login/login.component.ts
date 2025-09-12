@@ -1,7 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { AuthService } from '../../../../core/services/auth.service';
+import { SignInRequestDto } from '../../../../shared/models/auth.models';
 
 @Component({
   selector: 'app-login',
@@ -10,9 +12,15 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
   templateUrl: './login.component.html'
 })
 export class LoginComponent {
-  loginForm: FormGroup;
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
 
-  constructor(private fb: FormBuilder) {
+  loginForm: FormGroup;
+  isLoading = false;
+  errorMessage = '';
+
+  constructor() {
     this.loginForm = this.fb.group({
       email: ['', [
         Validators.required,
@@ -25,16 +33,81 @@ export class LoginComponent {
     });
   }
 
-  onSubmit() {
+  onSubmit(): void {
     if (this.loginForm.valid) {
-      const formData = this.loginForm.value;
-      // TODO: Implementar lógica de inicio de sesión
-      console.log('Login form submitted:', formData);
+      this.isLoading = true;
+      this.errorMessage = '';
+
+      const credentials: SignInRequestDto = {
+        email: this.loginForm.value.email.trim().toLowerCase(),
+        password: this.loginForm.value.password
+      };
+
+      this.authService.signIn(credentials).subscribe({
+        next: (response) => {
+          console.log('Login exitoso:', response);
+          // Redirigir a la página principal después del login exitoso
+          this.router.navigate(['/']);
+        },
+        error: (error) => {
+          console.error('Error en login:', error);
+          this.errorMessage = error.message || 'Error al iniciar sesión';
+          this.isLoading = false;
+        },
+        complete: () => {
+          this.isLoading = false;
+        }
+      });
     } else {
       // Marcar todos los campos como touched para mostrar errores
-      Object.keys(this.loginForm.controls).forEach(key => {
-        this.loginForm.get(key)?.markAsTouched();
-      });
+      this.markFormGroupTouched();
     }
+  }
+
+  /**
+   * Marca todos los campos del formulario como touched
+   */
+  private markFormGroupTouched(): void {
+    Object.keys(this.loginForm.controls).forEach(key => {
+      this.loginForm.get(key)?.markAsTouched();
+    });
+  }
+
+  /**
+   * Obtiene el mensaje de error para un campo específico
+   */
+  getFieldError(fieldName: string): string {
+    const field = this.loginForm.get(fieldName);
+    if (field?.errors && field.touched) {
+      if (field.errors['required']) {
+        return `${this.getFieldLabel(fieldName)} es requerido`;
+      }
+      if (field.errors['email']) {
+        return 'Ingresa un email válido';
+      }
+      if (field.errors['minlength']) {
+        return `${this.getFieldLabel(fieldName)} debe tener al menos ${field.errors['minlength'].requiredLength} caracteres`;
+      }
+    }
+    return '';
+  }
+
+  /**
+   * Obtiene la etiqueta amigable para un campo
+   */
+  private getFieldLabel(fieldName: string): string {
+    const labels: { [key: string]: string } = {
+      email: 'El correo electrónico',
+      password: 'La contraseña'
+    };
+    return labels[fieldName] || fieldName;
+  }
+
+  /**
+   * Verifica si un campo tiene errores y ha sido tocado
+   */
+  hasFieldError(fieldName: string): boolean {
+    const field = this.loginForm.get(fieldName);
+    return !!(field?.errors && field.touched);
   }
 }

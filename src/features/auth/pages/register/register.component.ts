@@ -1,7 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
+import { AuthService } from '../../../../core/services/auth.service';
+import { SignUpRequestDto } from '../../../../shared/models/auth.models';
 
 @Component({
   selector: 'app-register',
@@ -11,6 +13,11 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractContro
 })
 export class RegisterComponent {
   registerForm: FormGroup;
+  isLoading = false;
+  errorMessage = '';
+
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
   constructor(private fb: FormBuilder) {
     this.registerForm = this.fb.group({
@@ -129,17 +136,55 @@ export class RegisterComponent {
 
   onSubmit() {
     if (this.registerForm.valid) {
+      this.isLoading = true;
+      this.errorMessage = '';
+
       const formData = this.registerForm.value;
       // Remover confirmPassword del objeto a enviar
       const { confirmPassword, ...registerData } = formData;
 
-      // TODO: Implementar lógica de registro
-      console.log('Datos de registro:', registerData);
+      // Limpiar campos opcionales vacíos
+      const signUpData: SignUpRequestDto = {
+        email: registerData.email,
+        password: registerData.password,
+        firstName: registerData.firstName,
+        lastName: registerData.lastName,
+        ...(registerData.phoneNumber && { phoneNumber: registerData.phoneNumber }),
+        ...(registerData.profilePictureUrl && { profilePictureUrl: registerData.profilePictureUrl })
+      };
+
+      this.authService.signUp(signUpData).subscribe({
+        next: (response) => {
+          // Registro exitoso, redirigir al usuario
+          this.router.navigate(['/']);
+        },
+        error: (error) => {
+          this.isLoading = false;
+          this.errorMessage = error.message || 'Error al registrar usuario. Inténtalo de nuevo.';
+        },
+        complete: () => {
+          this.isLoading = false;
+        }
+      });
     } else {
       // Marcar todos los campos como touched para mostrar errores
       Object.keys(this.registerForm.controls).forEach(key => {
         this.registerForm.get(key)?.markAsTouched();
       });
     }
+  }
+
+  /**
+   * Verifica si el formulario es válido y no está cargando
+   */
+  isFormValid(): boolean {
+    return this.registerForm.valid && !this.isLoading;
+  }
+
+  /**
+   * Limpia el mensaje de error
+   */
+  clearError(): void {
+    this.errorMessage = '';
   }
 }

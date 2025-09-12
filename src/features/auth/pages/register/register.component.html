@@ -9,6 +9,14 @@
     <div class="card-body lg:w-2/3">
       <h2 class="card-title text-2xl mb-6 justify-center">Crear Cuenta</h2>
 
+      <!-- Mensaje de error global -->
+      <div class="alert alert-error mb-4" *ngIf="errorMessage" (click)="clearError()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>{{ errorMessage }}</span>
+      </div>
+
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-6">
         <!-- Nombre -->
         <div class="form-control">
@@ -130,8 +138,9 @@
           <button
             type="submit"
             class="btn btn-primary w-full"
-            [disabled]="registerForm.invalid">
-            Crear Cuenta
+            [disabled]="!isFormValid()">
+            <span class="loading loading-spinner" *ngIf="isLoading"></span>
+            {{ isLoading ? 'Creando cuenta...' : 'Crear Cuenta' }}
           </button>
         </div>
       </form>
