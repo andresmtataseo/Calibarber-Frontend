@@ -23,6 +23,7 @@ export const AUTH_URLS = {
   SIGN_IN: `${API_CONFIG.API_BASE}/auth/sign-in`,
   SIGN_UP: `${API_CONFIG.API_BASE}/auth/sign-up`,
   CHECK_AUTH: `${API_CONFIG.API_BASE}/auth/check-auth`,
+  CHECK_EMAIL: `${API_CONFIG.API_BASE}/auth/check-email`,
   FORGOT_PASSWORD: `${API_CONFIG.API_BASE}/auth/forgot-password`,
   RESET_PASSWORD: `${API_CONFIG.API_BASE}/auth/reset-password`,
   REFRESH_TOKEN: `${API_CONFIG.API_BASE}/auth/refresh-token`

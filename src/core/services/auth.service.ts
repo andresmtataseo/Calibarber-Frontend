@@ -144,6 +144,25 @@ export class AuthService {
   }
 
   /**
+   * Verifica si un email está disponible para registro
+   */
+  checkEmailAvailability(email: string): Observable<{ message: string; available: boolean }> {
+    const normalizedEmail = email.toLowerCase().trim();
+    return this.http.get<ApiResponseDto<string>>(
+      `${this.urlService.getAuthUrl('CHECK_EMAIL')}?email=${encodeURIComponent(normalizedEmail)}`
+    ).pipe(
+      map(response => {
+        const available = response.message === 'El email está disponible';
+        return {
+          message: response.message,
+          available
+        };
+      }),
+      catchError(this.handleError.bind(this))
+    );
+  }
+
+  /**
    * Cierra la sesión del usuario
    */
   signOut(): void {

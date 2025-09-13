@@ -1,9 +1,12 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
 import { SignUpRequestDto } from '../../../../shared/models/auth.models';
+import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-register',
@@ -11,10 +14,17 @@ import { SignUpRequestDto } from '../../../../shared/models/auth.models';
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './register.component.html'
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit, OnDestroy {
   registerForm: FormGroup;
   isLoading = false;
   errorMessage = '';
+  
+  // Estados para validación de email
+  isCheckingEmail = false;
+  emailAvailabilityMessage = '';
+  isEmailAvailable: boolean | null = null;
+  private emailCheckTimeout: any;
+  private destroy$ = new Subject<void>();
 
   private authService = inject(AuthService);
   private router = inject(Router);
@@ -58,7 +68,76 @@ export class RegisterComponent {
     }, { validators: this.passwordMatchValidator });
   }
 
+  ngOnInit() {
+    this.setupEmailValidation();
+  }
 
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+    if (this.emailCheckTimeout) {
+      clearTimeout(this.emailCheckTimeout);
+    }
+  }
+
+  /**
+   * Configura la validación en tiempo real del email
+   */
+  private setupEmailValidation() {
+    const emailControl = this.registerForm.get('email');
+    if (emailControl) {
+      emailControl.valueChanges
+        .pipe(
+          takeUntil(this.destroy$),
+          debounceTime(500), // Esperar 500ms después del último cambio
+          distinctUntilChanged(),
+          filter(email => {
+            // Solo verificar si el email tiene formato válido
+            const isValidFormat = emailControl.valid && email && email.trim().length > 0;
+            if (!isValidFormat) {
+              this.resetEmailValidation();
+            }
+            return isValidFormat;
+          })
+        )
+        .subscribe(email => {
+          this.checkEmailAvailability(email);
+        });
+    }
+  }
+
+  /**
+   * Verifica la disponibilidad del email
+   */
+  private checkEmailAvailability(email: string) {
+    this.isCheckingEmail = true;
+    this.emailAvailabilityMessage = '';
+    this.isEmailAvailable = null;
+
+    this.authService.checkEmailAvailability(email)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.isCheckingEmail = false;
+          this.emailAvailabilityMessage = response.message;
+          this.isEmailAvailable = response.available;
+        },
+        error: (error) => {
+          this.isCheckingEmail = false;
+          this.emailAvailabilityMessage = 'Error al verificar el email';
+          this.isEmailAvailable = null;
+        }
+      });
+  }
+
+  /**
+   * Resetea el estado de validación del email
+   */
+  private resetEmailValidation() {
+    this.isCheckingEmail = false;
+    this.emailAvailabilityMessage = '';
+    this.isEmailAvailable = null;
+  }
 
   // Validador para confirmar que las contraseñas coincidan
   passwordMatchValidator(group: AbstractControl): ValidationErrors | null {
@@ -178,7 +257,9 @@ export class RegisterComponent {
    * Verifica si el formulario es válido y no está cargando
    */
   isFormValid(): boolean {
-    return this.registerForm.valid && !this.isLoading;
+    const isFormValid = this.registerForm.valid && !this.isLoading;
+    const isEmailValid = this.isEmailAvailable === true || this.isEmailAvailable === null;
+    return isFormValid && isEmailValid && !this.isCheckingEmail;
   }
 
   /**
