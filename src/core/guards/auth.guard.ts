@@ -13,7 +13,11 @@ export const authGuard = () => {
   return authService.authState$.pipe(
     take(1),
     map(authState => {
-      if (authState.isAuthenticated && authState.token) {
+      // Verificar tanto el estado reactivo como el localStorage directamente
+      const hasToken = authState.token || authService.getToken();
+      const isAuthenticated = authState.isAuthenticated || !!hasToken;
+
+      if (isAuthenticated && hasToken) {
         return true;
       } else {
         // Redirigir al login si no está autenticado
@@ -34,7 +38,11 @@ export const guestGuard = () => {
   return authService.authState$.pipe(
     take(1),
     map(authState => {
-      if (authState.isAuthenticated && authState.token) {
+      // Verificar tanto el estado reactivo como el localStorage directamente
+      const hasToken = authState.token || authService.getToken();
+      const isAuthenticated = authState.isAuthenticated || !!hasToken;
+
+      if (isAuthenticated && hasToken) {
         // Redirigir a home si ya está autenticado
         router.navigate(['/']);
         return false;

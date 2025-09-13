@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { UrlService } from '../../../core/services/url.service';
+import { UserDto } from '../../../shared/models/auth.models';
 
 /**
  * Componente Mobile Sidebar
@@ -26,7 +27,7 @@ export class MobileSidebarComponent {
    */
   @Input() isOpen: boolean = false;
   @Input() isAuthenticated: boolean = false;
-  @Input() currentUser: any = null;
+  @Input() currentUser: UserDto | null = null;
   @Input() navigationItems: any[] = [];
 
   /**
@@ -89,5 +90,19 @@ export class MobileSidebarComponent {
    */
   getAvatarUrl(name: string, size: number = 48): string {
     return this.urlService.generateAvatarUrl(name, '570df8', 'fff', size);
+  }
+
+  /**
+   * Obtiene el nombre completo del usuario
+   */
+  getUserFullName(): string {
+    return this.currentUser?.fullName || 'No disponible';
+  }
+
+  /**
+   * Obtiene el email del usuario
+   */
+  getUserEmail(): string {
+    return this.currentUser?.email || 'No disponible';
   }
 }

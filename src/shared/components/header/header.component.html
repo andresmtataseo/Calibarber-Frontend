@@ -40,12 +40,12 @@
       <div tabindex="0" role="button" class="flex items-center gap-3 px-3 hover:bg-base-100/10 transition-all duration-200 ease-in-out rounded-lg py-2">
         <div class="avatar">
           <div class="w-10 rounded-full">
-            <img [src]="currentUser.avatar || getAvatarUrl(currentUser.name || 'Usuario', 40)" [alt]="'Avatar de ' + (currentUser.name || 'Usuario')" />
+            <img [src]="getAvatarUrl(getUserFullName(), 40)" [alt]="'Avatar de ' + getUserFullName()" />
           </div>
         </div>
         <div class="text-left">
-          <div class="text-sm font-medium text-base-100">{{ currentUser.name || 'Usuario' }}</div>
-          <div class="text-xs text-base-200">{{ currentUser.email || 'Sin correo' }}</div>
+          <div class="text-sm font-medium text-base-100">{{ getUserFullName() }}</div>
+          <div class="text-xs text-base-200">{{ getUserEmail() }}</div>
         </div>
       </div>
 
@@ -56,12 +56,12 @@
           <div class="flex items-center gap-3 p-2">
             <div class="avatar">
               <div class="w-12 rounded-full">
-                <img [src]="currentUser.avatar || getAvatarUrl(currentUser.name, 48)" [alt]="'Avatar de ' + currentUser.name" />
+                <img [src]="getAvatarUrl(getUserFullName(), 48)" [alt]="'Avatar de ' + getUserFullName()" />
               </div>
             </div>
             <div class="flex flex-col">
-              <span class="text-sm text-primary font-bold">{{ currentUser.name }}</span>
-              <span class="text-xs text-secondary opacity-70">{{ currentUser.email }}</span>
+              <span class="text-sm text-primary font-bold">{{ getUserFullName() }}</span>
+              <span class="text-xs text-secondary opacity-70">{{ getUserEmail() }}</span>
             </div>
           </div>
         </li>

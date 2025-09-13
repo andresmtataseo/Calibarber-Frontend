@@ -1,8 +1,11 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 import { MobileSidebarComponent } from '../mobile-sidebar';
 import { UrlService } from '../../../core/services/url.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { UserDto } from '../../../shared/models/auth.models';
 
 /**
  * Componente Header reutilizable
@@ -21,28 +24,38 @@ import { UrlService } from '../../../core/services/url.service';
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css']
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit, OnDestroy {
 
   /**
    * Configuración del componente
    */
-  @Input() isAuthenticated: boolean = false; // Por defecto false para mostrar botones de auth
   @Input() showAuthButtons: boolean = true;
   @Input() showUserDropdown: boolean = true;
 
   private urlService = inject(UrlService);
+  private authService = inject(AuthService);
+  private destroy$ = new Subject<void>();
+
+  // Estado de autenticación reactivo
+  isAuthenticated = false;
+  currentUser: UserDto | null = null;
 
   constructor(private router: Router) {}
 
-  /**
-   * Información del usuario actual
-   * En una implementación real, esto vendría del servicio de autenticación
-   */
-  currentUser = {
-    name: 'Jose Perez',
-    email: 'josep@mail.com',
-    avatar: undefined as string | undefined
-  };
+  ngOnInit(): void {
+    // Suscribirse al estado de autenticación
+    this.authService.authState$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(authState => {
+        this.isAuthenticated = authState.isAuthenticated;
+        this.currentUser = authState.user;
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   /**
    * Estado del mobile sidebar
@@ -92,17 +105,17 @@ export class HeaderComponent {
   onUserAction(action: string): void {
     switch (action) {
       case 'profile':
-        // Navegar al perfil
-        console.log('Ir al perfil');
+        this.router.navigate(['/profile']);
         break;
       case 'settings':
-        // Navegar a configuración
-        console.log('Ir a configuración');
+        this.router.navigate(['/settings']);
         break;
       case 'logout':
-        // Cerrar sesión
-        console.log('Cerrar sesión');
+        this.authService.signOut();
+        this.router.navigate(['/']);
         break;
+      default:
+        console.log(`Acción no reconocida: ${action}`);
     }
   }
 
@@ -125,5 +138,19 @@ export class HeaderComponent {
    */
   getAvatarUrl(name: string, size: number = 40): string {
     return this.urlService.generateAvatarUrl(name, '570df8', 'fff', size);
+  }
+
+  /**
+   * Obtiene el nombre completo del usuario
+   */
+  getUserFullName(): string {
+    return this.currentUser?.fullName || 'No disponible';
+  }
+
+  /**
+   * Obtiene el email del usuario
+   */
+  getUserEmail(): string {
+    return this.currentUser?.email || 'No disponible';
   }
 }

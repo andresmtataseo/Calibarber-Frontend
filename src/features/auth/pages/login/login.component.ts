@@ -110,4 +110,11 @@ export class LoginComponent {
     const field = this.loginForm.get(fieldName);
     return !!(field?.errors && field.touched);
   }
+
+  /**
+   * Verifica si el formulario es válido y no está cargando
+   */
+  isFormValid(): boolean {
+    return this.loginForm.valid && !this.isLoading;
+  }
 }

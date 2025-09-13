@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
-import { map, catchError, tap } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import {
   SignInRequestDto,
@@ -40,15 +40,29 @@ export class AuthService {
    * Inicializa el estado de autenticación desde localStorage
    */
   private initializeAuthState(): void {
-    const token = this.getStoredToken();
-    const user = this.getStoredUser();
+    try {
+      const token = this.getStoredToken();
+      const user = this.getStoredUser();
 
-    if (token && user) {
-      this.updateAuthState({
-        isAuthenticated: true,
-        user,
-        token
-      });
+      if (token && user) {
+        // Validar que el token no esté vacío o sea inválido
+        if (token.trim() && token !== 'null' && token !== 'undefined') {
+          console.log('Restaurando sesión desde localStorage');
+          this.updateAuthState({
+            isAuthenticated: true,
+            user,
+            token
+          });
+        } else {
+          console.warn('Token inválido encontrado en localStorage, limpiando...');
+          this.clearStoredAuth();
+        }
+      } else {
+        console.log('No se encontró sesión válida en localStorage');
+      }
+    } catch (error) {
+      console.error('Error al inicializar estado de autenticación:', error);
+      this.clearStoredAuth();
     }
   }
 
@@ -99,6 +113,28 @@ export class AuthService {
     ).pipe(
       map(response => {
         if (response.data) {
+          // Verificar si el token es válido y el usuario está activo
+          if (response.data.isTokenValid && response.data.isActive) {
+            // Crear UserDto a partir de la respuesta
+            const user: UserDto = {
+              id: response.data.userId,
+              email: response.data.email,
+              fullName: response.data.fullName,
+              role: response.data.role
+            };
+
+            // Actualizar el estado con los datos del usuario del backend
+            this.updateAuthState({
+              isAuthenticated: true,
+              user: user,
+              token: this.getToken()
+            });
+            this.storeUser(user);
+          } else {
+            // Token inválido o usuario inactivo, limpiar sesión
+            console.warn('Token inválido o usuario inactivo');
+            this.signOut();
+          }
           return response.data;
         }
         throw new Error('No se pudo verificar la autenticación');
@@ -144,12 +180,19 @@ export class AuthService {
    * Maneja una autenticación exitosa
    */
   private handleSuccessfulAuth(authResponse: AuthResponseDto): void {
-    this.storeToken(authResponse.token);
-    this.storeUser(authResponse.user);
+    // Crear UserDto a partir de la respuesta de autenticación
+    const user: UserDto = {
+      id: authResponse.userId,
+      email: authResponse.email,
+      fullName: authResponse.fullName,
+      role: authResponse.role
+    };
 
+    this.storeToken(authResponse.token);
+    this.storeUser(user);
     this.updateAuthState({
       isAuthenticated: true,
-      user: authResponse.user,
+      user: user,
       token: authResponse.token
     });
   }
@@ -186,16 +229,18 @@ export class AuthService {
    * Obtiene el usuario almacenado
    */
   private getStoredUser(): UserDto | null {
-    const userJson = localStorage.getItem(this.USER_KEY);
-    if (userJson) {
-      try {
-        return JSON.parse(userJson);
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        this.clearStoredAuth();
+    try {
+      const userJson = localStorage.getItem(this.USER_KEY);
+      if (!userJson || userJson === 'undefined' || userJson === 'null') {
+        return null;
       }
+      return JSON.parse(userJson);
+    } catch (error) {
+      console.warn('Error parsing stored user data:', error);
+      // Limpiar datos corruptos
+      localStorage.removeItem(this.USER_KEY);
+      return null;
     }
-    return null;
   }
 
   /**

@@ -32,23 +32,34 @@ export interface ResetPasswordRequestDto {
 // Response DTOs
 export interface AuthResponseDto {
   token: string;
-  user: UserDto;
+  type: string;
+  expiresAt: string;
+  issuedAt: string;
+  userId: string;
+  email: string;
+  role: string;
+  fullName: string;
 }
 
 export interface CheckAuthResponseDto {
-  user: UserDto;
-  isAuthenticated: boolean;
+  userId: string;
+  email: string;
+  role: string;
+  fullName: string;
+  isActive: boolean;
+  isTokenValid: boolean;
 }
 
 export interface UserDto {
-  id: number;
+  id: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
+  firstName?: string;
+  lastName?: string;
+  fullName: string;
+  phoneNumber?: string;
   role: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Generic API Response wrapper
