@@ -32,6 +32,7 @@ export const AUTH_URLS = {
 // URLs de usuarios
 export const USER_URLS = {
   BASE: `${API_CONFIG.API_BASE}/users`,
+  BY_ID: (id: string) => `${API_CONFIG.API_BASE}/users?id=${id}`,
   PROFILE: `${API_CONFIG.API_BASE}/users/profile`,
   UPDATE_PROFILE: `${API_CONFIG.API_BASE}/users/profile`,
   CHANGE_PASSWORD: `${API_CONFIG.API_BASE}/users/change-password`,
