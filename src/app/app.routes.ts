@@ -3,6 +3,7 @@ import { HomeComponent } from '../features/home';
 import { LoginComponent } from '../features/auth/pages';
 import { RegisterComponent } from '../features/auth/pages/register';
 import { ForgotPasswordComponent } from '../features/auth/pages/forgot-password';
+import { ResetPasswordComponent } from '../features/auth/pages/reset-password';
 import { guestGuard } from '../core/guards/auth.guard';
 
 export const routes: Routes = [
@@ -27,6 +28,12 @@ export const routes: Routes = [
     path: 'forgot-password',
     component: ForgotPasswordComponent,
     title: 'Restablecer Contraseña - CaliBarber',
+    canActivate: [guestGuard]
+  },
+  {
+    path: 'reset-password',
+    component: ResetPasswordComponent,
+    title: 'Nueva Contraseña - CaliBarber',
     canActivate: [guestGuard]
   },
   {

@@ -3,18 +3,24 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
+import { NotificationComponent, NotificationType } from '../../../../shared/components/notification/notification.component';
 
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, NotificationComponent],
   templateUrl: './reset-password.component.html'
 })
 export class ResetPasswordComponent {
   resetPasswordForm: FormGroup;
   isLoading = false;
-  message: string | null = null;
-  messageType: 'success' | 'error' | null = null;
+  
+  // Propiedades para el componente de notificación
+  showNotification = false;
+  notificationType: NotificationType = 'info';
+  notificationMessage = '';
+  duration = 5000;
+  autoClose = true;
 
   constructor(
     private fb: FormBuilder,
@@ -88,26 +94,25 @@ export class ResetPasswordComponent {
   onSubmit() {
     if (this.resetPasswordForm.valid && !this.isLoading) {
       this.isLoading = true;
-      this.message = null;
-      this.messageType = null;
+      this.hideNotification();
 
       const { token, newPassword, confirmNewPassword } = this.resetPasswordForm.value;
 
       this.authService.resetPassword(token, newPassword, confirmNewPassword).subscribe({
         next: (response) => {
           this.isLoading = false;
-          this.messageType = 'success';
-          this.message = response.message;
+          this.showSuccessNotification(
+            `${response.message} Serás redirigido al login en unos segundos.`
+          );
           
-          // Redirigir al login después de 2 segundos
+          // Redirigir al login después de 3 segundos
           setTimeout(() => {
             this.router.navigate(['/login']);
-          }, 2000);
+          }, 3000);
         },
         error: (error) => {
           this.isLoading = false;
-          this.messageType = 'error';
-          this.message = error.message || 'Ha ocurrido un error. Por favor, inténtalo de nuevo.';
+          this.showErrorNotification(error.message || 'Ha ocurrido un error. Por favor, inténtalo de nuevo.');
         }
       });
     } else {
@@ -193,5 +198,23 @@ export class ResetPasswordComponent {
     }
     
     return errors;
+  }
+
+  // Métodos auxiliares para notificaciones
+  private showSuccessNotification(message: string) {
+    this.notificationType = 'success';
+    this.notificationMessage = message;
+    this.showNotification = true;
+  }
+
+  private showErrorNotification(message: string) {
+    this.notificationType = 'error';
+    this.notificationMessage = message;
+    this.showNotification = true;
+  }
+
+  private hideNotification() {
+    this.showNotification = false;
+    this.notificationMessage = '';
   }
 }
