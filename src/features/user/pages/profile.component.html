@@ -1,0 +1,106 @@
+<div class="min-h-screen bg-base-200 py-8">
+  <div class="container mx-auto px-4 max-w-4xl">
+    <!-- Encabezado del perfil -->
+    <div class="bg-base-100 rounded-lg shadow-lg p-6 mb-6">
+      <div class="flex items-center gap-6">
+        <!-- Avatar del usuario -->
+        <div class="avatar">
+          <div class="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+            <img [src]="getAvatarUrl(getUserFullName(), 96)" [alt]="'Avatar de ' + getUserFullName()" />
+          </div>
+        </div>
+
+        <!-- Información básica -->
+        <div class="flex-1">
+          <h1 class="text-3xl font-bold text-primary mb-2">{{ getUserFullName() }}</h1>
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center gap-2 text-base-content/70">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              </svg>
+              <span>{{ user.email }}</span>
+            </div>
+            <div class="flex items-center gap-2 text-base-content/70" *ngIf="user.phoneNumber">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+              </svg>
+              <span>{{ user.phoneNumber }}</span>
+            </div>
+            <div class="flex items-center gap-2 text-base-content/70">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h6m-6 0l-1 12a2 2 0 002 2h6a2 2 0 002-2L16 7m-6 0V3a2 2 0 012-2h4a2 2 0 012 2v4"></path>
+              </svg>
+              <span>Miembro desde {{ getFormattedCreatedDate() }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sistema de pestañas -->
+    <div class="bg-base-100 rounded-lg shadow-lg overflow-hidden p-2">
+      <div class="tabs tabs-lift">
+        <!-- Pestaña Próximas -->
+        <label class="tab">
+          <input type="radio" name="profile_tabs" checked="checked" />
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4 me-2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
+          </svg>
+          Próximas
+        </label>
+        <div class="tab-content bg-base-100 border-base-300 p-6">
+          <h3 class="text-xl font-semibold mb-4 text-primary">Citas Próximas</h3>
+          <div class="space-y-4">
+            <div class="alert alert-info">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>No hay citas próximas programadas. ¡Reserva una ahora!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pestaña Pasadas -->
+        <label class="tab">
+          <input type="radio" name="profile_tabs" />
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4 me-2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 0 1-6.364 0M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Z" />
+          </svg>
+          Historial
+        </label>
+        <div class="tab-content bg-base-100 border-base-300 p-6">
+          <h3 class="text-xl font-semibold mb-4 text-primary">Historial de Citas</h3>
+          <div class="space-y-4">
+            <!-- Ejemplo de cita pasada -->
+            <div class="card bg-base-200 shadow-sm">
+              <div class="card-body p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-semibold">Corte de Cabello</h4>
+                    <p class="text-sm text-base-content/70">Barbería El Clásico</p>
+                    <p class="text-sm text-base-content/70">15 de Enero, 2024 - 3:00 PM</p>
+                  </div>
+                  <div class="badge badge-success">Completada</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card bg-base-200 shadow-sm">
+              <div class="card-body p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-semibold">Afeitado Clásico</h4>
+                    <p class="text-sm text-base-content/70">Barbería El Clásico</p>
+                    <p class="text-sm text-base-content/70">8 de Enero, 2024 - 11:00 AM</p>
+                  </div>
+                  <div class="badge badge-success">Completada</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
