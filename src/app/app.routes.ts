@@ -4,6 +4,7 @@ import { LoginComponent } from '../features/auth/pages';
 import { RegisterComponent } from '../features/auth/pages/register';
 import { ForgotPasswordComponent } from '../features/auth/pages/forgot-password';
 import { ResetPasswordComponent } from '../features/auth/pages/reset-password';
+import { ChangePasswordComponent } from '../features/auth/pages/change-password';
 import { ProfileComponent } from '../features/user/pages/profile/profile.component';
 import { EditProfileComponent } from '../features/user/pages/edit-profile/edit-profile.component';
 import { guestGuard, authGuard } from '../core/guards/auth.guard';
@@ -37,6 +38,12 @@ export const routes: Routes = [
     component: ResetPasswordComponent,
     title: 'Nueva Contraseña - CaliBarber',
     canActivate: [guestGuard]
+  },
+  {
+    path: 'auth/change-password',
+    component: ChangePasswordComponent,
+    title: 'Cambiar Contraseña - CaliBarber',
+    canActivate: [authGuard]
   },
   {
     path: 'profile',

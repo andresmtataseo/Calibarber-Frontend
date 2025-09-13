@@ -43,11 +43,31 @@
           <div class="form-control">
             <label class="floating-label">
               <span>Correo electrónico *</span>
-              <input type="email" formControlName="email" placeholder="Correo electrónico *" class="input input-md w-full"
-                [class.input-error]="hasError('email')" maxlength="255" />
+              <input type="email" formControlName="email" placeholder="Correo electrónico *"
+                class="input input-md w-full"
+                [class.input-error]="hasError('email') || isEmailAvailable === false"
+                [class.input-success]="isEmailAvailable === true"
+                maxlength="255" />
             </label>
+
+            <!-- Mensaje de error de formato -->
             <div class="label" *ngIf="hasError('email')">
               <span class="label-text-alt text-error">{{ getErrorMessage('email') }}</span>
+            </div>
+
+            <!-- Indicador de verificación en progreso -->
+            <div class="label" *ngIf="isCheckingEmail">
+              <span class="label-text-alt text-info">
+                <span class="loading loading-spinner loading-xs mr-1"></span>
+                Verificando disponibilidad...
+              </span>
+            </div>
+
+            <!-- Mensaje de disponibilidad del email -->
+            <div class="label" *ngIf="emailAvailabilityMessage && !isCheckingEmail && !hasError('email') && isEmailAvailable === false">
+              <span class="label-text-alt text-error">
+                {{ emailAvailabilityMessage }}
+              </span>
             </div>
           </div>
 
@@ -80,11 +100,8 @@
             <div class="flex justify-center">
               <div class="avatar">
                 <div class="w-20 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                  <img
-                    [src]="editForm.get('profilePictureUrl')?.value"
-                    [alt]="'Vista previa del avatar'"
-                    (error)="editForm.get('profilePictureUrl')?.setErrors({'invalidUrl': true})"
-                  />
+                  <img [src]="editForm.get('profilePictureUrl')?.value" [alt]="'Vista previa del avatar'"
+                    (error)="editForm.get('profilePictureUrl')?.setErrors({'invalidUrl': true})" />
                 </div>
               </div>
             </div>
@@ -92,15 +109,16 @@
 
           <!-- Botones de acción -->
           <div class="form-control mt-6">
-            <button type="submit" class="btn btn-primary w-full mb-4" [disabled]="!isFormValid()" [class.loading]="isSaving">
+            <button type="submit" class="btn btn-primary w-full mb-4" [disabled]="!isFormValid()"
+              [class.loading]="isSaving">
               <span class="loading loading-spinner" *ngIf="isSaving"></span>
               {{ isSaving ? 'Guardando...' : 'Guardar Cambios' }}
             </button>
-            <button type="button" class="btn btn-outline w-full" (click)="onCancel()" [disabled]="isSaving">
-              Volver
+            <button type="button" class="btn btn-ghost w-full" (click)="onCancel()" [disabled]="isSaving">
+              Volver al perfil
             </button>
           </div>
-          
+
         </form>
       </div>
     </div>
@@ -108,9 +126,5 @@
 </div>
 
 <!-- Componente de notificación -->
-<app-notification
-  *ngIf="showNotification"
-  [message]="notificationMessage"
-  [type]="notificationType"
-  (close)="clearError()"
-></app-notification>
+<app-notification *ngIf="showNotification" [message]="notificationMessage" [type]="notificationType"
+  (close)="clearError()"></app-notification>

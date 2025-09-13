@@ -154,4 +154,11 @@ export class ProfileComponent implements OnInit {
   navigateToEditProfile(): void {
     this.router.navigate(['/user/edit-profile']);
   }
+
+  /**
+   * Navega a la página de cambio de contraseña
+   */
+  navigateToChangePassword(): void {
+    this.router.navigate(['/auth/change-password']);
+  }
 }

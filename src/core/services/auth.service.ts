@@ -225,6 +225,36 @@ export class AuthService {
   }
 
   /**
+   * Cambia la contraseña del usuario autenticado
+   * @param currentPassword Contraseña actual
+   * @param newPassword Nueva contraseña
+   * @param confirmNewPassword Confirmación de la nueva contraseña
+   * @returns Observable con la respuesta del servidor
+   */
+  changePassword(data: { currentPassword: string; newPassword: string; confirmNewPassword: string }): Observable<{ status: number; message: string }> {
+    return this.http.put<{ status: number; message: string; timestamp: string; path: string }>(
+      this.urlService.getAuthUrl('CHANGE_PASSWORD'),
+      data
+    ).pipe(
+      map(response => ({
+        status: response.status,
+        message: response.message
+      })),
+      catchError((error: HttpErrorResponse) => {
+        // Manejar respuestas de error del servidor (400, etc.)
+        if (error.error && error.error.status && error.error.message) {
+          return throwError(() => ({
+            status: error.error.status,
+            message: error.error.message,
+            errors: error.error.errors || null
+          }));
+        }
+        return this.handleError(error);
+      })
+    );
+  }
+
+  /**
    * Cierra la sesión del usuario
    */
   signOut(): void {

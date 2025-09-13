@@ -26,6 +26,7 @@ export const AUTH_URLS = {
   CHECK_EMAIL: `${API_CONFIG.API_BASE}/auth/check-email`,
   FORGOT_PASSWORD: `${API_CONFIG.API_BASE}/auth/forgot-password`,
   RESET_PASSWORD: `${API_CONFIG.API_BASE}/auth/reset-password`,
+  CHANGE_PASSWORD: `${API_CONFIG.API_BASE}/auth/change-password`,
   REFRESH_TOKEN: `${API_CONFIG.API_BASE}/auth/refresh-token`
 } as const;
 

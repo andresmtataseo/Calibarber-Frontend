@@ -8,7 +8,7 @@ import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { UserResponse } from '../../models/user.model';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-edit-profile',
@@ -27,6 +27,11 @@ export class EditProfileComponent implements OnInit, OnDestroy {
   notificationMessage = '';
   notificationType: NotificationType = 'error';
 
+  // Estados para validación de email
+  isCheckingEmail = false;
+  emailAvailabilityMessage = '';
+  isEmailAvailable: boolean | null = null;
+  private emailCheckTimeout: any;
   private destroy$ = new Subject<void>();
   private userService = inject(UserService);
   private authService = inject(AuthService);
@@ -64,11 +69,15 @@ export class EditProfileComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadUserProfile();
+    this.setupEmailValidation();
   }
 
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    if (this.emailCheckTimeout) {
+      clearTimeout(this.emailCheckTimeout);
+    }
   }
 
   /**
@@ -111,6 +120,66 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       phoneNumber: user.phoneNumber || '',
       profilePictureUrl: user.profilePictureUrl || ''
     });
+  }
+
+  /**
+   * Configura la validación en tiempo real del email
+   */
+  private setupEmailValidation() {
+    const emailControl = this.editForm.get('email');
+    if (emailControl) {
+      emailControl.valueChanges
+        .pipe(
+          takeUntil(this.destroy$),
+          debounceTime(500), // Esperar 500ms después del último cambio
+          distinctUntilChanged(),
+          filter(email => {
+            // Solo verificar si el email tiene formato válido y es diferente al email actual
+            const isValidFormat = emailControl.valid && email && email.trim().length > 0;
+            const isDifferentFromCurrent = this.user && email !== this.user.email;
+            if (!isValidFormat || !isDifferentFromCurrent) {
+              this.resetEmailValidation();
+            }
+            return isValidFormat && isDifferentFromCurrent;
+          })
+        )
+        .subscribe(email => {
+          this.checkEmailAvailability(email);
+        });
+    }
+  }
+
+  /**
+   * Verifica la disponibilidad del email
+   */
+  private checkEmailAvailability(email: string) {
+    this.isCheckingEmail = true;
+    this.emailAvailabilityMessage = '';
+    this.isEmailAvailable = null;
+
+    this.authService.checkEmailAvailability(email)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.isCheckingEmail = false;
+          this.emailAvailabilityMessage = response.message;
+          this.isEmailAvailable = response.available;
+        },
+        error: (error) => {
+          this.isCheckingEmail = false;
+          this.emailAvailabilityMessage = 'Error al verificar el email';
+          this.isEmailAvailable = null;
+        }
+      });
+  }
+
+  /**
+   * Resetea el estado de validación del email
+   */
+  private resetEmailValidation() {
+    this.isCheckingEmail = false;
+    this.emailAvailabilityMessage = '';
+    this.isEmailAvailable = null;
   }
 
   /**
@@ -226,7 +295,17 @@ export class EditProfileComponent implements OnInit, OnDestroy {
    * Verifica si el formulario es válido y no está guardando
    */
   isFormValid(): boolean {
-    return this.editForm.valid && !this.isSaving;
+    const emailControl = this.editForm.get('email');
+    const currentEmail = this.user?.email;
+    const newEmail = emailControl?.value;
+    
+    // Si el email no ha cambiado, no necesitamos verificar disponibilidad
+    const emailUnchanged = currentEmail === newEmail;
+    
+    // Si el email cambió, debe estar disponible
+    const emailValid = emailUnchanged || (this.isEmailAvailable === true && !this.isCheckingEmail);
+    
+    return this.editForm.valid && !this.isSaving && emailValid;
   }
 
   /**
