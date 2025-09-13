@@ -7,18 +7,24 @@ import { SignUpRequestDto } from '../../../../shared/models/auth.models';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { NotificationComponent } from '../../../../shared/components/notification/notification.component';
+import { NotificationType } from '../../../../shared/components/notification/notification.component';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, NotificationComponent],
   templateUrl: './register.component.html'
 })
 export class RegisterComponent implements OnInit, OnDestroy {
   registerForm: FormGroup;
   isLoading = false;
-  errorMessage = '';
-  
+
+  // Propiedades para el componente de notificación
+  showNotification = false;
+  notificationMessage = '';
+  notificationType: NotificationType = 'error';
+
   // Estados para validación de email
   isCheckingEmail = false;
   emailAvailabilityMessage = '';
@@ -216,7 +222,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   onSubmit() {
     if (this.registerForm.valid) {
       this.isLoading = true;
-      this.errorMessage = '';
+      this.hideNotification();
 
       const formData = this.registerForm.value;
       // Remover confirmPassword del objeto a enviar
@@ -234,12 +240,15 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
       this.authService.signUp(signUpData).subscribe({
         next: (response) => {
-          // Registro exitoso, redirigir al usuario
-          this.router.navigate(['/']);
+          this.showSuccessNotification('¡Cuenta creada exitosamente!');
+          // Registro exitoso, redirigir al usuario después de un breve delay
+          setTimeout(() => {
+            this.router.navigate(['/']);
+          }, 2000);
         },
         error: (error) => {
           this.isLoading = false;
-          this.errorMessage = error.message || 'Error al registrar usuario. Inténtalo de nuevo.';
+          this.showErrorNotification(error.message || 'Error al registrar usuario. Inténtalo de nuevo.');
         },
         complete: () => {
           this.isLoading = false;
@@ -250,6 +259,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
       Object.keys(this.registerForm.controls).forEach(key => {
         this.registerForm.get(key)?.markAsTouched();
       });
+      this.showErrorNotification('Por favor, completa todos los campos requeridos correctamente.');
     }
   }
 
@@ -266,6 +276,32 @@ export class RegisterComponent implements OnInit, OnDestroy {
    * Limpia el mensaje de error
    */
   clearError(): void {
-    this.errorMessage = '';
+    this.hideNotification();
+  }
+
+  /**
+   * Muestra una notificación de error
+   */
+  private showErrorNotification(message: string): void {
+    this.notificationMessage = message;
+    this.notificationType = 'error';
+    this.showNotification = true;
+  }
+
+  /**
+   * Muestra una notificación de éxito
+   */
+  private showSuccessNotification(message: string): void {
+    this.notificationMessage = message;
+    this.notificationType = 'success';
+    this.showNotification = true;
+  }
+
+  /**
+   * Oculta la notificación
+   */
+  private hideNotification(): void {
+    this.showNotification = false;
+    this.notificationMessage = '';
   }
 }

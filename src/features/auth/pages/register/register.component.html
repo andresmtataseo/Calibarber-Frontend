@@ -9,13 +9,7 @@
     <div class="card-body lg:w-2/3">
       <h2 class="card-title text-2xl mb-6 justify-center">Crear Cuenta</h2>
 
-      <!-- Mensaje de error global -->
-      <div class="alert alert-error mb-4" *ngIf="errorMessage" (click)="clearError()">
-        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span>{{ errorMessage }}</span>
-      </div>
+
 
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-6">
         <!-- Nombre -->
@@ -82,12 +76,12 @@
               [class.input-success]="isEmailAvailable === true"
               maxlength="255" />
           </label>
-          
+
           <!-- Mensaje de error de formato -->
           <div class="label" *ngIf="hasError('email')">
             <span class="label-text-alt text-error">{{ getErrorMessage('email') }}</span>
           </div>
-          
+
           <!-- Indicador de verificación en progreso -->
           <div class="label" *ngIf="isCheckingEmail">
             <span class="label-text-alt text-info">
@@ -95,10 +89,10 @@
               Verificando disponibilidad...
             </span>
           </div>
-          
+
           <!-- Mensaje de disponibilidad del email -->
           <div class="label" *ngIf="emailAvailabilityMessage && !isCheckingEmail && !hasError('email')">
-            <span class="label-text-alt" 
+            <span class="label-text-alt"
                   [class.text-success]="isEmailAvailable === true"
                   [class.text-error]="isEmailAvailable === false">
               <svg *ngIf="isEmailAvailable === true" xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -182,3 +176,12 @@
     </div>
   </div>
 </div>
+
+<!-- Componente de notificación -->
+<app-notification
+  *ngIf="showNotification"
+  [type]="notificationType"
+  [message]="notificationMessage"
+  [duration]="5000"
+  [autoClose]="true">
+</app-notification>
