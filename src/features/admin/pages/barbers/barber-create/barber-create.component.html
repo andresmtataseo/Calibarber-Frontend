@@ -1,0 +1,308 @@
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Nuevo Barbero</h1>
+      <p class="page-description">Registra un nuevo barbero en el sistema</p>
+    </div>
+    <div class="header-actions">
+      <button 
+        type="button" 
+        class="btn btn-secondary" 
+        (click)="onCancel()"
+        [disabled]="loading">
+        <i class="fas fa-arrow-left"></i>
+        Volver
+      </button>
+    </div>
+  </div>
+
+  <!-- Form Container -->
+  <div class="form-container">
+    <form [formGroup]="barberForm" (ngSubmit)="onSubmit()" class="barber-form">
+      
+      <!-- Información Personal -->
+      <div class="form-section">
+        <h3 class="section-title">Información Personal</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="firstName">Nombre *</label>
+            <input
+              type="text"
+              id="firstName"
+              class="form-control"
+              [class.error]="f['firstName'].invalid && f['firstName'].touched"
+              formControlName="firstName"
+              placeholder="Ingresa el nombre">
+            <div class="error-message" *ngIf="getFieldError('firstName')">
+              {{ getFieldError('firstName') }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="lastName">Apellido *</label>
+            <input
+              type="text"
+              id="lastName"
+              class="form-control"
+              [class.error]="f['lastName'].invalid && f['lastName'].touched"
+              formControlName="lastName"
+              placeholder="Ingresa el apellido">
+            <div class="error-message" *ngIf="getFieldError('lastName')">
+              {{ getFieldError('lastName') }}
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="email">Email *</label>
+            <input
+              type="email"
+              id="email"
+              class="form-control"
+              [class.error]="f['email'].invalid && f['email'].touched"
+              formControlName="email"
+              placeholder="ejemplo@correo.com">
+            <div class="error-message" *ngIf="getFieldError('email')">
+              {{ getFieldError('email') }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="phone">Teléfono *</label>
+            <input
+              type="tel"
+              id="phone"
+              class="form-control"
+              [class.error]="f['phone'].invalid && f['phone'].touched"
+              formControlName="phone"
+              placeholder="+57 300 123 4567">
+            <div class="error-message" *ngIf="getFieldError('phone')">
+              {{ getFieldError('phone') }}
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="dateOfBirth">Fecha de Nacimiento *</label>
+            <input
+              type="date"
+              id="dateOfBirth"
+              class="form-control"
+              [class.error]="f['dateOfBirth'].invalid && f['dateOfBirth'].touched"
+              formControlName="dateOfBirth">
+            <div class="error-message" *ngIf="getFieldError('dateOfBirth')">
+              {{ getFieldError('dateOfBirth') }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="profileImage">Foto de Perfil</label>
+            <input
+              type="url"
+              id="profileImage"
+              class="form-control"
+              formControlName="profileImage"
+              placeholder="URL de la imagen">
+          </div>
+        </div>
+      </div>
+
+      <!-- Credenciales de Acceso -->
+      <div class="form-section">
+        <h3 class="section-title">Credenciales de Acceso</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="password">Contraseña *</label>
+            <div class="password-input">
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                id="password"
+                class="form-control"
+                [class.error]="f['password'].invalid && f['password'].touched"
+                formControlName="password"
+                placeholder="Ingresa la contraseña">
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="togglePasswordVisibility()">
+                <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+              </button>
+            </div>
+            <div class="error-message" *ngIf="getFieldError('password')">
+              {{ getFieldError('password') }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="confirmPassword">Confirmar Contraseña *</label>
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="confirmPassword"
+              class="form-control"
+              [class.error]="f['confirmPassword'].invalid && f['confirmPassword'].touched"
+              formControlName="confirmPassword"
+              placeholder="Confirma la contraseña">
+            <div class="error-message" *ngIf="getFieldError('confirmPassword')">
+              {{ getFieldError('confirmPassword') }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información Profesional -->
+      <div class="form-section">
+        <h3 class="section-title">Información Profesional</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="barbershopId">Barbería *</label>
+            <select
+              id="barbershopId"
+              class="form-control"
+              [class.error]="f['barbershopId'].invalid && f['barbershopId'].touched"
+              formControlName="barbershopId">
+              <option value="" disabled>Selecciona una barbería</option>
+              <option *ngFor="let barbershop of barbershops" [value]="barbershop.id">
+                {{ barbershop.name }}
+              </option>
+            </select>
+            <div class="error-message" *ngIf="getFieldError('barbershopId')">
+              {{ getFieldError('barbershopId') }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="experienceLevel">Nivel de Experiencia *</label>
+            <select
+              id="experienceLevel"
+              class="form-control"
+              [class.error]="f['experienceLevel'].invalid && f['experienceLevel'].touched"
+              formControlName="experienceLevel">
+              <option value="" disabled>Selecciona el nivel</option>
+              <option *ngFor="let level of experienceLevels" [value]="level.value">
+                {{ level.label }}
+              </option>
+            </select>
+            <div class="error-message" *ngIf="getFieldError('experienceLevel')">
+              {{ getFieldError('experienceLevel') }}
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="yearsOfExperience">Años de Experiencia *</label>
+            <input
+              type="number"
+              id="yearsOfExperience"
+              class="form-control"
+              [class.error]="f['yearsOfExperience'].invalid && f['yearsOfExperience'].touched"
+              formControlName="yearsOfExperience"
+              placeholder="0"
+              min="0"
+              max="50">
+            <div class="error-message" *ngIf="getFieldError('yearsOfExperience')">
+              {{ getFieldError('yearsOfExperience') }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="startDate">Fecha de Inicio *</label>
+            <input
+              type="date"
+              id="startDate"
+              class="form-control"
+              [class.error]="f['startDate'].invalid && f['startDate'].touched"
+              formControlName="startDate">
+            <div class="error-message" *ngIf="getFieldError('startDate')">
+              {{ getFieldError('startDate') }}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Especialidades -->
+        <div class="form-group full-width">
+          <label class="form-label">Especialidades *</label>
+          <div class="specialties-grid">
+            <label 
+              *ngFor="let specialty of availableSpecialties" 
+              class="specialty-checkbox">
+              <input
+                type="checkbox"
+                [checked]="isSpecialtySelected(specialty)"
+                (change)="onSpecialtyChange(specialty, $event)">
+              <span class="checkmark"></span>
+              <span class="specialty-label">{{ specialty }}</span>
+            </label>
+          </div>
+          <div class="error-message" *ngIf="getSpecialtiesError()">
+            {{ getSpecialtiesError() }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Información Adicional -->
+      <div class="form-section">
+        <h3 class="section-title">Información Adicional</h3>
+        
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label class="form-label" for="bio">Biografía</label>
+            <textarea
+              id="bio"
+              class="form-control"
+              formControlName="bio"
+              placeholder="Describe la experiencia y habilidades del barbero..."
+              rows="4">
+            </textarea>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="status">Estado *</label>
+            <select
+              id="status"
+              class="form-control"
+              [class.error]="f['status'].invalid && f['status'].touched"
+              formControlName="status">
+              <option value="active">Activo</option>
+              <option value="inactive">Inactivo</option>
+              <option value="pending">Pendiente</option>
+            </select>
+            <div class="error-message" *ngIf="getFieldError('status')">
+              {{ getFieldError('status') }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button 
+          type="button" 
+          class="btn btn-secondary" 
+          (click)="onCancel()"
+          [disabled]="loading">
+          Cancelar
+        </button>
+        
+        <button 
+          type="submit" 
+          class="btn btn-primary"
+          [disabled]="barberForm.invalid || loading">
+          <span *ngIf="loading" class="loading-spinner"></span>
+          <span [class.loading-text]="loading">
+            {{ loading ? 'Creando...' : 'Crear Barbero' }}
+          </span>
+        </button>
+      </div>
+      
+    </form>
+  </div>
+</div>

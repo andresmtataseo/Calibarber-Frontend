@@ -1,0 +1,1 @@
+export * from './barbershop-edit.component';

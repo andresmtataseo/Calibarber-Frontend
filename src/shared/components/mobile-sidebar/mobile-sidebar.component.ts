@@ -105,4 +105,11 @@ export class MobileSidebarComponent {
   getUserEmail(): string {
     return this.currentUser?.email || 'No disponible';
   }
+
+  /**
+   * Verifica si el usuario actual es administrador
+   */
+  isUserAdmin(): boolean {
+    return this.currentUser?.role === 'ROLE_ADMIN';
+  }
 }

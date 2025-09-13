@@ -1,27 +1,27 @@
 <!-- Mobile Sidebar Drawer -->
 <div class="drawer drawer-end lg:hidden">
   <!-- Hidden checkbox que controla el estado del drawer -->
-  <input 
-    id="mobile-drawer" 
-    type="checkbox" 
-    class="drawer-toggle" 
+  <input
+    id="mobile-drawer"
+    type="checkbox"
+    class="drawer-toggle"
     [checked]="isOpen"
     (change)="onCloseDrawer()"
   />
-  
+
   <!-- Drawer Side -->
   <div class="drawer-side z-50">
     <!-- Overlay para cerrar el drawer -->
-    <label 
-      for="mobile-drawer" 
-      aria-label="close sidebar" 
+    <label
+      for="mobile-drawer"
+      aria-label="close sidebar"
       class="drawer-overlay"
       (click)="onOverlayClick()"
     ></label>
-    
+
     <!-- Contenido del sidebar -->
     <div class="menu bg-base-100 text-base-content min-h-full w-80 p-0 shadow-xl">
-      
+
       <!-- Header del sidebar -->
       <div class="bg-primary p-4 mb-4">
         <div class="flex items-center justify-between">
@@ -33,9 +33,9 @@
               <span class="text-base-200 text-xs">Tu estilo, nuestra pasión</span>
             </div>
           </div>
-          
+
           <!-- Botón cerrar -->
-          <button 
+          <button
             class="btn btn-ghost btn-sm text-base-100 hover:bg-base-100/10"
             (click)="onCloseDrawer()"
             aria-label="Cerrar menú"
@@ -49,11 +49,11 @@
 
       <!-- Información del usuario (si está autenticado) -->
       <div *ngIf="isAuthenticated && currentUser" class="px-4 mb-4">
-        <div class="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
+        <div class="flex items-center gap-3 rounded-lg">
           <div class="avatar">
             <div class="w-12 rounded-full">
-              <img 
-                [src]="getAvatarUrl(getUserFullName(), 48)" 
+              <img
+                [src]="getAvatarUrl(getUserFullName(), 48)"
                 [alt]="'Avatar de ' + getUserFullName()"
               />
             </div>
@@ -70,7 +70,7 @@
         <h3 class="text-xs font-semibold text-base-content opacity-60 uppercase tracking-wider mb-2 px-2">Navegación</h3>
         <ul class="space-y-1">
           <li *ngFor="let item of navigationItems">
-            <a 
+            <a
               [routerLink]="item.route"
               [class.active]="item.active"
               class="flex items-center gap-3 px-4 py-3 rounded-lg text-base-content hover:bg-primary hover:text-primary-content transition-all duration-200 ease-in-out transform hover:scale-[1.02]"
@@ -87,7 +87,7 @@
         <div class="divider text-xs opacity-60">CUENTA</div>
         <ul class="space-y-1">
           <li>
-            <a 
+            <a
               class="flex items-center gap-3 px-4 py-3 rounded-lg text-base-content hover:bg-base-200 transition-all duration-200 ease-in-out"
               (click)="onUserAction('profile')"
             >
@@ -97,25 +97,27 @@
               <span class="text-sm">Mi Perfil</span>
             </a>
           </li>
-          <li>
-            <a 
+
+          <!-- Botón de Administración (solo para admins) -->
+          <li *ngIf="isUserAdmin()">
+            <a
               class="flex items-center gap-3 px-4 py-3 rounded-lg text-base-content hover:bg-base-200 transition-all duration-200 ease-in-out"
-              (click)="onUserAction('settings')"
+              (click)="onUserAction('admin')"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
               </svg>
-              <span class="text-sm">Configuración</span>
+              <span class="text-sm">Panel de Administración</span>
             </a>
           </li>
         </ul>
-        
+
         <div class="divider opacity-30"></div>
-        
+
         <ul>
           <li>
-            <a 
+            <a
               class="flex items-center gap-3 px-4 py-3 rounded-lg text-error hover:bg-error hover:text-error-content transition-all duration-200 ease-in-out"
               (click)="onUserAction('logout')"
             >
@@ -132,7 +134,7 @@
       <div *ngIf="!isAuthenticated" class="px-4 mt-auto pb-4">
         <div class="divider text-xs opacity-60">ACCESO</div>
         <div class="space-y-3">
-          <button 
+          <button
             class="btn btn-primary w-full justify-start gap-3"
             (click)="onLogin()"
           >
@@ -141,7 +143,7 @@
             </svg>
             Iniciar Sesión
           </button>
-          <button 
+          <button
             class="btn btn-outline btn-accent w-full justify-start gap-3"
             (click)="onRegister()"
           >
@@ -152,7 +154,7 @@
           </button>
         </div>
       </div>
-      
+
     </div>
   </div>
 </div>

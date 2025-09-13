@@ -7,7 +7,8 @@ import { ResetPasswordComponent } from '../features/auth/pages/reset-password';
 import { ChangePasswordComponent } from '../features/auth/pages/change-password';
 import { ProfileComponent } from '../features/user/pages/profile/profile.component';
 import { EditProfileComponent } from '../features/user/pages/edit-profile/edit-profile.component';
-import { guestGuard, authGuard } from '../core/guards/auth.guard';
+import { AdminDashboardComponent } from '../features/admin/pages/admin-dashboard/admin-dashboard.component';
+import { guestGuard, authGuard, adminGuard } from '../core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -56,6 +57,12 @@ export const routes: Routes = [
     component: EditProfileComponent,
     title: 'Editar Perfil - CaliBarber',
     canActivate: [authGuard]
+  },
+  {
+    path: 'admin',
+    component: AdminDashboardComponent,
+    title: 'Panel de Administración - CaliBarber',
+    canActivate: [adminGuard]
   },
   {
     path: '**',

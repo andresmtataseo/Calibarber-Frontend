@@ -52,3 +52,25 @@ export const guestGuard = () => {
     })
   );
 };
+
+/**
+ * Guard de administrador que protege rutas que requieren permisos de admin
+ */
+export const adminGuard = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  return authService.authState$.pipe(
+    take(1),
+    map(authState => {
+      // Verificar si el usuario está autenticado y es administrador
+      if (authState.user && authState.user.role === 'ROLE_ADMIN') {
+        return true;
+      } else {
+        // Redirigir a home si no es administrador
+        router.navigate(['/']);
+        return false;
+      }
+    })
+  );
+};

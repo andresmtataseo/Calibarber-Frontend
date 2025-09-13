@@ -1,0 +1,176 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Crear Nuevo Usuario</h1>
+      <p class="page-description">Completa la información para registrar un nuevo usuario</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">
+        <span class="material-icons">arrow_back</span>
+        Volver
+      </button>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <div class="form-container">
+      <form [formGroup]="userForm" (ngSubmit)="onSubmit()" class="user-form">
+        <div class="form-section">
+          <h3 class="section-title">Información Personal</h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName" class="form-label">Nombre *</label>
+              <input
+                type="text"
+                id="firstName"
+                formControlName="firstName"
+                class="form-control"
+                [class.error]="f['firstName'].invalid && f['firstName'].touched"
+                placeholder="Ingresa el nombre">
+              <div class="error-message" *ngIf="getFieldError('firstName')">
+                {{ getFieldError('firstName') }}
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="lastName" class="form-label">Apellido *</label>
+              <input
+                type="text"
+                id="lastName"
+                formControlName="lastName"
+                class="form-control"
+                [class.error]="f['lastName'].invalid && f['lastName'].touched"
+                placeholder="Ingresa el apellido">
+              <div class="error-message" *ngIf="getFieldError('lastName')">
+                {{ getFieldError('lastName') }}
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email" class="form-label">Email *</label>
+              <input
+                type="email"
+                id="email"
+                formControlName="email"
+                class="form-control"
+                [class.error]="f['email'].invalid && f['email'].touched"
+                placeholder="ejemplo@correo.com">
+              <div class="error-message" *ngIf="getFieldError('email')">
+                {{ getFieldError('email') }}
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="phone" class="form-label">Teléfono *</label>
+              <input
+                type="tel"
+                id="phone"
+                formControlName="phone"
+                class="form-control"
+                [class.error]="f['phone'].invalid && f['phone'].touched"
+                placeholder="+57 300 123 4567">
+              <div class="error-message" *ngIf="getFieldError('phone')">
+                {{ getFieldError('phone') }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">Credenciales de Acceso</h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="password" class="form-label">Contraseña *</label>
+              <div class="password-input">
+                <input
+                  [type]="showPassword ? 'text' : 'password'"
+                  id="password"
+                  formControlName="password"
+                  class="form-control"
+                  [class.error]="f['password'].invalid && f['password'].touched"
+                  placeholder="Mínimo 8 caracteres">
+                <button
+                  type="button"
+                  class="password-toggle"
+                  (click)="togglePasswordVisibility()">
+                  <span class="material-icons">
+                    {{ showPassword ? 'visibility_off' : 'visibility' }}
+                  </span>
+                </button>
+              </div>
+              <div class="error-message" *ngIf="getFieldError('password')">
+                {{ getFieldError('password') }}
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="confirmPassword" class="form-label">Confirmar Contraseña *</label>
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                id="confirmPassword"
+                formControlName="confirmPassword"
+                class="form-control"
+                [class.error]="f['confirmPassword'].invalid && f['confirmPassword'].touched"
+                placeholder="Repite la contraseña">
+              <div class="error-message" *ngIf="getFieldError('confirmPassword')">
+                {{ getFieldError('confirmPassword') }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">Configuración de Cuenta</h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="role" class="form-label">Rol *</label>
+              <select
+                id="role"
+                formControlName="role"
+                class="form-control"
+                [class.error]="f['role'].invalid && f['role'].touched">
+                <option value="" disabled>Selecciona un rol</option>
+                <option *ngFor="let role of roles" [value]="role.value">
+                  {{ role.label }}
+                </option>
+              </select>
+              <div class="error-message" *ngIf="getFieldError('role')">
+                {{ getFieldError('role') }}
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="status" class="form-label">Estado *</label>
+              <select
+                id="status"
+                formControlName="status"
+                class="form-control"
+                [class.error]="f['status'].invalid && f['status'].touched">
+                <option value="active">Activo</option>
+                <option value="inactive">Inactivo</option>
+              </select>
+              <div class="error-message" *ngIf="getFieldError('status')">
+                {{ getFieldError('status') }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="loading">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading">
+            <span class="loading-spinner" *ngIf="loading"></span>
+            <span [class.loading-text]="loading">{{ loading ? 'Creando...' : 'Crear Usuario' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

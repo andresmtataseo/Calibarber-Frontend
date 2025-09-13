@@ -96,6 +96,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
       case 'profile':
         this.router.navigate(['/profile']);
         break;
+      case 'admin':
+        this.router.navigate(['/admin']);
+        break;
       case 'settings':
         this.router.navigate(['/settings']);
         break;
@@ -141,5 +144,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
    */
   getUserEmail(): string {
     return this.currentUser?.email || 'No disponible';
+  }
+
+  /**
+   * Verifica si el usuario actual es administrador
+   */
+  isUserAdmin(): boolean {
+    return this.currentUser?.role === 'ROLE_ADMIN';
   }
 }
