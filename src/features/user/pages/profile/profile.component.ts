@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { PreloaderComponent } from '../../../../shared/components/preloader/preloader.component';
 import { UserResponse, UserRole } from '../../models/user.model';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -9,7 +10,7 @@ import { UrlService } from '../../../../core/services/url.service';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PreloaderComponent],
   templateUrl: './profile.component.html'
 })
 export class ProfileComponent implements OnInit {

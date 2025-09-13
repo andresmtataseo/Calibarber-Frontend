@@ -1,0 +1,17 @@
+<div
+  *ngIf="isVisible"
+  [@fadeInOut]
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-sm"
+  role="dialog"
+  aria-label="Loading">
+  <div class="flex flex-col items-center space-y-4" [@fadeInOut]>
+    <span
+      class="loading loading-ring text-primary transition-all duration-300 ease-in-out"
+      [class]="sizeClass"
+      [attr.aria-label]="'Loading content'">
+    </span>
+    <p class="text-primary text-sm font-medium animate-pulse transition-opacity duration-300">
+      Cargando...
+    </p>
+  </div>
+</div>

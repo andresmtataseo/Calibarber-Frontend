@@ -1,0 +1,1 @@
+export { PreloaderComponent } from './preloader.component';

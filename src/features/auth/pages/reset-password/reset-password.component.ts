@@ -4,11 +4,12 @@ import { RouterModule, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationComponent, NotificationType } from '../../../../shared/components/notification/notification.component';
+import { PreloaderComponent } from '../../../../shared/components/preloader/preloader.component';
 
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, NotificationComponent],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, NotificationComponent, PreloaderComponent],
   templateUrl: './reset-password.component.html'
 })
 export class ResetPasswordComponent {
@@ -216,5 +217,9 @@ export class ResetPasswordComponent {
   private hideNotification() {
     this.showNotification = false;
     this.notificationMessage = '';
+  }
+
+  isFormValid(): boolean {
+    return this.resetPasswordForm.valid && !this.isLoading;
   }
 }

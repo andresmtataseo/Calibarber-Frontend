@@ -128,9 +128,11 @@
         </div>
 
         <div class="form-control mt-6">
-          <button type="submit" class="btn btn-primary w-full" [disabled]="!isFormValid()">
-            <span class="loading loading-spinner" *ngIf="isLoading"></span>
-            {{ isLoading ? 'Creando cuenta...' : 'Crear Cuenta' }}
+          <button
+            type="submit"
+            class="btn btn-primary w-full"
+            [disabled]="!isFormValid()">
+            {{ isLoading ? 'Registrando...' : 'Crear cuenta' }}
           </button>
         </div>
       </form>
@@ -147,7 +149,14 @@
   </div>
 </div>
 
-<!-- Componente de notificación -->
-<app-notification *ngIf="showNotification" [type]="notificationType" [message]="notificationMessage" [duration]="5000"
+<!-- Preloader compartido -->
+<app-preloader [show]="isLoading" [size]="'lg'"></app-preloader>
+
+<!-- Componente de notificación reutilizable -->
+<app-notification
+  *ngIf="showNotification"
+  [type]="notificationType"
+  [message]="notificationMessage"
+  [duration]="5000"
   [autoClose]="true">
 </app-notification>

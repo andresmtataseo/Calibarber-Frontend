@@ -7,22 +7,11 @@ import { UrlService } from '../../../core/services/url.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserDto } from '../../../shared/models/auth.models';
 
-/**
- * Componente Header reutilizable
- *
- * Este componente implementa la barra de navegación principal de la aplicación
- * siguiendo el diseño proporcionado. Incluye:
- * - Logo de la empresa
- * - Menú de navegación principal
- * - Información del usuario logueado
- * - Diseño responsive con Daisy UI y Tailwind CSS
- */
 @Component({
   selector: 'app-header',
   standalone: true,
   imports: [CommonModule, RouterModule, MobileSidebarComponent],
-  templateUrl: './header.component.html',
-  styleUrls: ['./header.component.css']
+  templateUrl: './header.component.html'
 })
 export class HeaderComponent implements OnInit, OnDestroy {
 

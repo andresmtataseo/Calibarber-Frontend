@@ -5,11 +5,12 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationComponent } from '../../../../shared/components/notification/notification.component';
 import { NotificationType } from '../../../../shared/components/notification/notification.component';
+import { PreloaderComponent } from '../../../../shared/components/preloader/preloader.component';
 
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, NotificationComponent],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, NotificationComponent, PreloaderComponent],
   templateUrl: './forgot-password.component.html'
 })
 export class ForgotPasswordComponent {
@@ -95,5 +96,9 @@ export class ForgotPasswordComponent {
   private hideNotification() {
     this.showNotification = false;
     this.notificationMessage = '';
+  }
+
+  isFormValid(): boolean {
+    return this.forgotPasswordForm.valid && !this.isLoading;
   }
 }

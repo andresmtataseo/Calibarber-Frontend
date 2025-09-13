@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { NotificationComponent, NotificationType } from '../../../../shared/components/notification/notification.component';
+import { PreloaderComponent } from '../../../../shared/components/preloader/preloader.component';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { UserResponse } from '../../models/user.model';
@@ -12,7 +13,7 @@ import { takeUntil } from 'rxjs/operators';
 @Component({
   selector: 'app-edit-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NotificationComponent],
+  imports: [CommonModule, ReactiveFormsModule, NotificationComponent, PreloaderComponent],
   templateUrl: './edit-profile.component.html'
 })
 export class EditProfileComponent implements OnInit, OnDestroy {

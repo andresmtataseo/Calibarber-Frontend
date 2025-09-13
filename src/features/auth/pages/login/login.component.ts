@@ -5,11 +5,12 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { AuthService } from '../../../../core/services/auth.service';
 import { SignInRequestDto } from '../../../../shared/models/auth.models';
 import { NotificationComponent, NotificationType } from '../../../../shared/components/notification';
+import { PreloaderComponent } from '../../../../shared/components/preloader/preloader.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, NotificationComponent],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, NotificationComponent, PreloaderComponent],
   templateUrl: './login.component.html'
 })
 export class LoginComponent {
@@ -50,9 +51,9 @@ export class LoginComponent {
         next: (response) => {
           console.log('Login exitoso:', response);
           this.showSuccessNotification('Inicio de sesión exitoso');
-          // Redirigir a la página principal después del login exitoso
+          // Redirigir al perfil de usuario después del login exitoso
           setTimeout(() => {
-            this.router.navigate(['/']);
+            this.router.navigate(['/user/profile']);
           }, 1500);
         },
         error: (error) => {

@@ -9,11 +9,12 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { NotificationComponent } from '../../../../shared/components/notification/notification.component';
 import { NotificationType } from '../../../../shared/components/notification/notification.component';
+import { PreloaderComponent } from '../../../../shared/components/preloader/preloader.component';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, NotificationComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, NotificationComponent, PreloaderComponent],
   templateUrl: './register.component.html'
 })
 export class RegisterComponent implements OnInit, OnDestroy {
@@ -241,9 +242,9 @@ export class RegisterComponent implements OnInit, OnDestroy {
       this.authService.signUp(signUpData).subscribe({
         next: (response) => {
           this.showSuccessNotification('¡Cuenta creada exitosamente!');
-          // Registro exitoso, redirigir al usuario después de un breve delay
+          // Registro exitoso, redirigir al perfil de usuario después de un breve delay
           setTimeout(() => {
-            this.router.navigate(['/']);
+            this.router.navigate(['/user/profile']);
           }, 2000);
         },
         error: (error) => {

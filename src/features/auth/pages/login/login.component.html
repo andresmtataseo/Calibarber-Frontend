@@ -57,7 +57,6 @@
             type="submit"
             class="btn btn-primary w-full"
             [disabled]="!isFormValid()">
-            <span *ngIf="isLoading" class="loading loading-spinner loading-sm"></span>
             {{ isLoading ? 'Iniciando sesión...' : 'Continuar' }}
           </button>
         </div>
@@ -74,6 +73,9 @@
     </div>
   </div>
 </div>
+
+<!-- Preloader compartido -->
+<app-preloader [show]="isLoading" [size]="'lg'"></app-preloader>
 
 <!-- Componente de notificación reutilizable -->
 <app-notification
