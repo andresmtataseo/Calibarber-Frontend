@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-forgot-password',
@@ -11,8 +12,15 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 })
 export class ForgotPasswordComponent {
   forgotPasswordForm: FormGroup;
+  isLoading = false;
+  message: string | null = null;
+  messageType: 'success' | 'error' | null = null;
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private router: Router
+  ) {
     this.forgotPasswordForm = this.fb.group({
       email: ['', [
         Validators.required,
@@ -22,7 +30,31 @@ export class ForgotPasswordComponent {
   }
 
   onSubmit() {
-    // Por el momento, no hacer nada
+    if (this.forgotPasswordForm.valid && !this.isLoading) {
+      this.isLoading = true;
+      this.message = null;
+      this.messageType = null;
+
+      const email = this.forgotPasswordForm.get('email')?.value;
+
+      this.authService.forgotPassword(email).subscribe({
+        next: (response) => {
+          this.isLoading = false;
+          this.messageType = 'success';
+          this.message = response.message;
+          
+          // Redirigir a reset-password después de 2 segundos
+          setTimeout(() => {
+            this.router.navigate(['/reset-password']);
+          }, 2000);
+        },
+        error: (error) => {
+          this.isLoading = false;
+          this.messageType = 'error';
+          this.message = error.message || 'Ha ocurrido un error. Por favor, inténtalo de nuevo.';
+        }
+      });
+    }
   }
 
   get email() {

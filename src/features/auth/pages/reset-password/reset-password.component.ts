@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-reset-password',
@@ -11,8 +12,15 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractContro
 })
 export class ResetPasswordComponent {
   resetPasswordForm: FormGroup;
+  isLoading = false;
+  message: string | null = null;
+  messageType: 'success' | 'error' | null = null;
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private router: Router
+  ) {
     this.resetPasswordForm = this.fb.group({
       token: ['', [
         Validators.required,
@@ -78,10 +86,30 @@ export class ResetPasswordComponent {
   }
 
   onSubmit() {
-    if (this.resetPasswordForm.valid) {
-      const formData = this.resetPasswordForm.value;
-      // TODO: Implementar lógica de restablecimiento de contraseña
-      console.log('Reset password form submitted:', formData);
+    if (this.resetPasswordForm.valid && !this.isLoading) {
+      this.isLoading = true;
+      this.message = null;
+      this.messageType = null;
+
+      const { token, newPassword, confirmNewPassword } = this.resetPasswordForm.value;
+
+      this.authService.resetPassword(token, newPassword, confirmNewPassword).subscribe({
+        next: (response) => {
+          this.isLoading = false;
+          this.messageType = 'success';
+          this.message = response.message;
+          
+          // Redirigir al login después de 2 segundos
+          setTimeout(() => {
+            this.router.navigate(['/login']);
+          }, 2000);
+        },
+        error: (error) => {
+          this.isLoading = false;
+          this.messageType = 'error';
+          this.message = error.message || 'Ha ocurrido un error. Por favor, inténtalo de nuevo.';
+        }
+      });
     } else {
       // Marcar todos los campos como touched para mostrar errores
       Object.keys(this.resetPasswordForm.controls).forEach(key => {

@@ -163,6 +163,68 @@ export class AuthService {
   }
 
   /**
+   * Envía una solicitud de recuperación de contraseña
+   * @param email Email del usuario
+   * @returns Observable con la respuesta del servidor
+   */
+  forgotPassword(email: string): Observable<{ status: number; message: string }> {
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    return this.http.post<{ status: number; message: string; timestamp: string; path: string }>(
+      this.urlService.getAuthUrl('FORGOT_PASSWORD'),
+      { email: normalizedEmail }
+    ).pipe(
+      map(response => ({
+        status: response.status,
+        message: response.message
+      })),
+      catchError((error: HttpErrorResponse) => {
+        // Manejar respuestas de error del servidor (404, etc.)
+        if (error.error && error.error.status && error.error.message) {
+          return throwError(() => ({
+            status: error.error.status,
+            message: error.error.message
+          }));
+        }
+        return this.handleError(error);
+      })
+    );
+  }
+
+  /**
+   * Restablece la contraseña usando el token de recuperación
+   * @param token Token de restablecimiento
+   * @param newPassword Nueva contraseña
+   * @param confirmNewPassword Confirmación de la nueva contraseña
+   * @returns Observable con la respuesta del servidor
+   */
+  resetPassword(token: string, newPassword: string, confirmNewPassword: string): Observable<{ status: number; message: string }> {
+    return this.http.post<{ status: number; message: string; timestamp: string; path: string }>(
+      this.urlService.getAuthUrl('RESET_PASSWORD'),
+      { 
+        token: token.trim(),
+        newPassword,
+        confirmNewPassword
+      }
+    ).pipe(
+      map(response => ({
+        status: response.status,
+        message: response.message
+      })),
+      catchError((error: HttpErrorResponse) => {
+        // Manejar respuestas de error del servidor (400, etc.)
+        if (error.error && error.error.status && error.error.message) {
+          return throwError(() => ({
+            status: error.error.status,
+            message: error.error.message
+          }));
+        }
+        return this.handleError(error);
+      })
+    );
+  }
+
+  /**
    * Cierra la sesión del usuario
    */
   signOut(): void {
