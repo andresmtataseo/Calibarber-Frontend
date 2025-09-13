@@ -1,22 +1,23 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UserResponse } from '../models/user.model';
-import { UserService } from '../services/user.service';
-import { AuthService } from '../../../core/services/auth.service';
-import { UrlService } from '../../../core/services/url.service';
+import { Router } from '@angular/router';
+import { UserResponse, UserRole } from '../../models/user.model';
+import { UserService } from '../../services/user.service';
+import { AuthService } from '../../../../core/services/auth.service';
+import { UrlService } from '../../../../core/services/url.service';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.css']
+  templateUrl: './profile.component.html'
 })
 export class ProfileComponent implements OnInit {
   private readonly userService = inject(UserService);
   private readonly authService = inject(AuthService);
   private readonly urlService = inject(UrlService);
-  
+  private readonly router = inject(Router);
+
   user: UserResponse | null = null;
   loading = false;
   error: string | null = null;
@@ -85,7 +86,7 @@ export class ProfileComponent implements OnInit {
     if (this.user?.profilePictureUrl) {
       return this.user.profilePictureUrl;
     }
-    
+
     const fullName = this.getUserFullName();
     return fullName ? this.urlService.generateAvatarUrl(fullName, '570df8', 'fff', 96) : 'assets/images/default-avatar.png';
   }
@@ -99,6 +100,42 @@ export class ProfileComponent implements OnInit {
   }
 
   /**
+   * Obtiene el rol del usuario formateado
+   */
+  getUserRole(): string {
+    if (!this.user?.role) return '';
+
+    switch (this.user.role) {
+      case UserRole.ROLE_ADMIN:
+        return 'Administrador';
+      case UserRole.ROLE_BARBER:
+        return 'Barbero';
+      case UserRole.ROLE_CLIENT:
+        return 'Cliente';
+      default:
+        return 'Usuario';
+    }
+  }
+
+  /**
+   * Obtiene el color del badge según el rol
+   */
+  getRoleBadgeClass(): string {
+    if (!this.user?.role) return 'badge-neutral';
+
+    switch (this.user.role) {
+      case UserRole.ROLE_ADMIN:
+        return 'badge-error';
+      case UserRole.ROLE_BARBER:
+        return 'badge-warning';
+      case UserRole.ROLE_CLIENT:
+        return 'badge-success';
+      default:
+        return 'badge-neutral';
+    }
+  }
+
+  /**
    * Formatea la fecha de creación de la cuenta
    */
   getFormattedCreatedDate(): string {
@@ -108,5 +145,12 @@ export class ProfileComponent implements OnInit {
       month: 'long',
       day: 'numeric'
     });
+  }
+
+  /**
+   * Navega a la página de edición de perfil
+   */
+  navigateToEditProfile(): void {
+    this.router.navigate(['/user/edit-profile']);
   }
 }

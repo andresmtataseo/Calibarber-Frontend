@@ -8,10 +8,10 @@ import { UserResponse } from '../models/user.model';
 
 /**
  * Servicio para gestionar operaciones relacionadas con usuarios
- * 
+ *
  * Proporciona métodos para obtener información de usuarios desde el backend
  * con manejo robusto de errores, timeouts y reintentos automáticos.
- * 
+ *
  * @author CaliBarber Team
  * @version 1.0.0
  */
@@ -20,7 +20,7 @@ import { UserResponse } from '../models/user.model';
 })
 export class UserService {
   private readonly http = inject(HttpClient);
-  
+
   // Configuración de timeouts y reintentos
   private readonly DEFAULT_TIMEOUT = 10000; // 10 segundos
   private readonly MAX_RETRIES = 2;
@@ -28,11 +28,11 @@ export class UserService {
 
   /**
    * Obtiene los datos de un usuario específico por su ID
-   * 
+   *
    * @param userId - ID único del usuario a obtener
    * @returns Observable con los datos del usuario
    * @throws Error con mensaje descriptivo en caso de fallo
-   * 
+   *
    * @example
    * ```typescript
    * this.userService.getUserById('e9c37e7e-66aa-4b07-a47a-69b27b2efed3')
@@ -48,18 +48,18 @@ export class UserService {
     }
 
     const url = USER_URLS.BY_ID(userId.trim());
-    
+
     return this.http.get<ApiResponseDto<UserResponse>>(url)
       .pipe(
         // Aplicar timeout para evitar esperas indefinidas
         timeout(this.DEFAULT_TIMEOUT),
-        
+
         // Reintentar automáticamente en caso de errores temporales
         retry({
           count: this.MAX_RETRIES,
           delay: this.RETRY_DELAY
         }),
-        
+
         // Extraer los datos del wrapper de respuesta
         map(response => {
           if (!response.data) {
@@ -67,7 +67,7 @@ export class UserService {
           }
           return response.data;
         }),
-        
+
         // Manejo centralizado de errores
         catchError(error => this.handleError(error, 'obtener usuario'))
       );
@@ -75,7 +75,7 @@ export class UserService {
 
   /**
    * Obtiene múltiples usuarios por sus IDs
-   * 
+   *
    * @param userIds - Array de IDs de usuarios
    * @returns Observable con array de usuarios
    */
@@ -92,7 +92,7 @@ export class UserService {
 
     // Crear requests paralelos para cada usuario
     const requests = validIds.map(id => this.getUserById(id));
-    
+
     // Usar forkJoin para ejecutar todas las peticiones en paralelo
     return new Observable<UserResponse[]>(observer => {
       let completedRequests = 0;
@@ -106,7 +106,7 @@ export class UserService {
             if (!hasError) {
               results[index] = user;
               completedRequests++;
-              
+
               if (completedRequests === requests.length) {
                 observer.next(results.filter(result => result !== undefined));
                 observer.complete();
@@ -116,7 +116,7 @@ export class UserService {
           error: (error) => {
             errors.push(error);
             completedRequests++;
-            
+
             if (completedRequests === requests.length) {
               if (results.filter(result => result !== undefined).length > 0) {
                 // Si al menos un usuario se obtuvo correctamente, devolver los resultados parciales
@@ -136,7 +136,7 @@ export class UserService {
 
   /**
    * Verifica si un usuario existe
-   * 
+   *
    * @param userId - ID del usuario a verificar
    * @returns Observable<boolean> - true si existe, false si no
    */
@@ -152,15 +152,77 @@ export class UserService {
   }
 
   /**
-   * Maneja errores HTTP de manera centralizada
+   * Actualiza los datos de un usuario específico
+   *
+   * @param userId - ID único del usuario a actualizar
+   * @param updateData - Datos a actualizar del usuario
+   * @returns Observable con los datos actualizados del usuario
+   * @throws Error con mensaje descriptivo en caso de fallo
+   *
+   * @example
+   * ```typescript
+   * const updateData = {
+   *   email: 'nuevo@email.com',
+   *   firstName: 'Nuevo Nombre',
+   *   lastName: 'Nuevo Apellido'
+   * };
    * 
+   * this.userService.updateUser('user-id', updateData)
+   *   .subscribe({
+   *     next: (user) => console.log('Usuario actualizado:', user),
+   *     error: (error) => console.error('Error:', error.message)
+   *   });
+   * ```
+   */
+  updateUser(userId: string, updateData: Partial<UserResponse>): Observable<UserResponse> {
+    if (!userId || userId.trim() === '') {
+      return throwError(() => new Error('El ID del usuario es requerido'));
+    }
+
+    if (!updateData || Object.keys(updateData).length === 0) {
+      return throwError(() => new Error('Los datos de actualización son requeridos'));
+    }
+
+    // Crear parámetros de consulta con el ID del usuario
+    const params = new HttpParams().set('id', userId.trim());
+    
+    // URL base para actualización de usuarios
+    const url = USER_URLS.BASE;
+
+    return this.http.put<ApiResponseDto<UserResponse>>(url, updateData, { params })
+      .pipe(
+        // Aplicar timeout para evitar esperas indefinidas
+        timeout(this.DEFAULT_TIMEOUT),
+
+        // Reintentar automáticamente en caso de errores temporales
+        retry({
+          count: this.MAX_RETRIES,
+          delay: this.RETRY_DELAY
+        }),
+
+        // Extraer los datos del wrapper de respuesta
+        map(response => {
+          if (!response.data) {
+            throw new Error('No se recibieron datos del usuario actualizado');
+          }
+          return response.data;
+        }),
+
+        // Manejo centralizado de errores
+        catchError(error => this.handleError(error, 'actualizar usuario'))
+      );
+  }
+
+  /**
+   * Maneja errores HTTP de manera centralizada
+   *
    * @param error - Error HTTP recibido
    * @param operation - Descripción de la operación que falló
    * @returns Observable que emite un error con mensaje descriptivo
    */
   private handleError(error: any, operation: string = 'operación'): Observable<never> {
     let errorMessage = `Error al ${operation}`;
-    
+
     console.error(`UserService - Error en ${operation}:`, error);
 
     if (error instanceof HttpErrorResponse) {

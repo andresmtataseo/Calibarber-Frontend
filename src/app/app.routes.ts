@@ -4,7 +4,8 @@ import { LoginComponent } from '../features/auth/pages';
 import { RegisterComponent } from '../features/auth/pages/register';
 import { ForgotPasswordComponent } from '../features/auth/pages/forgot-password';
 import { ResetPasswordComponent } from '../features/auth/pages/reset-password';
-import { ProfileComponent } from '../features/user/pages';
+import { ProfileComponent } from '../features/user/pages/profile/profile.component';
+import { EditProfileComponent } from '../features/user/pages/edit-profile/edit-profile.component';
 import { guestGuard, authGuard } from '../core/guards/auth.guard';
 
 export const routes: Routes = [
@@ -41,6 +42,12 @@ export const routes: Routes = [
     path: 'profile',
     component: ProfileComponent,
     title: 'Perfil - CaliBarber',
+    canActivate: [authGuard]
+  },
+  {
+    path: 'user/edit-profile',
+    component: EditProfileComponent,
+    title: 'Editar Perfil - CaliBarber',
     canActivate: [authGuard]
   },
   {

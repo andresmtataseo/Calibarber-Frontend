@@ -40,7 +40,12 @@
 
         <!-- Información básica -->
         <div class="flex-1 text-center md:text-left">
-          <h1 class="text-2xl md:text-3xl font-bold text-primary mb-2">{{ getUserFullName() }}</h1>
+          <div class="flex flex-col md:flex-row items-center md:items-start gap-2 mb-2">
+            <h1 class="text-2xl md:text-3xl font-bold text-primary">{{ getUserFullName() }}</h1>
+            <div class="badge {{ getRoleBadgeClass() }} badge-sm badge-outline my-auto">
+              {{ getUserRole() }}
+            </div>
+          </div>
           <div class="flex flex-col gap-2">
             <div class="flex items-center justify-center md:justify-start gap-2 text-base-content/70">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -58,6 +63,19 @@
               <span>Miembro desde {{ getFormattedCreatedDate() }}</span>
             </div>
           </div>
+        </div>
+
+        <!-- Botón de editar perfil -->
+        <div class="flex-shrink-0 mb-auto">
+          <button
+            class="btn btn-primary btn-outline gap-2"
+            (click)="navigateToEditProfile()"
+            title="Editar perfil">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Editar Perfil
+          </button>
         </div>
       </div>
     </div>
