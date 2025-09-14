@@ -1,219 +1,196 @@
-<div class="container mx-auto px-4 py-8">
-  <!-- Header -->
-  <div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-2">Editar Barbería</h1>
-    <p class="text-gray-600">Modifica la información de la barbería</p>
-  </div>
+<div class="flex items-center justify-center bg-base-200 py-4 px-4">
+  <div class="card bg-base-100 shadow-xl max-w-5xl w-full">
+    <!-- Header -->
+    <div class="card-body">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="card-title text-2xl">Editar Barbería</h2>
+          <p class="text-base-content/70 text-sm mt-2">Modifica la información de la barbería</p>
+        </div>
+        <button
+          type="button"
+          class="btn btn-ghost"
+          (click)="onCancel()"
+          [disabled]="isLoading || isSubmitting">
+          Volver
+        </button>
+      </div>
 
-  <!-- Loading State -->
-  <div *ngIf="loading" class="flex justify-center items-center py-12">
-    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-    <span class="ml-3 text-gray-600">Cargando información de la barbería...</span>
-  </div>
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+        <span class="loading loading-spinner loading-lg"></span>
+        <span class="ml-3 text-base-content/70">Cargando información de la barbería...</span>
+      </div>
 
-  <!-- Error State -->
-  <div *ngIf="error && !loading" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-    <div class="flex items-center">
-      <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-      </svg>
-      <span class="text-red-700">{{ error }}</span>
-      <button type="button" (click)="retryLoad()" class="ml-auto text-red-600 hover:text-red-800 underline">
-        Reintentar
-      </button>
-    </div>
-  </div>
-
-  <!-- Form -->
-  <form *ngIf="!loading && !error" [formGroup]="barbershopForm" (ngSubmit)="onSubmit()" class="space-y-8">
-    
-    <!-- Información Básica -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 class="text-xl font-semibold text-gray-900 mb-6">Información Básica</h2>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Nombre -->
-        <div class="floating-label">
-          <input 
-            type="text" 
-            id="name" 
-            formControlName="name"
-            class="floating-input peer"
-            placeholder=" "
-            [class.border-red-500]="getFieldError('name')"
-          >
-          <label for="name" class="floating-label-text">Nombre de la Barbería *</label>
-          <div *ngIf="getFieldError('name')" class="text-red-500 text-sm mt-1">
-            {{ getFieldError('name') }}
+      <!-- Mensajes de estado -->
+      <div class="mb-6" *ngIf="errorMessage || successMessage">
+        <div class="alert alert-error" *ngIf="errorMessage">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>{{ errorMessage }}</span>
+          <div class="flex gap-2">
+            <button type="button" class="btn btn-sm btn-ghost" (click)="retryLoad()" *ngIf="!barbershop">Reintentar</button>
+            <button type="button" class="btn btn-sm btn-ghost" (click)="errorMessage = ''">✕</button>
           </div>
         </div>
 
-        <!-- Logo URL -->
-        <div class="floating-label">
-          <input 
-            type="url" 
-            id="logoUrl" 
-            formControlName="logoUrl"
-            class="floating-input peer"
-            placeholder=" "
-            [class.border-red-500]="getFieldError('logoUrl')"
-          >
-          <label for="logoUrl" class="floating-label-text">URL del Logo</label>
-          <div *ngIf="getFieldError('logoUrl')" class="text-red-500 text-sm mt-1">
-            {{ getFieldError('logoUrl') }}
-          </div>
+        <div class="alert alert-success" *ngIf="successMessage">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>{{ successMessage }}</span>
         </div>
       </div>
-    </div>
 
-    <!-- Información de Contacto -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 class="text-xl font-semibold text-gray-900 mb-6">Información de Contacto</h2>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Teléfono -->
-        <div class="floating-label">
-          <input 
-            type="tel" 
-            id="phoneNumber" 
-            formControlName="phoneNumber"
-            class="floating-input peer"
-            placeholder=" "
-            [class.border-red-500]="getFieldError('phoneNumber')"
-          >
-          <label for="phoneNumber" class="floating-label-text">Número de Teléfono</label>
-          <div *ngIf="getFieldError('phoneNumber')" class="text-red-500 text-sm mt-1">
-            {{ getFieldError('phoneNumber') }}
-          </div>
-        </div>
+      <form *ngIf="!isLoading && barbershop" [formGroup]="barbershopForm" (ngSubmit)="onSubmit()" class="space-y-6">
 
-        <!-- Email -->
-        <div class="floating-label">
-          <input 
-            type="email" 
-            id="email" 
-            formControlName="email"
-            class="floating-input peer"
-            placeholder=" "
-            [class.border-red-500]="getFieldError('email')"
-          >
-          <label for="email" class="floating-label-text">Correo Electrónico</label>
-          <div *ngIf="getFieldError('email')" class="text-red-500 text-sm mt-1">
-            {{ getFieldError('email') }}
-          </div>
-        </div>
-      </div>
-    </div>
+        <!-- Información Básica -->
+        <div class="space-y-6">
+          <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Información Básica</h3>
 
-    <!-- Dirección Completa -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 class="text-xl font-semibold text-gray-900 mb-6">Dirección Completa</h2>
-      
-      <div class="floating-label">
-        <textarea 
-          id="addressText" 
-          formControlName="addressText"
-          class="floating-input peer min-h-[100px] resize-none"
-          placeholder=" "
-          [class.border-red-500]="getFieldError('addressText')"
-        ></textarea>
-        <label for="addressText" class="floating-label-text">Dirección Completa</label>
-        <div *ngIf="getFieldError('addressText')" class="text-red-500 text-sm mt-1">
-          {{ getFieldError('addressText') }}
-        </div>
-      </div>
-    </div>
-
-    <!-- Horarios de Atención -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 class="text-xl font-semibold text-gray-900 mb-6">Horarios de Atención</h2>
-      
-      <div class="space-y-4" formArrayName="operatingHours">
-        <div 
-          *ngFor="let dayControl of getOperatingHoursControls(); let i = index" 
-          [formGroupName]="i"
-          class="border border-gray-200 rounded-lg p-4"
-        >
-          <!-- Día de la semana -->
-          <div class="mb-3">
-            <label class="text-lg font-medium text-gray-900">
-              {{ getDayName(dayControl.get('dayOfWeek')?.value) }}
+          <!-- Nombre -->
+          <div class="form-control">
+            <label class="floating-label">
+              <span>Nombre de la Barbería *</span>
+              <input
+                type="text"
+                id="name"
+                class="input input-md w-full"
+                [class.input-error]="f['name'].invalid && f['name'].touched"
+                formControlName="name"
+                placeholder="Nombre de la Barbería *">
             </label>
+            <div class="label" *ngIf="getFieldError('name')">
+              <span class="label-text-alt text-error">{{ getFieldError('name') }}</span>
+            </div>
           </div>
-          
-          <!-- Controles en fila -->
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
-            <!-- Checkbox Cerrado -->
-            <div class="flex items-center">
-              <input 
-                type="checkbox" 
-                [id]="'isClosed-' + i"
-                formControlName="isClosed"
-                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              >
-              <label [for]="'isClosed-' + i" class="ml-2 text-sm text-gray-700">
-                Cerrado
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Teléfono -->
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Teléfono</span>
+                <input
+                  type="tel"
+                  id="phone"
+                  class="input input-md w-full"
+                  [class.input-error]="f['phone'].invalid && f['phone'].touched"
+                  formControlName="phone"
+                  placeholder="Teléfono">
               </label>
+              <div class="label" *ngIf="getFieldError('phone')">
+                <span class="label-text-alt text-error">{{ getFieldError('phone') }}</span>
+              </div>
             </div>
-            
-            <!-- Hora de Apertura -->
-            <div class="floating-label" *ngIf="!dayControl.get('isClosed')?.value">
-              <input 
-                type="time" 
-                [id]="'openingTime-' + i"
-                formControlName="openingTime"
-                class="floating-input peer"
-                placeholder=" "
-              >
-              <label [for]="'openingTime-' + i" class="floating-label-text">Apertura</label>
+
+            <!-- Email -->
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Email</span>
+                <input
+                  type="email"
+                  id="email"
+                  class="input input-md w-full"
+                  [class.input-error]="f['email'].invalid && f['email'].touched"
+                  formControlName="email"
+                  placeholder="Email">
+              </label>
+              <div class="label" *ngIf="getFieldError('email')">
+                <span class="label-text-alt text-error">{{ getFieldError('email') }}</span>
+              </div>
             </div>
-            
-            <!-- Hora de Cierre -->
-            <div class="floating-label" *ngIf="!dayControl.get('isClosed')?.value">
-              <input 
-                type="time" 
-                [id]="'closingTime-' + i"
-                formControlName="closingTime"
-                class="floating-input peer"
-                placeholder=" "
-              >
-              <label [for]="'closingTime-' + i" class="floating-label-text">Cierre</label>
-            </div>
-            
-            <!-- Notas -->
-            <div class="floating-label" *ngIf="dayControl.get('isClosed')?.value">
-              <input 
-                type="text" 
-                [id]="'notes-' + i"
-                formControlName="notes"
-                class="floating-input peer"
-                placeholder=" "
-              >
-              <label [for]="'notes-' + i" class="floating-label-text">Notas</label>
+          </div>
+
+          <!-- Dirección -->
+          <div class="form-control">
+            <label class="floating-label">
+              <span>Dirección *</span>
+              <textarea
+                id="address"
+                class="textarea textarea-md w-full"
+                [class.textarea-error]="f['address'].invalid && f['address'].touched"
+                formControlName="address"
+                placeholder="Dirección completa *"
+                rows="2"></textarea>
+            </label>
+            <div class="label" *ngIf="getFieldError('address')">
+              <span class="label-text-alt text-error">{{ getFieldError('address') }}</span>
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Acciones del Formulario -->
-    <div class="flex flex-col sm:flex-row gap-4 justify-end">
-      <button 
-        type="button" 
-        (click)="onCancel()"
-        class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-      >
-        Cancelar
-      </button>
-      
-      <button 
-        type="submit" 
-        [disabled]="loading || barbershopForm.invalid"
-        class="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
-      >
-        <div *ngIf="loading" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-        {{ loading ? 'Actualizando...' : 'Actualizar Barbería' }}
-      </button>
+        <!-- Horarios de Atención -->
+        <div class="mb-8">
+          <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Horarios de Atención</h3>
+
+          <div formArrayName="operatingHours" class="space-y-6">
+            <div *ngFor="let dayControl of getOperatingHoursControls(); let i = index"
+                 [formGroupName]="i"
+                 class="card bg-base-50">
+              <!-- Día de la semana -->
+              <div class="form-control mb-3">
+                <label class="label">
+                  <span class="label-text font-medium text-lg">{{ getDayName(dayControl.get('dayOfWeek')?.value) }}</span>
+                </label>
+              </div>
+
+              <!-- Campos en fila -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <!-- Abierto -->
+                <div class="form-control">
+                  <label class="label cursor-pointer justify-start gap-2">
+                    <input type="checkbox" class="checkbox checkbox-primary" formControlName="isOpen">
+                    <span class="label-text">Abierto</span>
+                  </label>
+                </div>
+
+                <!-- Hora de apertura -->
+                <div class="form-control" [class.opacity-50]="!dayControl.get('isOpen')?.value">
+                  <label class="floating-label">
+                    <span>Apertura</span>
+                    <input type="time" class="input input-sm" formControlName="openTime" [disabled]="!dayControl.get('isOpen')?.value">
+                  </label>
+                </div>
+
+                <!-- Hora de cierre -->
+                <div class="form-control" [class.opacity-50]="!dayControl.get('isOpen')?.value">
+                  <label class="floating-label">
+                    <span>Cierre</span>
+                    <input type="time" class="input input-sm" formControlName="closeTime" [disabled]="!dayControl.get('isOpen')?.value">
+                  </label>
+                </div>
+              </div>
+
+              <!-- Notas -->
+              <div class="form-control mt-4" *ngIf="!dayControl.get('isOpen')?.value">
+                <label class="floating-label">
+                  <span>Notas (opcional)</span>
+                  <input type="text" class="input input-sm w-full" formControlName="notes" placeholder="Notas adicionales (opcional)">
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex flex-col-reverse sm:flex-row justify-end gap-4 pt-6 border-t border-base-300">
+          <button
+            type="button"
+            class="btn btn-ghost w-full sm:w-auto"
+            (click)="onCancel()"
+            [disabled]="isLoading || isSubmitting">
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="btn btn-primary w-full sm:w-auto"
+            [disabled]="barbershopForm.invalid || isSubmitting">
+            <span *ngIf="isSubmitting" class="loading loading-spinner loading-sm"></span>
+            <span>
+              {{ isSubmitting ? 'Actualizando...' : 'Actualizar Barbería' }}
+            </span>
+          </button>
+        </div>
+
+      </form>
     </div>
-  </form>
+  </div>
 </div>

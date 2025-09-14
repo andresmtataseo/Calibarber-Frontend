@@ -1,11 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { BarbershopService } from '../../../../barbershop/services/barbershop.service';
-import { BarbershopResponse, UpdateBarbershopRequest, BarbershopOperatingHours } from '../../../../barbershop/models/barbershop.model';
-import { catchError, finalize } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { UpdateBarbershopRequest, BarbershopResponse } from '../../../../barbershop/models/barbershop.model';
+import { BarbershopService, BarbershopOperatingHoursService } from '../../../../barbershop/services';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-barbershop-edit',
@@ -14,83 +13,114 @@ import { of } from 'rxjs';
     CommonModule,
     ReactiveFormsModule
   ],
-  templateUrl: './barbershop-edit.component.html',
-  styleUrls: ['./barbershop-edit.component.css']
+  templateUrl: './barbershop-edit.component.html'
 })
 export class BarbershopEditComponent implements OnInit {
-  barbershopForm: FormGroup;
+  barbershopForm!: FormGroup;
   loading = false;
-  saving = false;
-  error: string | null = null;
-  barbershop: BarbershopResponse | null = null;
   barbershopId: string | null = null;
+  barbershop: BarbershopResponse | null = null;
+
+  // Days of the week
+  daysOfWeek = [
+    { key: 'MONDAY', name: 'Lunes' },
+    { key: 'TUESDAY', name: 'Martes' },
+    { key: 'WEDNESDAY', name: 'Miércoles' },
+    { key: 'THURSDAY', name: 'Jueves' },
+    { key: 'FRIDAY', name: 'Viernes' },
+    { key: 'SATURDAY', name: 'Sábado' },
+    { key: 'SUNDAY', name: 'Domingo' }
+  ];
+
+  // Estados de carga y errores
+  isLoading = false;
+  isSubmitting = false;
+  errorMessage = '';
+  successMessage = '';
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
     private route: ActivatedRoute,
-    private barbershopService: BarbershopService
-  ) {
-    this.barbershopForm = this.createForm();
-  }
+    private barbershopService: BarbershopService,
+    private operatingHoursService: BarbershopOperatingHoursService
+  ) {}
 
   ngOnInit(): void {
     this.barbershopId = this.route.snapshot.paramMap.get('id');
+    this.initializeForm();
     if (this.barbershopId) {
       this.loadBarbershopData();
     } else {
-      this.error = 'ID de barbería no válido';
+      this.errorMessage = 'ID de barbería no válido';
     }
   }
 
-  private createForm(): FormGroup {
-    return this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(2)]],
-      logoUrl: [''],
-      phoneNumber: ['', [Validators.required]],
-      email: ['', [Validators.required, Validators.email]],
-      addressText: ['', [Validators.required]],
+  private initializeForm(): void {
+    this.barbershopForm = this.fb.group({
+      name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      phone: ['', [Validators.pattern(/^[0-9+\-\s()]+$/)]],
+      email: ['', [Validators.email]],
+      address: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(200)]],
       operatingHours: this.fb.array(this.createOperatingHoursControls())
     });
   }
 
-  private createOperatingHoursControls() {
-    const days = [1, 2, 3, 4, 5, 6, 7]; // Monday to Sunday
-    return days.map(day => this.fb.group({
-      dayOfWeek: [day],
-      isClosed: [true],
-      openingTime: [''],
-      closingTime: ['']
-    }));
+  // Custom validator for time range
+  private createOperatingHoursControls(): FormGroup[] {
+    return this.daysOfWeek.map(day =>
+      this.fb.group({
+        dayOfWeek: [day.key, [Validators.required]],
+        isOpen: [true],
+        openTime: ['09:00'],
+        closeTime: ['18:00'],
+        notes: ['']
+      })
+    );
   }
 
-  get operatingHours(): FormArray {
+  get operatingHoursArray(): FormArray {
     return this.barbershopForm.get('operatingHours') as FormArray;
   }
 
-  getOperatingHoursControls() {
-    return this.operatingHours.controls;
+  getOperatingHourControl(index: number): FormGroup {
+    return this.operatingHoursArray.at(index) as FormGroup;
+  }
+
+  getOperatingHoursControls(): FormGroup[] {
+    return this.operatingHoursArray.controls as FormGroup[];
+  }
+
+  getDayName(dayKey: string): string {
+    const day = this.daysOfWeek.find(d => d.key === dayKey);
+    return day ? day.name : '';
+  }
+
+  get f() {
+    return this.barbershopForm.controls;
   }
 
   private loadBarbershopData(): void {
     if (!this.barbershopId) return;
 
-    this.loading = true;
-    this.error = null;
+    this.isLoading = true;
+    this.errorMessage = '';
 
     this.barbershopService.getBarbershopById(this.barbershopId)
       .pipe(
-        catchError(error => {
-          console.error('Error loading barbershop:', error);
-          this.error = this.getErrorMessage(error);
-          return of(null);
-        }),
-        finalize(() => this.loading = false)
+        finalize(() => {
+          this.isLoading = false;
+        })
       )
-      .subscribe(barbershop => {
-        if (barbershop) {
+      .subscribe({
+        next: (barbershop) => {
+          console.log('Barbería cargada exitosamente:', barbershop);
           this.barbershop = barbershop;
           this.populateForm();
+        },
+        error: (error) => {
+          console.error('Error al cargar la barbería:', error);
+          this.errorMessage = error.message || 'Error al cargar la barbería';
         }
       });
   }
@@ -100,22 +130,31 @@ export class BarbershopEditComponent implements OnInit {
 
     this.barbershopForm.patchValue({
       name: this.barbershop.name,
-      logoUrl: this.barbershop.logoUrl || '',
-      phoneNumber: this.barbershop.phoneNumber || '',
+      phone: this.barbershop.phoneNumber || '',
       email: this.barbershop.email || '',
-      addressText: this.barbershop.addressText || ''
+      address: this.barbershop.addressText || ''
     });
 
     // Update operating hours
     const operatingHoursArray = this.barbershopForm.get('operatingHours') as FormArray;
     if (this.barbershop.operatingHours && this.barbershop.operatingHours.length > 0) {
-      this.barbershop.operatingHours.forEach((hour, index) => {
-        if (operatingHoursArray.at(index)) {
+      // Create a map of existing operating hours by day of week
+      const existingHours = new Map();
+      this.barbershop.operatingHours.forEach(hour => {
+        const dayKey = this.getDayKeyFromNumber(hour.dayOfWeek);
+        existingHours.set(dayKey, hour);
+      });
+
+      // Update form controls with existing data
+      this.daysOfWeek.forEach((day, index) => {
+        const existingHour = existingHours.get(day.key);
+        if (operatingHoursArray.at(index) && existingHour) {
           operatingHoursArray.at(index).patchValue({
-            dayOfWeek: hour.dayOfWeek,
-            isClosed: hour.isClosed,
-            openingTime: hour.openingTime || '',
-            closingTime: hour.closingTime || ''
+            dayOfWeek: day.key,
+            isOpen: !existingHour.isClosed,
+            openTime: existingHour.openingTime || '09:00',
+            closeTime: existingHour.closingTime || '18:00',
+            notes: existingHour.notes || ''
           });
         }
       });
@@ -123,104 +162,116 @@ export class BarbershopEditComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (!this.barbershopForm.valid) {
-      this.markFormGroupTouched();
-      return;
-    }
+    if (this.barbershopForm.valid && !this.isSubmitting) {
+      this.isSubmitting = true;
+      this.errorMessage = '';
+      this.successMessage = '';
 
-    if (!this.barbershopId) {
-      this.error = 'ID de barbería no válido';
-      return;
-    }
-
-    this.saving = true;
-    this.error = null;
-
-    const formValue = this.barbershopForm.value;
-    const updateRequest: UpdateBarbershopRequest = {
-      name: formValue.name,
-      logoUrl: formValue.logoUrl || undefined,
-      phoneNumber: formValue.phoneNumber,
-      email: formValue.email,
-      addressText: formValue.addressText,
-      operatingHours: formValue.operatingHours.map((hour: any) => ({
-        dayOfWeek: hour.dayOfWeek,
-        isClosed: hour.isClosed,
-        openingTime: !hour.isClosed ? hour.openingTime : undefined,
-        closingTime: !hour.isClosed ? hour.closingTime : undefined
-      }))
-    };
-
-    this.barbershopService.updateBarbershop(this.barbershopId, updateRequest)
-      .pipe(
-        catchError(error => {
-          console.error('Error updating barbershop:', error);
-          this.error = this.getErrorMessage(error);
-          return of(null);
-        }),
-        finalize(() => this.saving = false)
-      )
-      .subscribe(response => {
-        if (response) {
-          console.log('Barbershop updated successfully:', response);
-          this.router.navigate(['/admin/barbershops']);
-        }
-      });
-  }
-
-  private markFormGroupTouched(): void {
-    Object.keys(this.barbershopForm.controls).forEach(key => {
-      const control = this.barbershopForm.get(key);
-      control?.markAsTouched();
-
-      if (control instanceof FormArray) {
-        control.controls.forEach(arrayControl => {
-          Object.keys(arrayControl.value).forEach(arrayKey => {
-            arrayControl.get(arrayKey)?.markAsTouched();
-          });
-        });
+      if (!this.barbershopId) {
+        this.errorMessage = 'ID de barbería no válido';
+        this.isSubmitting = false;
+        return;
       }
-    });
+
+      const formValue = this.barbershopForm.value;
+
+      const updateRequest: UpdateBarbershopRequest = {
+        name: formValue.name,
+        addressText: formValue.address,
+        phoneNumber: formValue.phone || undefined,
+        email: formValue.email || undefined,
+        operatingHours: formValue.operatingHours.map((hour: any) => ({
+          dayOfWeek: this.getDayOfWeekNumber(hour.dayOfWeek),
+          openingTime: hour.isOpen ? hour.openTime : undefined,
+          closingTime: hour.isOpen ? hour.closeTime : undefined,
+          isClosed: !hour.isOpen,
+          notes: hour.notes || undefined
+        }))
+      };
+
+      this.barbershopService.updateBarbershop(this.barbershopId, updateRequest)
+        .pipe(
+          finalize(() => {
+            this.isSubmitting = false;
+          })
+        )
+        .subscribe({
+          next: (updatedBarbershop) => {
+            console.log('Barbería actualizada exitosamente:', updatedBarbershop);
+            this.handleSuccess('Barbería actualizada exitosamente');
+          },
+          error: (error) => {
+            console.error('Error al actualizar la barbería:', error);
+            this.errorMessage = error.message || 'Error al actualizar la barbería';
+          }
+        });
+    } else {
+      this.markFormGroupTouched();
+    }
   }
 
   onCancel(): void {
     this.router.navigate(['/admin/barbershops']);
   }
 
-  getDayName(dayNumber: number): string {
-    const dayNames: { [key: number]: string } = {
-      1: 'Lunes',
-      2: 'Martes',
-      3: 'Miércoles',
-      4: 'Jueves',
-      5: 'Viernes',
-      6: 'Sábado',
-      7: 'Domingo'
+  private getDayOfWeekNumber(dayKey: string): number {
+    const dayMap: { [key: string]: number } = {
+      'MONDAY': 1,
+      'TUESDAY': 2,
+      'WEDNESDAY': 3,
+      'THURSDAY': 4,
+      'FRIDAY': 5,
+      'SATURDAY': 6,
+      'SUNDAY': 7
     };
-    return dayNames[dayNumber] || `Día ${dayNumber}`;
+    return dayMap[dayKey] || 1;
   }
 
-  private getErrorMessage(error: any): string {
-    if (error?.error?.message) {
-      return error.error.message;
-    }
-    if (error?.message) {
-      return error.message;
-    }
-    if (error?.status === 404) {
-      return 'Barbería no encontrada';
-    }
-    if (error?.status === 403) {
-      return 'No tienes permisos para editar esta barbería';
-    }
-    if (error?.status === 500) {
-      return 'Error interno del servidor';
-    }
-    return 'Error al procesar la solicitud';
+  private getDayKeyFromNumber(dayNumber: number): string {
+    const dayMap: { [key: number]: string } = {
+      1: 'MONDAY',
+      2: 'TUESDAY',
+      3: 'WEDNESDAY',
+      4: 'THURSDAY',
+      5: 'FRIDAY',
+      6: 'SATURDAY',
+      7: 'SUNDAY'
+    };
+    return dayMap[dayNumber] || 'MONDAY';
+  }
+
+  private handleSuccess(message: string): void {
+    this.successMessage = message;
+    setTimeout(() => {
+      this.router.navigate(['/admin/barbershops']);
+    }, 1500);
+  }
+
+  private markFormGroupTouched(): void {
+    this.markFormGroupTouchedRecursive(this.barbershopForm);
+  }
+
+  private markFormGroupTouchedRecursive(formGroup: FormGroup): void {
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      control?.markAsTouched();
+
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouchedRecursive(control);
+      } else if (control instanceof FormArray) {
+        control.controls.forEach(arrayControl => {
+          if (arrayControl instanceof FormGroup) {
+            this.markFormGroupTouchedRecursive(arrayControl);
+          } else {
+            arrayControl.markAsTouched();
+          }
+        });
+      }
+    });
   }
 
   retryLoad(): void {
-    this.error = null;
+    this.errorMessage = '';
     this.loadBarbershopData();
   }
 
@@ -248,10 +299,8 @@ export class BarbershopEditComponent implements OnInit {
 
       if (errors?.['pattern']) {
         switch (fieldName) {
-          case 'phoneNumber':
-            return 'Ingresa un número de teléfono válido (10 dígitos)';
-          case 'logoUrl':
-            return 'Ingresa una URL de imagen válida';
+          case 'phone':
+            return 'Ingresa un número de teléfono válido';
           default:
             return 'Formato inválido';
         }
