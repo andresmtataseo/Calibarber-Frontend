@@ -4,25 +4,23 @@ import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
 import { SignInRequestDto } from '../../../../shared/models/auth.models';
-import { NotificationComponent, NotificationType } from '../../../../shared/components/notification';
+import { NotificationService } from '../../../../shared/components/notification';
 import { PreloaderComponent } from '../../../../shared/components/preloader/preloader.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, NotificationComponent, PreloaderComponent],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, PreloaderComponent],
   templateUrl: './login.component.html'
 })
 export class LoginComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly notificationService = inject(NotificationService);
 
   loginForm: FormGroup;
   isLoading = false;
-  showNotification = false;
-  notificationMessage = '';
-  notificationType: NotificationType = 'error';
 
   constructor() {
     this.loginForm = this.fb.group({
@@ -40,7 +38,6 @@ export class LoginComponent {
   onSubmit(): void {
     if (this.loginForm.valid) {
       this.isLoading = true;
-      this.hideNotification();
 
       const credentials: SignInRequestDto = {
         email: this.loginForm.value.email.trim().toLowerCase(),
@@ -50,15 +47,12 @@ export class LoginComponent {
       this.authService.signIn(credentials).subscribe({
         next: (response) => {
           console.log('Login exitoso:', response);
-          this.showSuccessNotification('Inicio de sesión exitoso');
-          // Redirigir al perfil de usuario después del login exitoso
-          setTimeout(() => {
-            this.router.navigate(['/user/profile']);
-          }, 1500);
+          this.notificationService.success('Inicio de sesión exitoso');
+          this.router.navigate(['/profile']);
         },
         error: (error) => {
           console.error('Error en login:', error);
-          this.showErrorNotification(error.message || 'Error al iniciar sesión');
+          this.notificationService.error(error.message || 'Error al iniciar sesión');
           this.isLoading = false;
         },
         complete: () => {
@@ -68,7 +62,7 @@ export class LoginComponent {
     } else {
       // Marcar todos los campos como touched para mostrar errores
       this.markFormGroupTouched();
-      this.showErrorNotification('Por favor, completa todos los campos correctamente');
+      this.notificationService.error('Por favor, completa todos los campos correctamente');
     }
   }
 
@@ -126,28 +120,4 @@ export class LoginComponent {
     return this.loginForm.valid && !this.isLoading;
   }
 
-  /**
-   * Muestra una notificación de error
-   */
-  private showErrorNotification(message: string): void {
-    this.notificationMessage = message;
-    this.notificationType = 'error';
-    this.showNotification = true;
-  }
-
-  /**
-   * Muestra una notificación de éxito
-   */
-  private showSuccessNotification(message: string): void {
-    this.notificationMessage = message;
-    this.notificationType = 'success';
-    this.showNotification = true;
-  }
-
-  /**
-   * Oculta la notificación
-   */
-  private hideNotification(): void {
-    this.showNotification = false;
-  }
 }

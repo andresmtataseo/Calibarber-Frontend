@@ -7,17 +7,18 @@ import { BarbershopResponse } from '../../../../barbershop/models';
 import { HttpErrorResponse } from '@angular/common/http';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { UrlService } from '../../../../../core/services/url.service';
+import { NotificationService } from '../../../../../shared/components/notification';
+import { PreloaderComponent } from '../../../../../shared/components/preloader';
 
 @Component({
   selector: 'app-barbershop-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, PreloaderComponent],
   templateUrl: './barbershop-list.component.html'
 })
 export class BarbershopListComponent implements OnInit {
   barbershops: BarbershopResponse[] = [];
   loading = false;
-  error: string | null = null;
 
   // Pagination
   currentPage = 0;
@@ -36,6 +37,7 @@ export class BarbershopListComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly barbershopService = inject(BarbershopService);
   private readonly urlService = inject(UrlService);
+  private readonly notificationService = inject(NotificationService);
 
   constructor() {}
 
@@ -57,7 +59,6 @@ export class BarbershopListComponent implements OnInit {
 
   loadBarbershops(): void {
     this.loading = true;
-    this.error = null;
 
     this.barbershopService.getAllBarbershops(
       this.currentPage,
@@ -72,7 +73,7 @@ export class BarbershopListComponent implements OnInit {
         this.loading = false;
       },
       error: (error: HttpErrorResponse) => {
-        this.error = this.getErrorMessage(error);
+        this.notificationService.error(this.getErrorMessage(error));
         this.loading = false;
         console.error('Error loading barbershops:', error);
       }
@@ -119,10 +120,11 @@ export class BarbershopListComponent implements OnInit {
     if (confirm(`¿Estás seguro de que deseas eliminar la barbería "${barbershop.name}"?`)) {
       this.barbershopService.deleteBarbershop(barbershop.barbershopId).subscribe({
         next: () => {
+          this.notificationService.success('Barbería eliminada exitosamente');
           this.loadBarbershops();
         },
         error: (error: HttpErrorResponse) => {
-          this.error = this.getErrorMessage(error);
+          this.notificationService.error(this.getErrorMessage(error));
           console.error('Error deleting barbershop:', error);
         }
       });

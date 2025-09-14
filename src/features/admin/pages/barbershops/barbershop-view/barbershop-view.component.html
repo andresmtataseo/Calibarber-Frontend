@@ -1,0 +1,162 @@
+<!-- Preloader -->
+<app-preloader [show]="isLoading" size="xl"></app-preloader>
+
+<div class="flex items-center justify-center bg-base-200 py-4 px-4">
+  <div class="card bg-base-100 shadow-xl max-w-5xl w-full">
+    <!-- Header -->
+    <div class="card-body">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="card-title text-2xl">Detalles de la Barbería</h2>
+          <p class="text-base-content/70 text-sm mt-2">Información completa de la barbería</p>
+        </div>
+        <button
+          type="button"
+          class="btn btn-ghost"
+          (click)="onBack()"
+          [disabled]="isLoading">
+          Volver
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+        <span class="loading loading-spinner loading-lg"></span>
+        <span class="ml-3 text-base-content/70">Cargando información de la barbería...</span>
+      </div>
+
+
+
+      <div *ngIf="!isLoading && barbershop" class="space-y-6">
+
+        <!-- Información Básica -->
+        <div class="space-y-6">
+          <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Información Básica</h3>
+
+          <!-- Nombre -->
+          <div class="form-control">
+            <label class="floating-label">
+              <span>Nombre de la Barbería</span>
+              <div class="input input-md w-full bg-base-200 cursor-default flex items-center">
+                {{ barbershop.name || '' }}
+              </div>
+            </label>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Teléfono -->
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Teléfono</span>
+                <div class="input input-md w-full bg-base-200 cursor-default flex items-center">
+                  {{ barbershop.phoneNumber || '' }}
+                </div>
+              </label>
+            </div>
+
+            <!-- Email -->
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Email</span>
+                <div class="input input-md w-full bg-base-200 cursor-default flex items-center">
+                  {{ barbershop.email || '' }}
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Dirección -->
+          <div class="form-control">
+            <label class="floating-label">
+              <span>Dirección</span>
+              <div class="textarea textarea-md w-full bg-base-200 cursor-default min-h-[4rem] flex items-start pt-3">
+                {{ barbershop.addressText || '' }}
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Horarios de Atención -->
+        <div class="mb-8">
+          <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Horarios de Atención</h3>
+
+          <div class="space-y-6">
+            <div *ngFor="let daySchedule of displayOperatingHours"
+                 class="card bg-base-50">
+              <!-- Día de la semana -->
+              <div class="form-control mb-3">
+                <label class="label">
+                  <span class="label-text font-medium text-lg">{{ daySchedule.dayName }}</span>
+                </label>
+              </div>
+
+              <!-- Información del horario -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <!-- Estado -->
+                <div class="form-control">
+                  <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 rounded-full" 
+                         [class]="daySchedule.isOpen ? 'bg-success' : 'bg-error'"></div>
+                    <span class="label-text font-medium">
+                      {{ daySchedule.isOpen ? 'Abierto' : 'Cerrado' }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Hora de apertura -->
+                <div class="form-control" [class.opacity-50]="!daySchedule.isOpen">
+                  <label class="floating-label">
+                    <span>Apertura</span>
+                    <div class="input input-sm bg-base-200 cursor-default flex items-center">
+                      {{ daySchedule.isOpen ? daySchedule.openTime : '--:--' }}
+                    </div>
+                  </label>
+                </div>
+
+                <!-- Hora de cierre -->
+                <div class="form-control" [class.opacity-50]="!daySchedule.isOpen">
+                  <label class="floating-label">
+                    <span>Cierre</span>
+                    <div class="input input-sm bg-base-200 cursor-default flex items-center">
+                      {{ daySchedule.isOpen ? daySchedule.closeTime : '--:--' }}
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Notas -->
+              <div class="form-control mt-4" *ngIf="daySchedule.notes">
+                <label class="floating-label">
+                  <span>Notas</span>
+                  <div class="input input-sm w-full bg-base-200 cursor-default flex items-center">
+                    {{ daySchedule.notes }}
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-col-reverse sm:flex-row justify-end gap-4 pt-6 border-t border-base-300">
+          <button
+            type="button"
+            class="btn btn-ghost w-full sm:w-auto"
+            (click)="onBack()"
+            [disabled]="isLoading">
+            Volver
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-primary w-full sm:w-auto"
+            (click)="onEdit()"
+            [disabled]="isLoading">
+            Editar Barbería
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

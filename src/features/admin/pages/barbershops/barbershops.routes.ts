@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { BarbershopCreateComponent } from './barbershop-create/barbershop-create.component';
 import { BarbershopEditComponent } from './barbershop-edit/barbershop-edit.component';
+import { BarbershopViewComponent } from './barbershop-view/barbershop-view.component';
 
 export const barbershopsRoutes: Routes = [
   {
@@ -17,6 +18,11 @@ export const barbershopsRoutes: Routes = [
     path: 'create',
     component: BarbershopCreateComponent,
     title: 'Crear Barbería - CaliBarber'
+  },
+  {
+    path: 'view/:id',
+    component: BarbershopViewComponent,
+    title: 'Ver Barbería - CaliBarber'
   },
   {
     path: 'edit/:id',

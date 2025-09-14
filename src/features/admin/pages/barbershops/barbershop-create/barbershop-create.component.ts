@@ -5,6 +5,8 @@ import { CommonModule } from '@angular/common';
 import { CreateBarbershopRequest } from '../../../../barbershop/models/barbershop.model';
 import { BarbershopService, BarbershopOperatingHoursService } from '../../../../barbershop/services';
 import { BarbershopOperatingHoursRequest, DayOfWeek } from '../../../../barbershop/models/operating-hours.model';
+import { NotificationService } from '../../../../../shared/components/notification';
+import { PreloaderComponent } from '../../../../../shared/components/preloader';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -12,7 +14,8 @@ import { finalize } from 'rxjs/operators';
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    PreloaderComponent
   ],
   templateUrl: './barbershop-create.component.html'
 })
@@ -34,14 +37,13 @@ export class BarbershopCreateComponent implements OnInit {
   // Estados de carga y errores
   isLoading = false;
   isSubmitting = false;
-  errorMessage = '';
-  successMessage = '';
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
     private barbershopService: BarbershopService,
-    private operatingHoursService: BarbershopOperatingHoursService
+    private operatingHoursService: BarbershopOperatingHoursService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -95,8 +97,6 @@ export class BarbershopCreateComponent implements OnInit {
   onSubmit(): void {
     if (this.barbershopForm.valid && !this.isSubmitting) {
       this.isSubmitting = true;
-      this.errorMessage = '';
-      this.successMessage = '';
 
       const formValue = this.barbershopForm.value;
 
@@ -124,13 +124,13 @@ export class BarbershopCreateComponent implements OnInit {
         .subscribe({
           next: (createdBarbershop) => {
             console.log('Barbería creada exitosamente:', createdBarbershop);
-            
+
             // Asignar el barbershopId a todos los horarios
             const hoursWithBarbershopId = operatingHours.map(hour => ({
               ...hour,
               barbershopId: createdBarbershop.barbershopId
             }));
-            
+
             // Ahora enviar los horarios de operación usando la nueva API
             this.operatingHoursService.createOrUpdateOperatingHours(
               createdBarbershop.barbershopId,
@@ -142,17 +142,18 @@ export class BarbershopCreateComponent implements OnInit {
             ).subscribe({
               next: (createdHours) => {
                 console.log('Horarios creados exitosamente:', createdHours);
-                this.handleSuccess('Barbería y horarios creados exitosamente');
+                this.notificationService.success('Barbería y horarios creados exitosamente');
+                this.router.navigate(['/admin/barbershops']);
               },
               error: (error) => {
                 console.error('Error al crear los horarios:', error);
-                this.errorMessage = 'Barbería creada, pero error al configurar horarios: ' + (error.message || 'Error desconocido');
+                this.notificationService.error('Barbería creada, pero error al configurar horarios: ' + (error.message || 'Error desconocido'));
               }
             });
           },
           error: (error) => {
             console.error('Error al crear la barbería:', error);
-            this.errorMessage = error.message || 'Error al crear la barbería';
+            this.notificationService.error(error.message || 'Error al crear la barbería');
             this.isSubmitting = false;
           }
         });
@@ -185,12 +186,7 @@ export class BarbershopCreateComponent implements OnInit {
     return dayMap[dayKey] || 1;
   }
 
-  private handleSuccess(message: string): void {
-    this.successMessage = message;
-    setTimeout(() => {
-      this.router.navigate(['/admin/barbershops']);
-    }, 1500);
-  }
+  // Notificaciones ahora manejadas por el servicio global
 
   private markFormGroupTouched(): void {
     this.markFormGroupTouchedRecursive(this.barbershopForm);

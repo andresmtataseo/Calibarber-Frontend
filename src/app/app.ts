@@ -1,11 +1,12 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { HeaderComponent, FooterComponent } from '../shared/components';
+import { NotificationContainerComponent } from '../shared/components/notification/notification-container.component';
 import { AuthService } from '../core/services/auth.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, HeaderComponent, FooterComponent],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, NotificationContainerComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

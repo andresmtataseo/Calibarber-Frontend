@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { NotificationComponent, NotificationType } from '../../../../shared/components/notification/notification.component';
+import { NotificationService } from '../../../../shared/components/notification/notification.service';
 import { PreloaderComponent } from '../../../../shared/components/preloader/preloader.component';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -13,7 +13,7 @@ import { takeUntil, debounceTime, distinctUntilChanged, filter } from 'rxjs/oper
 @Component({
   selector: 'app-edit-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NotificationComponent, PreloaderComponent],
+  imports: [CommonModule, ReactiveFormsModule, PreloaderComponent],
   templateUrl: './edit-profile.component.html'
 })
 export class EditProfileComponent implements OnInit, OnDestroy {
@@ -21,11 +21,6 @@ export class EditProfileComponent implements OnInit, OnDestroy {
   isLoading = false;
   isSaving = false;
   user: UserResponse | null = null;
-
-  // Propiedades para el componente de notificación
-  showNotification = false;
-  notificationMessage = '';
-  notificationType: NotificationType = 'error';
 
   // Estados para validación de email
   isCheckingEmail = false;
@@ -36,6 +31,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
   private userService = inject(UserService);
   private authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly notificationService = inject(NotificationService);
 
   constructor(private fb: FormBuilder) {
     this.editForm = this.fb.group({
@@ -88,7 +84,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     const currentUserId = this.authService.getCurrentUser()?.id;
 
     if (!currentUserId) {
-      this.showErrorNotification('No se pudo obtener la información del usuario');
+      this.notificationService.error('No se pudo obtener la información del usuario');
       this.router.navigate(['/profile']);
       return;
     }
@@ -103,7 +99,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.isLoading = false;
-          this.showErrorNotification('Error al cargar el perfil del usuario');
+          this.notificationService.error('Error al cargar el perfil del usuario');
           console.error('Error loading user profile:', error);
         }
       });
@@ -251,7 +247,6 @@ export class EditProfileComponent implements OnInit, OnDestroy {
   onSubmit() {
     if (this.editForm.valid && this.user) {
       this.isSaving = true;
-      this.hideNotification();
 
       const formData = this.editForm.value;
 
@@ -268,15 +263,12 @@ export class EditProfileComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (response) => {
-            this.showSuccessNotification('¡Perfil actualizado exitosamente!');
-            // Redirigir al perfil después de un breve delay
-            setTimeout(() => {
-              this.router.navigate(['/profile']);
-            }, 2000);
+            this.notificationService.success('¡Perfil actualizado exitosamente!');
+            this.router.navigate(['/profile']);
           },
           error: (error) => {
             this.isSaving = false;
-            this.showErrorNotification(error.message || 'Error al actualizar el perfil. Inténtalo de nuevo.');
+            this.notificationService.error(error.message || 'Error al actualizar el perfil. Inténtalo de nuevo.');
           },
           complete: () => {
             this.isSaving = false;
@@ -287,7 +279,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       Object.keys(this.editForm.controls).forEach(key => {
         this.editForm.get(key)?.markAsTouched();
       });
-      this.showErrorNotification('Por favor, completa todos los campos requeridos correctamente.');
+      this.notificationService.error('Por favor, completa todos los campos requeridos correctamente.');
     }
   }
 
@@ -298,13 +290,13 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     const emailControl = this.editForm.get('email');
     const currentEmail = this.user?.email;
     const newEmail = emailControl?.value;
-    
+
     // Si el email no ha cambiado, no necesitamos verificar disponibilidad
     const emailUnchanged = currentEmail === newEmail;
-    
+
     // Si el email cambió, debe estar disponible
     const emailValid = emailUnchanged || (this.isEmailAvailable === true && !this.isCheckingEmail);
-    
+
     return this.editForm.valid && !this.isSaving && emailValid;
   }
 
@@ -315,42 +307,5 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     this.router.navigate(['/profile']);
   }
 
-  /**
-   * Limpia el error actual
-   */
-  clearError(): void {
-    this.hideNotification();
-  }
 
-  /**
-   * Muestra una notificación de error
-   */
-  private showErrorNotification(message: string): void {
-    this.notificationMessage = message;
-    this.notificationType = 'error';
-    this.showNotification = true;
-
-    // Auto-ocultar después de 5 segundos
-    setTimeout(() => this.hideNotification(), 5000);
-  }
-
-  /**
-   * Muestra una notificación de éxito
-   */
-  private showSuccessNotification(message: string): void {
-    this.notificationMessage = message;
-    this.notificationType = 'success';
-    this.showNotification = true;
-
-    // Auto-ocultar después de 3 segundos
-    setTimeout(() => this.hideNotification(), 3000);
-  }
-
-  /**
-   * Oculta la notificación
-   */
-  private hideNotification(): void {
-    this.showNotification = false;
-    this.notificationMessage = '';
-  }
 }

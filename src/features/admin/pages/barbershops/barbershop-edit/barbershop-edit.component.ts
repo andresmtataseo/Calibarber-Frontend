@@ -5,6 +5,8 @@ import { CommonModule } from '@angular/common';
 import { UpdateBarbershopRequest, BarbershopResponse } from '../../../../barbershop/models/barbershop.model';
 import { BarbershopService, BarbershopOperatingHoursService } from '../../../../barbershop/services';
 import { BarbershopOperatingHoursRequest, DayOfWeek, BarbershopOperatingHours } from '../../../../barbershop/models/operating-hours.model';
+import { NotificationService } from '../../../../../shared/components/notification';
+import { PreloaderComponent } from '../../../../../shared/components/preloader';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -12,7 +14,8 @@ import { finalize } from 'rxjs/operators';
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    PreloaderComponent
   ],
   templateUrl: './barbershop-edit.component.html'
 })
@@ -36,15 +39,14 @@ export class BarbershopEditComponent implements OnInit {
   // Estados de carga y errores
   isLoading = false;
   isSubmitting = false;
-  errorMessage = '';
-  successMessage = '';
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
     private route: ActivatedRoute,
     private barbershopService: BarbershopService,
-    private operatingHoursService: BarbershopOperatingHoursService
+    private operatingHoursService: BarbershopOperatingHoursService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -53,7 +55,7 @@ export class BarbershopEditComponent implements OnInit {
     if (this.barbershopId) {
       this.loadBarbershopData();
     } else {
-      this.errorMessage = 'ID de barbería no válido';
+      this.notificationService.error('ID de barbería no válido');
     }
   }
 
@@ -105,7 +107,6 @@ export class BarbershopEditComponent implements OnInit {
     if (!this.barbershopId) return;
 
     this.isLoading = true;
-    this.errorMessage = '';
 
     // Cargar datos de la barbería
     this.barbershopService.getBarbershopById(this.barbershopId)
@@ -122,7 +123,7 @@ export class BarbershopEditComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error al cargar la barbería:', error);
-          this.errorMessage = error.message || 'Error al cargar la barbería';
+          this.notificationService.error(error.message || 'Error al cargar la barbería');
         }
       });
   }
@@ -183,11 +184,9 @@ export class BarbershopEditComponent implements OnInit {
   onSubmit(): void {
     if (this.barbershopForm.valid && !this.isSubmitting) {
       this.isSubmitting = true;
-      this.errorMessage = '';
-      this.successMessage = '';
 
       if (!this.barbershopId) {
-        this.errorMessage = 'ID de barbería no válido';
+        this.notificationService.error('ID de barbería no válido');
         this.isSubmitting = false;
         return;
       }
@@ -230,17 +229,18 @@ export class BarbershopEditComponent implements OnInit {
             ).subscribe({
               next: (updatedHours) => {
                 console.log('Horarios actualizados exitosamente:', updatedHours);
-                this.handleSuccess('Barbería y horarios actualizados exitosamente');
+                this.notificationService.success('Barbería y horarios actualizados exitosamente');
+                this.router.navigate(['/admin/barbershops']);
               },
               error: (error) => {
                 console.error('Error al actualizar los horarios:', error);
-                this.errorMessage = 'Barbería actualizada, pero error al configurar horarios: ' + (error.message || 'Error desconocido');
+                this.notificationService.error('Barbería actualizada, pero error al configurar horarios: ' + (error.message || 'Error desconocido'));
               }
             });
           },
           error: (error) => {
             console.error('Error al actualizar la barbería:', error);
-            this.errorMessage = error.message || 'Error al actualizar la barbería';
+            this.notificationService.error(error.message || 'Error al actualizar la barbería');
             this.isSubmitting = false;
           }
         });
@@ -284,12 +284,7 @@ export class BarbershopEditComponent implements OnInit {
     return dayMap[dayNumber] || 'MONDAY';
   }
 
-  private handleSuccess(message: string): void {
-    this.successMessage = message;
-    setTimeout(() => {
-      this.router.navigate(['/admin/barbershops']);
-    }, 1500);
-  }
+  // Notificaciones ahora manejadas por el servicio global
 
   private markFormGroupTouched(): void {
     this.markFormGroupTouchedRecursive(this.barbershopForm);
@@ -315,7 +310,6 @@ export class BarbershopEditComponent implements OnInit {
   }
 
   retryLoad(): void {
-    this.errorMessage = '';
     this.loadBarbershopData();
   }
 

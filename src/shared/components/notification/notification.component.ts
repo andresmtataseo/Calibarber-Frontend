@@ -13,8 +13,7 @@ export interface NotificationData {
   selector: 'app-notification',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './notification.component.html',
-  styleUrls: ['./notification.component.css']
+  templateUrl: './notification.component.html'
 })
 export class NotificationComponent implements OnInit, OnDestroy {
   @Input() type: NotificationType = 'info';

@@ -6,6 +6,7 @@ import { UserResponse, UserRole } from '../../models/user.model';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { UrlService } from '../../../../core/services/url.service';
+import { NotificationService } from '../../../../shared/components/notification/notification.service';
 
 @Component({
   selector: 'app-profile',
@@ -18,10 +19,10 @@ export class ProfileComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly urlService = inject(UrlService);
   private readonly router = inject(Router);
+  private readonly notificationService = inject(NotificationService);
 
   user: UserResponse | null = null;
   loading = false;
-  error: string | null = null;
 
   constructor() { }
 
@@ -34,7 +35,6 @@ export class ProfileComponent implements OnInit {
    */
   private loadUserProfile(): void {
     this.loading = true;
-    this.error = null;
 
     // Obtener el usuario actual del estado de autenticación
     this.authService.authState$.subscribe({
@@ -42,12 +42,12 @@ export class ProfileComponent implements OnInit {
         if (authState.user?.id) {
           this.loadUserById(authState.user.id);
         } else {
-          this.error = 'No se pudo obtener la información del usuario autenticado';
+          this.notificationService.error('No se pudo obtener la información del usuario autenticado');
           this.loading = false;
         }
       },
       error: (error) => {
-        this.error = 'Error al obtener el estado de autenticación';
+        this.notificationService.error('Error al obtener el estado de autenticación');
         this.loading = false;
         console.error('Error en authState:', error);
       }
@@ -65,7 +65,7 @@ export class ProfileComponent implements OnInit {
         console.log('Usuario cargado exitosamente:', user);
       },
       error: (error) => {
-        this.error = error.message || 'Error al cargar el perfil del usuario';
+        this.notificationService.error(error.message || 'Error al cargar el perfil del usuario');
         this.loading = false;
         console.error('Error al cargar usuario:', error);
       }

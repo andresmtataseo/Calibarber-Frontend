@@ -4,31 +4,28 @@ import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { NotificationComponent, NotificationType } from '../../../../shared/components/notification/notification.component';
+import { NotificationService } from '../../../../shared/components/notification';
 import { PreloaderComponent } from '../../../../shared/components/preloader/preloader.component';
 
 @Component({
   selector: 'app-change-password',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NotificationComponent, PreloaderComponent],
+  imports: [CommonModule, ReactiveFormsModule, PreloaderComponent],
   templateUrl: './change-password.component.html'
 })
 export class ChangePasswordComponent implements OnInit, OnDestroy {
   changePasswordForm: FormGroup;
   isLoading = false;
 
-  // Propiedades para el componente de notificación
-  showNotification = false;
-  notificationMessage = '';
-  notificationType: NotificationType = 'error';
+  // El servicio global de notificaciones maneja automáticamente la visualización
 
   private destroy$ = new Subject<void>();
 
 constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private notificationService: NotificationService
   ) {
     this.changePasswordForm = this.fb.group({
       currentPassword: ['', [
@@ -123,7 +120,6 @@ constructor(
   onSubmit() {
     if (this.changePasswordForm.valid) {
       this.isLoading = true;
-      this.hideNotification();
 
       const formData = this.changePasswordForm.value;
       const changePasswordData = {
@@ -134,16 +130,14 @@ constructor(
 
       this.authService.changePassword(changePasswordData).subscribe({
         next: (response) => {
-          this.showSuccessNotification('¡Contraseña cambiada exitosamente!');
-          // Redirigir al perfil después de un breve delay
-          setTimeout(() => {
-            this.router.navigate(['/user/profile']);
-          }, 2000);
+          this.isLoading = false;
+          this.notificationService.success('¡Contraseña cambiada exitosamente! Redirigiendo al perfil...');
+          this.router.navigate(['/profile']);
         },
         error: (error) => {
           this.isLoading = false;
           let errorMessage = 'Error al cambiar la contraseña. Inténtalo de nuevo.';
-          
+
           // Manejar errores específicos de la API
           if (error.errors) {
             const firstErrorKey = Object.keys(error.errors)[0];
@@ -151,11 +145,8 @@ constructor(
           } else if (error.message) {
             errorMessage = error.message;
           }
-          
-          this.showErrorNotification(errorMessage);
-        },
-        complete: () => {
-          this.isLoading = false;
+
+          this.notificationService.error(errorMessage);
         }
       });
     } else {
@@ -163,7 +154,7 @@ constructor(
       Object.keys(this.changePasswordForm.controls).forEach(key => {
         this.changePasswordForm.get(key)?.markAsTouched();
       });
-      this.showErrorNotification('Por favor, completa todos los campos correctamente.');
+      this.notificationService.error('Por favor, completa todos los campos correctamente.');
     }
   }
 
@@ -175,10 +166,10 @@ constructor(
   }
 
   /**
-   * Limpia el mensaje de error
+   * Limpia el mensaje de error (manejado automáticamente por el servicio global)
    */
   clearError(): void {
-    this.hideNotification();
+    // El servicio global maneja automáticamente la limpieza de notificaciones
   }
 
   /**
@@ -188,29 +179,5 @@ constructor(
     this.router.navigate(['/profile']);
   }
 
-  /**
-   * Muestra una notificación de error
-   */
-  private showErrorNotification(message: string): void {
-    this.notificationMessage = message;
-    this.notificationType = 'error';
-    this.showNotification = true;
-  }
-
-  /**
-   * Muestra una notificación de éxito
-   */
-  private showSuccessNotification(message: string): void {
-    this.notificationMessage = message;
-    this.notificationType = 'success';
-    this.showNotification = true;
-  }
-
-  /**
-   * Oculta la notificación
-   */
-  private hideNotification(): void {
-    this.showNotification = false;
-    this.notificationMessage = '';
-  }
+  // El servicio global de notificaciones maneja automáticamente la visualización y limpieza
 }

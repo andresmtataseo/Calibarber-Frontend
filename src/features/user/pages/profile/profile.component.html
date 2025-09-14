@@ -4,24 +4,7 @@
     <!-- Preloader compartido -->
     <app-preloader [show]="loading" [size]="'lg'"></app-preloader>
 
-    <!-- Estado de error -->
-    <div *ngIf="error && !loading" class="bg-base-100 rounded-lg shadow-lg p-6 mb-6">
-      <div class="alert alert-error">
-        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <div>
-          <h3 class="font-bold">Error al cargar el perfil</h3>
-          <div class="text-xs">{{ error }}</div>
-        </div>
-        <button class="btn btn-sm btn-outline" (click)="reloadProfile()">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Reintentar
-        </button>
-      </div>
-    </div>
+
 
     <!-- Encabezado del perfil -->
     <div *ngIf="user && !loading" class="bg-base-100 rounded-lg shadow-lg p-6 mb-6">

@@ -3,30 +3,24 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
-import { NotificationComponent, NotificationType } from '../../../../shared/components/notification/notification.component';
+import { NotificationService } from '../../../../shared/components/notification';
 import { PreloaderComponent } from '../../../../shared/components/preloader/preloader.component';
 
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, NotificationComponent, PreloaderComponent],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, PreloaderComponent],
   templateUrl: './reset-password.component.html'
 })
 export class ResetPasswordComponent {
   resetPasswordForm: FormGroup;
   isLoading = false;
-  
-  // Propiedades para el componente de notificación
-  showNotification = false;
-  notificationType: NotificationType = 'info';
-  notificationMessage = '';
-  duration = 5000;
-  autoClose = true;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private notificationService: NotificationService
   ) {
     this.resetPasswordForm = this.fb.group({
       token: ['', [
@@ -95,25 +89,18 @@ export class ResetPasswordComponent {
   onSubmit() {
     if (this.resetPasswordForm.valid && !this.isLoading) {
       this.isLoading = true;
-      this.hideNotification();
 
       const { token, newPassword, confirmNewPassword } = this.resetPasswordForm.value;
 
       this.authService.resetPassword(token, newPassword, confirmNewPassword).subscribe({
         next: (response) => {
           this.isLoading = false;
-          this.showSuccessNotification(
-            `${response.message} Serás redirigido al login en unos segundos.`
-          );
-          
-          // Redirigir al login después de 3 segundos
-          setTimeout(() => {
-            this.router.navigate(['/login']);
-          }, 3000);
+          this.notificationService.success(`${response.message} Redirigiendo al login...`);
+          this.router.navigate(['/login']);
         },
         error: (error) => {
           this.isLoading = false;
-          this.showErrorNotification(error.message || 'Ha ocurrido un error. Por favor, inténtalo de nuevo.');
+          this.notificationService.error(error.message || 'Ha ocurrido un error. Por favor, inténtalo de nuevo.');
         }
       });
     } else {
@@ -128,7 +115,7 @@ export class ResetPasswordComponent {
   getTokenErrors(): string[] {
     const errors: string[] = [];
     const tokenControl = this.resetPasswordForm.get('token');
-    
+
     if (tokenControl?.touched && tokenControl?.errors) {
       if (tokenControl.errors['required']) {
         errors.push('El token es requerido');
@@ -140,14 +127,14 @@ export class ResetPasswordComponent {
         errors.push('El token no puede exceder 500 caracteres');
       }
     }
-    
+
     return errors;
   }
 
   getPasswordErrors(): string[] {
     const errors: string[] = [];
     const passwordControl = this.resetPasswordForm.get('newPassword');
-    
+
     if (passwordControl?.touched && passwordControl?.errors) {
       if (passwordControl.errors['required']) {
         errors.push('La contraseña es requerida');
@@ -174,14 +161,14 @@ export class ResetPasswordComponent {
         }
       }
     }
-    
+
     return errors;
   }
 
   getConfirmPasswordErrors(): string[] {
     const errors: string[] = [];
     const confirmPasswordControl = this.resetPasswordForm.get('confirmNewPassword');
-    
+
     if (confirmPasswordControl?.touched && confirmPasswordControl?.errors) {
       if (confirmPasswordControl.errors['required']) {
         errors.push('La confirmación de contraseña es requerida');
@@ -193,31 +180,15 @@ export class ResetPasswordComponent {
         errors.push('La confirmación no puede exceder 100 caracteres');
       }
     }
-    
+
     if (this.resetPasswordForm.errors?.['passwordMismatch'] && confirmPasswordControl?.touched) {
       errors.push('Las contraseñas no coinciden');
     }
-    
+
     return errors;
   }
 
-  // Métodos auxiliares para notificaciones
-  private showSuccessNotification(message: string) {
-    this.notificationType = 'success';
-    this.notificationMessage = message;
-    this.showNotification = true;
-  }
-
-  private showErrorNotification(message: string) {
-    this.notificationType = 'error';
-    this.notificationMessage = message;
-    this.showNotification = true;
-  }
-
-  private hideNotification() {
-    this.showNotification = false;
-    this.notificationMessage = '';
-  }
+  // El servicio global de notificaciones maneja automáticamente la visualización y limpieza
 
   isFormValid(): boolean {
     return this.resetPasswordForm.valid && !this.isLoading;

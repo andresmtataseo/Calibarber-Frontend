@@ -1,3 +1,6 @@
+<!-- Preloader -->
+<app-preloader [show]="isSubmitting" size="xl"></app-preloader>
+
 <div class="flex items-center justify-center bg-base-200 py-4 px-4">
   <div class="card bg-base-100 shadow-xl max-w-5xl w-full">
     <!-- Header -->
@@ -16,19 +19,7 @@
         </button>
       </div>
 
-      <!-- Mensajes de estado -->
-      <div class="mb-6" *ngIf="errorMessage || successMessage">
-        <div class="alert alert-error" *ngIf="errorMessage">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <span>{{ errorMessage }}</span>
-          <button type="button" class="btn btn-sm btn-ghost" (click)="errorMessage = ''">✕</button>
-        </div>
 
-        <div class="alert alert-success" *ngIf="successMessage">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <span>{{ successMessage }}</span>
-        </div>
-      </div>
 
       <form [formGroup]="barbershopForm" (ngSubmit)="onSubmit()" class="space-y-6">
 
