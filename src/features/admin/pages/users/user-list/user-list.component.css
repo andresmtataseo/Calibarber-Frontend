@@ -1,0 +1,50 @@
+/* Estilos específicos para el componente user-list */
+
+/* Animaciones para las filas de la tabla */
+.table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: var(--fallback-b2, oklch(var(--b2)));
+}
+
+/* Estilos para los botones de acción */
+.btn-square {
+  transition: all 0.2s ease;
+}
+
+.btn-square:hover {
+  transform: scale(1.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .table {
+    font-size: 0.875rem;
+  }
+  
+  .btn-sm {
+    padding: 0.25rem;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+}
+
+/* Loading state */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

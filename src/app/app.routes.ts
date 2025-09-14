@@ -8,6 +8,7 @@ import { ChangePasswordComponent } from '../features/auth/pages/change-password'
 import { ProfileComponent } from '../features/user/pages/profile/profile.component';
 import { EditProfileComponent } from '../features/user/pages/edit-profile/edit-profile.component';
 import { AdminDashboardComponent } from '../features/admin/pages/admin-dashboard/admin-dashboard.component';
+import { DashboardHomeComponent } from '../features/admin/pages/dashboard-home/dashboard-home.component';
 import { guestGuard, authGuard, adminGuard } from '../core/guards/auth.guard';
 
 export const routes: Routes = [
@@ -62,7 +63,38 @@ export const routes: Routes = [
     path: 'admin',
     component: AdminDashboardComponent,
     title: 'Panel de Administración - CaliBarber',
-    canActivate: [adminGuard]
+    canActivate: [adminGuard],
+    children: [
+      {
+        path: '',
+        component: DashboardHomeComponent,
+        title: 'Dashboard - CaliBarber'
+      },
+      {
+        path: 'users',
+        loadChildren: () => import('../features/admin/pages/users/users.routes').then(m => m.usersRoutes)
+      },
+      {
+        path: 'barbers',
+        loadChildren: () => import('../features/admin/pages/barbers/barbers.routes').then(m => m.barbersRoutes)
+      },
+      {
+        path: 'barbershops',
+        loadChildren: () => import('../features/admin/pages/barbershops/barbershops.routes').then(m => m.barbershopsRoutes)
+      },
+      {
+        path: 'appointments',
+        loadChildren: () => import('../features/admin/pages/appointments/appointments.routes').then(m => m.appointmentsRoutes)
+      },
+      {
+        path: 'services',
+        loadChildren: () => import('../features/admin/pages/services/services.routes').then(m => m.servicesRoutes)
+      },
+      {
+        path: 'payments',
+        loadChildren: () => import('../features/admin/pages/payments/payments.routes').then(m => m.paymentsRoutes)
+      }
+    ]
   },
   {
     path: '**',
