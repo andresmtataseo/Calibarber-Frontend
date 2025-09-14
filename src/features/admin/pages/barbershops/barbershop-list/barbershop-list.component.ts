@@ -1,49 +1,182 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { BarbershopService } from '../../../../barbershop/services';
+import { BarbershopResponse } from '../../../../barbershop/models';
+import { HttpErrorResponse } from '@angular/common/http';
+import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import { UrlService } from '../../../../../core/services/url.service';
 
 @Component({
   selector: 'app-barbershop-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
-  template: `
-    <div class="p-6">
-      <div class="flex justify-between items-center mb-6">
-        <div>
-          <h1 class="text-3xl font-bold text-base-content">Gestión de Barberías</h1>
-          <p class="text-base-content/70 mt-1">Administra las barberías del sistema</p>
-        </div>
-        <button class="btn btn-primary" (click)="createBarbershop()">
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-          </svg>
-          Crear Barbería
-        </button>
-      </div>
-      
-      <div class="card bg-base-100 shadow-lg">
-        <div class="card-body">
-          <div class="text-center py-12">
-            <svg class="w-16 h-16 mx-auto text-base-content/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-            </svg>
-            <h3 class="text-lg font-medium text-base-content/70 mb-2">Lista de Barberías</h3>
-            <p class="text-base-content/50">Aquí se mostrarán todas las barberías registradas</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  `
+  imports: [CommonModule, RouterModule, FormsModule],
+  templateUrl: './barbershop-list.component.html'
 })
 export class BarbershopListComponent implements OnInit {
+  barbershops: BarbershopResponse[] = [];
+  loading = false;
+  error: string | null = null;
 
-  constructor(private router: Router) {}
+  // Pagination
+  currentPage = 0;
+  pageSize = 10;
+  totalElements = 0;
+  totalPages = 0;
+
+  // Search
+  searchTerm = '';
+  private searchSubject = new Subject<string>();
+
+  // Sorting
+  sortBy = 'name';
+  sortDir = 'asc';
+
+  private readonly router = inject(Router);
+  private readonly barbershopService = inject(BarbershopService);
+  private readonly urlService = inject(UrlService);
+
+  constructor() {}
 
   ngOnInit(): void {
-    // Cargar barberías desde el servicio
+    this.loadBarbershops();
+    this.setupSearch();
+  }
+
+  private setupSearch(): void {
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(searchTerm => {
+      this.searchTerm = searchTerm;
+      this.currentPage = 0;
+      this.loadBarbershops();
+    });
+  }
+
+  loadBarbershops(): void {
+    this.loading = true;
+    this.error = null;
+
+    this.barbershopService.getAllBarbershops(
+      this.currentPage,
+      this.pageSize,
+      this.sortBy,
+      this.sortDir
+    ).subscribe({
+      next: (response) => {
+        this.barbershops = response.data.content;
+        this.totalElements = response.data.totalElements;
+        this.totalPages = response.data.totalPages;
+        this.loading = false;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.error = this.getErrorMessage(error);
+        this.loading = false;
+        console.error('Error loading barbershops:', error);
+      }
+    });
+  }
+
+  onSearch(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.searchSubject.next(target.value);
+  }
+
+  onPageChange(page: number): void {
+    if (page >= 0 && page < this.totalPages) {
+      this.currentPage = page;
+      this.loadBarbershops();
+    }
+  }
+
+  onPageSizeChange(newSize: number): void {
+    this.pageSize = newSize;
+    this.currentPage = 0; // Reset to first page
+    this.loadBarbershops();
+  }
+
+  onSort(field: string): void {
+    this.sortBy = field;
+    this.loadBarbershops();
+  }
+
+  toggleSortDirection(): void {
+    this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+    this.loadBarbershops();
+  }
+
+  editBarbershop(id: string): void {
+    this.router.navigate(['/admin/barbershops/edit', id]);
+  }
+
+  viewBarbershop(id: string): void {
+    this.router.navigate(['/admin/barbershops/view', id]);
+  }
+
+  deleteBarbershop(barbershop: BarbershopResponse): void {
+    if (confirm(`¿Estás seguro de que deseas eliminar la barbería "${barbershop.name}"?`)) {
+      this.barbershopService.deleteBarbershop(barbershop.barbershopId).subscribe({
+        next: () => {
+          this.loadBarbershops();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.error = this.getErrorMessage(error);
+          console.error('Error deleting barbershop:', error);
+        }
+      });
+    }
   }
 
   createBarbershop(): void {
     this.router.navigate(['/admin/barbershops/create']);
+  }
+
+  getPaginationArray(): number[] {
+    const pages: number[] = [];
+    const maxVisiblePages = 5;
+    const halfVisible = Math.floor(maxVisiblePages / 2);
+
+    let startPage = Math.max(0, this.currentPage - halfVisible);
+    let endPage = Math.min(this.totalPages - 1, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(0, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return pages;
+  }
+
+  private getErrorMessage(error: HttpErrorResponse): string {
+    if (error.error?.message) {
+      return error.error.message;
+    }
+    if (error.status === 0) {
+      return 'Error de conexión. Verifica tu conexión a internet.';
+    }
+    if (error.status >= 500) {
+      return 'Error interno del servidor. Inténtalo más tarde.';
+    }
+    return 'Ha ocurrido un error inesperado.';
+  }
+
+  // Método auxiliar para usar Math.min en el template
+  mathMin(a: number, b: number): number {
+    return Math.min(a, b);
+  }
+
+  // Método para generar avatar con inicial del nombre
+  getAvatarUrl(barbershop: BarbershopResponse): string {
+    if (barbershop.logoUrl) {
+      return barbershop.logoUrl;
+    }
+    // Generar avatar con la primera letra del nombre
+    const initial = barbershop.name.charAt(0).toUpperCase();
+    return this.urlService.generateAvatarUrl(initial, '570df8', 'fff', 48);
   }
 }

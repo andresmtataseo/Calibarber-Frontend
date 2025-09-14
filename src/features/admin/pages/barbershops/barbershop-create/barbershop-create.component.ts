@@ -2,7 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { CreateBarbershopRequest, BarbershopOperatingHoursCreate } from '../../../../barbershop/models/barbershop.model';
+import { CreateBarbershopRequest } from '../../../../barbershop/models/barbershop.model';
+import { BarbershopService, BarbershopOperatingHoursService } from '../../../../barbershop/services';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-barbershop-create',
@@ -19,18 +21,26 @@ export class BarbershopCreateComponent implements OnInit {
 
   // Days of the week
   daysOfWeek = [
-    { value: 1, name: 'Lunes' },
-    { value: 2, name: 'Martes' },
-    { value: 3, name: 'Miércoles' },
-    { value: 4, name: 'Jueves' },
-    { value: 5, name: 'Viernes' },
-    { value: 6, name: 'Sábado' },
-    { value: 7, name: 'Domingo' }
+    { key: 'MONDAY', name: 'Lunes' },
+    { key: 'TUESDAY', name: 'Martes' },
+    { key: 'WEDNESDAY', name: 'Miércoles' },
+    { key: 'THURSDAY', name: 'Jueves' },
+    { key: 'FRIDAY', name: 'Viernes' },
+    { key: 'SATURDAY', name: 'Sábado' },
+    { key: 'SUNDAY', name: 'Domingo' }
   ];
+
+  // Estados de carga y errores
+  isLoading = false;
+  isSubmitting = false;
+  errorMessage = '';
+  successMessage = '';
 
   constructor(
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private barbershopService: BarbershopService,
+    private operatingHoursService: BarbershopOperatingHoursService
   ) {}
 
   ngOnInit(): void {
@@ -40,10 +50,9 @@ export class BarbershopCreateComponent implements OnInit {
   private initializeForm(): void {
     this.barbershopForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
-      phoneNumber: ['', [Validators.pattern(/^[0-9]{10}$/)]],
+      phone: ['', [Validators.pattern(/^[0-9+\-\s()]+$/)]],
       email: ['', [Validators.email]],
-      addressText: ['', [Validators.minLength(5), Validators.maxLength(200)]],
-      logoUrl: ['', [Validators.pattern(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i)]],
+      address: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(200)]],
       operatingHours: this.fb.array(this.createOperatingHoursControls())
     });
   }
@@ -52,10 +61,10 @@ export class BarbershopCreateComponent implements OnInit {
   private createOperatingHoursControls(): FormGroup[] {
     return this.daysOfWeek.map(day =>
       this.fb.group({
-        dayOfWeek: [day.value, [Validators.required]],
-        isClosed: [false],
-        openingTime: ['09:00'],
-        closingTime: ['18:00'],
+        dayOfWeek: [day.key, [Validators.required]],
+        isOpen: [true],
+        openTime: ['09:00'],
+        closeTime: ['18:00'],
         notes: ['']
       })
     );
@@ -73,8 +82,8 @@ export class BarbershopCreateComponent implements OnInit {
     return this.operatingHoursArray.controls as FormGroup[];
   }
 
-  getDayName(dayValue: number): string {
-    const day = this.daysOfWeek.find(d => d.value === dayValue);
+  getDayName(dayKey: string): string {
+    const day = this.daysOfWeek.find(d => d.key === dayKey);
     return day ? day.name : '';
   }
 
@@ -83,30 +92,49 @@ export class BarbershopCreateComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.barbershopForm.valid) {
-      this.loading = true;
+    if (this.barbershopForm.valid && !this.isSubmitting) {
+      this.isSubmitting = true;
+      this.errorMessage = '';
+      this.successMessage = '';
 
-      const formData: CreateBarbershopRequest = {
-        name: this.barbershopForm.value.name,
-        phoneNumber: this.barbershopForm.value.phoneNumber || undefined,
-        email: this.barbershopForm.value.email || undefined,
-        addressText: this.barbershopForm.value.addressText || undefined,
-        logoUrl: this.barbershopForm.value.logoUrl || undefined,
-        operatingHours: this.barbershopForm.value.operatingHours.map((hour: any) => ({
-          dayOfWeek: hour.dayOfWeek,
-          isClosed: hour.isClosed,
-          openingTime: hour.isClosed ? undefined : hour.openingTime,
-          closingTime: hour.isClosed ? undefined : hour.closingTime,
+      const formValue = this.barbershopForm.value;
+
+      const createRequest: CreateBarbershopRequest = {
+        name: formValue.name,
+        addressText: formValue.address,
+        phoneNumber: formValue.phone || undefined,
+        email: formValue.email || undefined,
+        operatingHours: formValue.operatingHours.map((hour: any) => ({
+          dayOfWeek: this.getDayOfWeekNumber(hour.dayOfWeek),
+          openingTime: hour.isOpen ? hour.openTime : undefined,
+          closingTime: hour.isOpen ? hour.closeTime : undefined,
+          isClosed: !hour.isOpen,
           notes: hour.notes || undefined
         }))
       };
 
-      // Simulate API call
-      setTimeout(() => {
-        console.log('Barbershop created:', formData);
-        this.loading = false;
-        this.router.navigate(['/admin/barbershops']);
-      }, 2000);
+      // Los horarios ya se incluyen en el createRequest
+      const hasOperatingHours = formValue.operatingHours.some((hour: any) => hour.isOpen);
+
+      // Crear la barbería primero
+      this.barbershopService.createBarbershop(createRequest)
+        .pipe(
+          finalize(() => {
+            this.isSubmitting = false;
+          })
+        )
+        .subscribe({
+          next: (createdBarbershop) => {
+            console.log('Barbería creada exitosamente:', createdBarbershop);
+
+            // La barbería se creó exitosamente con sus horarios
+            this.handleSuccess('Barbería creada exitosamente');
+          },
+          error: (error) => {
+            console.error('Error al crear la barbería:', error);
+            this.errorMessage = error.message || 'Error al crear la barbería';
+          }
+        });
     } else {
       this.markFormGroupTouched();
     }
@@ -116,10 +144,48 @@ export class BarbershopCreateComponent implements OnInit {
     this.router.navigate(['/admin/barbershops']);
   }
 
+
+
+  private getDayOfWeekNumber(dayKey: string): number {
+    const dayMap: { [key: string]: number } = {
+      'MONDAY': 1,
+      'TUESDAY': 2,
+      'WEDNESDAY': 3,
+      'THURSDAY': 4,
+      'FRIDAY': 5,
+      'SATURDAY': 6,
+      'SUNDAY': 7
+    };
+    return dayMap[dayKey] || 1;
+  }
+
+  private handleSuccess(message: string): void {
+    this.successMessage = message;
+    setTimeout(() => {
+      this.router.navigate(['/admin/barbershops']);
+    }, 1500);
+  }
+
   private markFormGroupTouched(): void {
-    Object.keys(this.barbershopForm.controls).forEach(key => {
-      const control = this.barbershopForm.get(key);
+    this.markFormGroupTouchedRecursive(this.barbershopForm);
+  }
+
+  private markFormGroupTouchedRecursive(formGroup: FormGroup): void {
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
       control?.markAsTouched();
+
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouchedRecursive(control);
+      } else if (control instanceof FormArray) {
+        control.controls.forEach(arrayControl => {
+          if (arrayControl instanceof FormGroup) {
+            this.markFormGroupTouchedRecursive(arrayControl);
+          } else {
+            arrayControl.markAsTouched();
+          }
+        });
+      }
     });
   }
 
@@ -147,10 +213,8 @@ export class BarbershopCreateComponent implements OnInit {
 
       if (errors?.['pattern']) {
         switch (fieldName) {
-          case 'phoneNumber':
-            return 'Ingresa un número de teléfono válido (10 dígitos)';
-          case 'logoUrl':
-            return 'Ingresa una URL de imagen válida';
+          case 'phone':
+            return 'Ingresa un número de teléfono válido';
           default:
             return 'Formato inválido';
         }

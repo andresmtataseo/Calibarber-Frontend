@@ -16,6 +16,20 @@
         </button>
       </div>
 
+      <!-- Mensajes de estado -->
+      <div class="mb-6" *ngIf="errorMessage || successMessage">
+        <div class="alert alert-error" *ngIf="errorMessage">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>{{ errorMessage }}</span>
+          <button type="button" class="btn btn-sm btn-ghost" (click)="errorMessage = ''">✕</button>
+        </div>
+
+        <div class="alert alert-success" *ngIf="successMessage">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>{{ successMessage }}</span>
+        </div>
+      </div>
+
       <form [formGroup]="barbershopForm" (ngSubmit)="onSubmit()" class="space-y-6">
 
 
@@ -41,21 +55,7 @@
             </div>
           </div>
 
-          <!-- Logo -->
-          <div class="form-control">
-            <label class="floating-label">
-              <span>Logo (URL)</span>
-              <input
-                type="url"
-                id="logoUrl"
-                class="input input-md w-full"
-                formControlName="logoUrl"
-                placeholder="Logo (URL)">
-            </label>
-            <div class="label" *ngIf="getFieldError('logoUrl')">
-              <span class="label-text-alt text-error">{{ getFieldError('logoUrl') }}</span>
-            </div>
-          </div>
+
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Teléfono -->
@@ -64,14 +64,14 @@
                 <span>Teléfono</span>
                 <input
                   type="tel"
-                  id="phoneNumber"
+                  id="phone"
                   class="input input-md w-full"
-                  [class.input-error]="f['phoneNumber'].invalid && f['phoneNumber'].touched"
-                  formControlName="phoneNumber"
+                  [class.input-error]="f['phone'].invalid && f['phone'].touched"
+                  formControlName="phone"
                   placeholder="Teléfono">
               </label>
-              <div class="label" *ngIf="getFieldError('phoneNumber')">
-                <span class="label-text-alt text-error">{{ getFieldError('phoneNumber') }}</span>
+              <div class="label" *ngIf="getFieldError('phone')">
+                <span class="label-text-alt text-error">{{ getFieldError('phone') }}</span>
               </div>
             </div>
 
@@ -93,19 +93,20 @@
             </div>
           </div>
 
+          <!-- Dirección -->
           <div class="form-control">
             <label class="floating-label">
-              <span>Dirección Completa *</span>
-              <input
-                type="text"
-                id="addressText"
-                class="input input-md w-full"
-                [class.input-error]="f['addressText'].invalid && f['addressText'].touched"
-                formControlName="addressText"
-                placeholder="Dirección Completa *">
+              <span>Dirección *</span>
+              <textarea
+                id="address"
+                class="textarea textarea-md w-full"
+                [class.textarea-error]="f['address'].invalid && f['address'].touched"
+                formControlName="address"
+                placeholder="Dirección completa *"
+                rows="2"></textarea>
             </label>
-            <div class="label" *ngIf="getFieldError('addressText')">
-              <span class="label-text-alt text-error">{{ getFieldError('addressText') }}</span>
+            <div class="label" *ngIf="getFieldError('address')">
+              <span class="label-text-alt text-error">{{ getFieldError('address') }}</span>
             </div>
           </div>
         </div>
@@ -127,37 +128,37 @@
 
               <!-- Campos en fila -->
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                <!-- Cerrado -->
+                <!-- Abierto -->
                 <div class="form-control">
                   <label class="label cursor-pointer justify-start gap-2">
-                    <input type="checkbox" class="checkbox checkbox-primary" formControlName="isClosed">
-                    <span class="label-text">Cerrado</span>
+                    <input type="checkbox" class="checkbox checkbox-primary" formControlName="isOpen">
+                    <span class="label-text">Abierto</span>
                   </label>
                 </div>
 
                 <!-- Hora de apertura -->
-                <div class="form-control" *ngIf="!dayControl.get('isClosed')?.value">
+                <div class="form-control" [class.opacity-50]="!dayControl.get('isOpen')?.value">
                   <label class="floating-label">
                     <span>Apertura</span>
-                    <input type="time" class="input input-sm" formControlName="openingTime">
+                    <input type="time" class="input input-sm" formControlName="openTime" [disabled]="!dayControl.get('isOpen')?.value">
                   </label>
                 </div>
 
                 <!-- Hora de cierre -->
-                <div class="form-control" *ngIf="!dayControl.get('isClosed')?.value">
+                <div class="form-control" [class.opacity-50]="!dayControl.get('isOpen')?.value">
                   <label class="floating-label">
                     <span>Cierre</span>
-                    <input type="time" class="input input-sm" formControlName="closingTime">
+                    <input type="time" class="input input-sm" formControlName="closeTime" [disabled]="!dayControl.get('isOpen')?.value">
                   </label>
                 </div>
+              </div>
 
-                <!-- Notas -->
-                <div class="form-control" *ngIf="dayControl.get('isClosed')?.value">
-                  <label class="floating-label">
-                    <span>Notas (opcional)</span>
-                    <input type="text" class="input input-sm" formControlName="notes" placeholder="Notas (opcional)">
-                  </label>
-                </div>
+              <!-- Notas -->
+              <div class="form-control mt-4" *ngIf="!dayControl.get('isOpen')?.value">
+                <label class="floating-label">
+                  <span>Notas (opcional)</span>
+                  <input type="text" class="input input-sm w-full" formControlName="notes" placeholder="Notas adicionales (opcional)">
+                </label>
               </div>
             </div>
           </div>
@@ -178,10 +179,10 @@
           <button
             type="submit"
             class="btn btn-primary w-full sm:w-auto"
-            [disabled]="barbershopForm.invalid || loading">
-            <span *ngIf="loading" class="loading loading-spinner loading-sm"></span>
+            [disabled]="barbershopForm.invalid || isSubmitting">
+            <span *ngIf="isSubmitting" class="loading loading-spinner loading-sm"></span>
             <span>
-              {{ loading ? 'Creando...' : 'Crear Barbería' }}
+              {{ isSubmitting ? 'Creando...' : 'Crear Barbería' }}
             </span>
           </button>
         </div>
