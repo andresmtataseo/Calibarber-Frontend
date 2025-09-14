@@ -19,6 +19,8 @@ export interface UpdateBarberRequest {
   isActive?: boolean;
 }
 
+import { DayOfWeek } from '../../barbershop/models/operating-hours.model';
+
 export interface BarberAvailabilityResponse {
   barberAvailabilityId: string;
   barberId: string;
@@ -36,14 +38,4 @@ export interface CreateBarberAvailabilityRequest {
   startTime: string; // HH:mm format
   endTime: string; // HH:mm format
   isAvailable: boolean;
-}
-
-export enum DayOfWeek {
-  MONDAY = 'MONDAY',
-  TUESDAY = 'TUESDAY',
-  WEDNESDAY = 'WEDNESDAY',
-  THURSDAY = 'THURSDAY',
-  FRIDAY = 'FRIDAY',
-  SATURDAY = 'SATURDAY',
-  SUNDAY = 'SUNDAY'
 }

@@ -4,6 +4,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { UpdateBarbershopRequest, BarbershopResponse } from '../../../../barbershop/models/barbershop.model';
 import { BarbershopService, BarbershopOperatingHoursService } from '../../../../barbershop/services';
+import { BarbershopOperatingHoursRequest, DayOfWeek, BarbershopOperatingHours } from '../../../../barbershop/models/operating-hours.model';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -106,6 +107,7 @@ export class BarbershopEditComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
+    // Cargar datos de la barbería
     this.barbershopService.getBarbershopById(this.barbershopId)
       .pipe(
         finalize(() => {
@@ -116,7 +118,7 @@ export class BarbershopEditComponent implements OnInit {
         next: (barbershop) => {
           console.log('Barbería cargada exitosamente:', barbershop);
           this.barbershop = barbershop;
-          this.populateForm();
+          this.loadOperatingHours();
         },
         error: (error) => {
           console.error('Error al cargar la barbería:', error);
@@ -125,7 +127,24 @@ export class BarbershopEditComponent implements OnInit {
       });
   }
 
-  private populateForm(): void {
+  private loadOperatingHours(): void {
+    if (!this.barbershopId) return;
+
+    this.operatingHoursService.getOperatingHoursByBarbershopId(this.barbershopId)
+      .subscribe({
+        next: (operatingHours) => {
+          console.log('Horarios cargados exitosamente:', operatingHours);
+          this.populateForm(operatingHours);
+        },
+        error: (error) => {
+          console.error('Error al cargar los horarios:', error);
+          // Si no hay horarios, continuar con el formulario vacío
+          this.populateForm([]);
+        }
+      });
+  }
+
+  private populateForm(operatingHours: BarbershopOperatingHours[] = []): void {
     if (!this.barbershop) return;
 
     this.barbershopForm.patchValue({
@@ -137,11 +156,11 @@ export class BarbershopEditComponent implements OnInit {
 
     // Update operating hours
     const operatingHoursArray = this.barbershopForm.get('operatingHours') as FormArray;
-    if (this.barbershop.operatingHours && this.barbershop.operatingHours.length > 0) {
+    if (operatingHours && operatingHours.length > 0) {
       // Create a map of existing operating hours by day of week
       const existingHours = new Map();
-      this.barbershop.operatingHours.forEach(hour => {
-        const dayKey = this.getDayKeyFromNumber(hour.dayOfWeek);
+      operatingHours.forEach(hour => {
+        const dayKey = hour.dayOfWeek; // Ya es el enum string
         existingHours.set(dayKey, hour);
       });
 
@@ -175,34 +194,54 @@ export class BarbershopEditComponent implements OnInit {
 
       const formValue = this.barbershopForm.value;
 
+      // Actualizar request solo con datos básicos de la barbería
       const updateRequest: UpdateBarbershopRequest = {
         name: formValue.name,
         addressText: formValue.address,
         phoneNumber: formValue.phone || undefined,
         email: formValue.email || undefined,
-        operatingHours: formValue.operatingHours.map((hour: any) => ({
-          dayOfWeek: this.getDayOfWeekNumber(hour.dayOfWeek),
-          openingTime: hour.isOpen ? hour.openTime : undefined,
-          closingTime: hour.isOpen ? hour.closeTime : undefined,
-          isClosed: !hour.isOpen,
-          notes: hour.notes || undefined
-        }))
+        logoUrl: undefined
       };
 
+      // Preparar horarios de operación usando el nuevo modelo
+      const operatingHours: BarbershopOperatingHoursRequest[] = formValue.operatingHours.map((hour: any) => ({
+        barbershopId: this.barbershopId!,
+        dayOfWeek: this.getDayOfWeekEnum(hour.dayOfWeek) as DayOfWeek,
+        openingTime: hour.isOpen ? hour.openTime : null,
+        closingTime: hour.isOpen ? hour.closeTime : null,
+        isClosed: !hour.isOpen,
+        notes: hour.notes || null
+      }));
+
+      // Actualizar la barbería primero
       this.barbershopService.updateBarbershop(this.barbershopId, updateRequest)
-        .pipe(
-          finalize(() => {
-            this.isSubmitting = false;
-          })
-        )
         .subscribe({
           next: (updatedBarbershop) => {
             console.log('Barbería actualizada exitosamente:', updatedBarbershop);
-            this.handleSuccess('Barbería actualizada exitosamente');
+            
+            // Ahora actualizar los horarios de operación usando la nueva API
+            this.operatingHoursService.createOrUpdateOperatingHours(
+              this.barbershopId!,
+              operatingHours
+            ).pipe(
+              finalize(() => {
+                this.isSubmitting = false;
+              })
+            ).subscribe({
+              next: (updatedHours) => {
+                console.log('Horarios actualizados exitosamente:', updatedHours);
+                this.handleSuccess('Barbería y horarios actualizados exitosamente');
+              },
+              error: (error) => {
+                console.error('Error al actualizar los horarios:', error);
+                this.errorMessage = 'Barbería actualizada, pero error al configurar horarios: ' + (error.message || 'Error desconocido');
+              }
+            });
           },
           error: (error) => {
             console.error('Error al actualizar la barbería:', error);
             this.errorMessage = error.message || 'Error al actualizar la barbería';
+            this.isSubmitting = false;
           }
         });
     } else {
@@ -212,6 +251,11 @@ export class BarbershopEditComponent implements OnInit {
 
   onCancel(): void {
     this.router.navigate(['/admin/barbershops']);
+  }
+
+  private getDayOfWeekEnum(dayKey: string): DayOfWeek {
+    // El dayKey ya es el enum correcto (MONDAY, TUESDAY, etc.)
+    return dayKey as DayOfWeek;
   }
 
   private getDayOfWeekNumber(dayKey: string): number {

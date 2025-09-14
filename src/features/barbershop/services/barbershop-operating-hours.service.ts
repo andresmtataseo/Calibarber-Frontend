@@ -1,12 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, forkJoin } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { UrlService } from '../../../core/services/url.service';
 import {
   BarbershopOperatingHours,
-  BarbershopOperatingHoursCreate
-} from '../models/barbershop.model';
+  BarbershopOperatingHoursRequest,
+  BarbershopOperatingHoursRequestDto,
+  DayOfWeek
+} from '../models/operating-hours.model';
 import { ApiResponseDto } from '../../../shared/models/auth.models';
 
 /**
@@ -21,30 +23,55 @@ export class BarbershopOperatingHoursService {
   private readonly urlService = inject(UrlService);
 
   /**
-   * Crea los horarios de atención para una barbería
-   * @param barbershopId ID de la barbería
-   * @param operatingHours Array de horarios de atención
-   * @returns Observable con los horarios creados
+   * Crea o actualiza un horario de atención individual para una barbería
+   * @param requestDto DTO con los datos del horario
+   * @returns Observable con el horario creado/actualizado
    */
-  createOperatingHours(
-    barbershopId: string,
-    operatingHours: BarbershopOperatingHoursCreate[]
-  ): Observable<BarbershopOperatingHours[]> {
-    const params = new HttpParams().set('barbershopId', barbershopId);
+  createOrUpdateOperatingHour(
+    requestDto: BarbershopOperatingHoursRequest
+  ): Observable<BarbershopOperatingHours> {
+    const dto = new BarbershopOperatingHoursRequestDto(requestDto);
     
-    return this.http.post<ApiResponseDto<BarbershopOperatingHours[]>>(
+    // Validar antes de enviar
+    if (!dto.isValidSchedule()) {
+      const errorMessage = dto.getValidationErrorMessage();
+      return throwError(() => new Error(errorMessage || 'Datos de horario inválidos'));
+    }
+    
+    return this.http.post<ApiResponseDto<BarbershopOperatingHours>>(
       `${this.urlService.getBarbershopUrl('BASE')}/operating-hours`,
-      operatingHours,
-      { params }
+      dto
     ).pipe(
       map(response => {
         if (response.data) {
           return response.data;
         }
-        throw new Error('No se recibieron datos de los horarios creados');
+        throw new Error('No se recibieron datos del horario creado/actualizado');
       }),
       catchError(this.handleError.bind(this))
     );
+  }
+
+  /**
+   * Crea o actualiza múltiples horarios de atención para una barbería
+   * @param barbershopId ID de la barbería
+   * @param operatingHours Array de horarios de atención
+   * @returns Observable con los horarios creados/actualizados
+   */
+  createOrUpdateOperatingHours(
+    barbershopId: string,
+    operatingHours: BarbershopOperatingHoursRequest[]
+  ): Observable<BarbershopOperatingHours[]> {
+    // Crear requests individuales para cada horario
+    const requests = operatingHours.map(hour => 
+      this.createOrUpdateOperatingHour({
+        ...hour,
+        barbershopId
+      })
+    );
+    
+    // Ejecutar todas las requests en paralelo
+    return forkJoin(requests);
   }
 
   /**
@@ -70,95 +97,28 @@ export class BarbershopOperatingHoursService {
   }
 
   /**
-   * Obtiene un horario específico por su ID
-   * @param id ID del horario
-   * @returns Observable con el horario
+   * Obtiene el horario de operación para un día específico
+   * @param barbershopId ID de la barbería
+   * @param dayOfWeek Día de la semana (enum DayOfWeek)
+   * @returns Observable con el horario del día
    */
-  getOperatingHourById(id: string): Observable<BarbershopOperatingHours> {
-    const params = new HttpParams().set('id', id);
+  getOperatingHoursForDay(
+    barbershopId: string,
+    dayOfWeek: DayOfWeek
+  ): Observable<BarbershopOperatingHours> {
+    const params = new HttpParams()
+      .set('barbershopId', barbershopId)
+      .set('dayOfWeek', dayOfWeek.toString());
     
     return this.http.get<ApiResponseDto<BarbershopOperatingHours>>(
-      `${this.urlService.getBarbershopUrl('BASE')}/operating-hours/by-id`,
+      `${this.urlService.getBarbershopUrl('BASE')}/operating-hours/day`,
       { params }
     ).pipe(
       map(response => {
         if (response.data) {
           return response.data;
         }
-        throw new Error('No se encontró el horario especificado');
-      }),
-      catchError(this.handleError.bind(this))
-    );
-  }
-
-  /**
-   * Actualiza un horario de atención específico
-   * @param id ID del horario a actualizar
-   * @param operatingHour Datos actualizados del horario
-   * @returns Observable con el horario actualizado
-   */
-  updateOperatingHour(
-    id: string,
-    operatingHour: BarbershopOperatingHoursCreate
-  ): Observable<BarbershopOperatingHours> {
-    const params = new HttpParams().set('id', id);
-    
-    return this.http.put<ApiResponseDto<BarbershopOperatingHours>>(
-      `${this.urlService.getBarbershopUrl('BASE')}/operating-hours`,
-      operatingHour,
-      { params }
-    ).pipe(
-      map(response => {
-        if (response.data) {
-          return response.data;
-        }
-        throw new Error('No se pudo actualizar el horario');
-      }),
-      catchError(this.handleError.bind(this))
-    );
-  }
-
-  /**
-   * Actualiza múltiples horarios de atención para una barbería
-   * @param barbershopId ID de la barbería
-   * @param operatingHours Array de horarios actualizados
-   * @returns Observable con los horarios actualizados
-   */
-  updateMultipleOperatingHours(
-    barbershopId: string,
-    operatingHours: BarbershopOperatingHoursCreate[]
-  ): Observable<BarbershopOperatingHours[]> {
-    const params = new HttpParams().set('barbershopId', barbershopId);
-    
-    return this.http.put<ApiResponseDto<BarbershopOperatingHours[]>>(
-      `${this.urlService.getBarbershopUrl('BASE')}/operating-hours/multiple`,
-      operatingHours,
-      { params }
-    ).pipe(
-      map(response => {
-        if (response.data) {
-          return response.data;
-        }
-        throw new Error('No se pudieron actualizar los horarios');
-      }),
-      catchError(this.handleError.bind(this))
-    );
-  }
-
-  /**
-   * Elimina un horario de atención específico
-   * @param id ID del horario a eliminar
-   * @returns Observable con la confirmación
-   */
-  deleteOperatingHour(id: string): Observable<string> {
-    const params = new HttpParams().set('id', id);
-    
-    return this.http.delete<ApiResponseDto<string>>(
-      `${this.urlService.getBarbershopUrl('BASE')}/operating-hours`,
-      { params }
-    ).pipe(
-      map(response => {
-        return response.message || 'Horario eliminado exitosamente';
+        throw new Error('No se encontró el horario para el día especificado');
       }),
       catchError(this.handleError.bind(this))
     );
@@ -166,35 +126,20 @@ export class BarbershopOperatingHoursService {
 
   /**
    * Elimina todos los horarios de atención de una barbería
+   * Nota: Este método puede requerir múltiples llamadas individuales
+   * dependiendo de la implementación del backend
    * @param barbershopId ID de la barbería
    * @returns Observable con la confirmación
    */
-  deleteAllOperatingHours(barbershopId: string): Observable<string> {
+  deleteOperatingHours(barbershopId: string): Observable<string> {
     const params = new HttpParams().set('barbershopId', barbershopId);
     
-    return this.http.delete<ApiResponseDto<string>>(
-      `${this.urlService.getBarbershopUrl('BASE')}/operating-hours/all`,
+    return this.http.delete<ApiResponseDto<void>>(
+      `${this.urlService.getBarbershopUrl('BASE')}/operating-hours`,
       { params }
     ).pipe(
       map(response => {
-        return response.message || 'Todos los horarios eliminados exitosamente';
-      }),
-      catchError(this.handleError.bind(this))
-    );
-  }
-
-  /**
-   * Valida si los horarios de atención son válidos
-   * @param operatingHours Array de horarios a validar
-   * @returns Observable con el resultado de la validación
-   */
-  validateOperatingHours(operatingHours: BarbershopOperatingHoursCreate[]): Observable<boolean> {
-    return this.http.post<ApiResponseDto<boolean>>(
-      `${this.urlService.getBarbershopUrl('BASE')}/operating-hours/validate`,
-      operatingHours
-    ).pipe(
-      map(response => {
-        return response.data || false;
+        return response.message || 'Horarios eliminados exitosamente';
       }),
       catchError(this.handleError.bind(this))
     );
@@ -202,20 +147,18 @@ export class BarbershopOperatingHoursService {
 
   /**
    * Obtiene los días de la semana disponibles para configurar horarios
-   * @returns Observable con los días disponibles
+   * @returns Array con los días disponibles
    */
-  getAvailableDays(): Observable<string[]> {
-    return this.http.get<ApiResponseDto<string[]>>(
-      `${this.urlService.getBarbershopUrl('BASE')}/operating-hours/available-days`
-    ).pipe(
-      map(response => {
-        if (response.data) {
-          return response.data;
-        }
-        return ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
-      }),
-      catchError(this.handleError.bind(this))
-    );
+  getAvailableDays(): DayOfWeek[] {
+    return [
+      DayOfWeek.MONDAY,
+      DayOfWeek.TUESDAY,
+      DayOfWeek.WEDNESDAY,
+      DayOfWeek.THURSDAY,
+      DayOfWeek.FRIDAY,
+      DayOfWeek.SATURDAY,
+      DayOfWeek.SUNDAY
+    ];
   }
 
   /**

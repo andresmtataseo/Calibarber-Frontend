@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CreateBarbershopRequest } from '../../../../barbershop/models/barbershop.model';
 import { BarbershopService, BarbershopOperatingHoursService } from '../../../../barbershop/services';
+import { BarbershopOperatingHoursRequest, DayOfWeek } from '../../../../barbershop/models/operating-hours.model';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -99,40 +100,60 @@ export class BarbershopCreateComponent implements OnInit {
 
       const formValue = this.barbershopForm.value;
 
+      // Crear request solo con datos básicos de la barbería
       const createRequest: CreateBarbershopRequest = {
         name: formValue.name,
         addressText: formValue.address,
         phoneNumber: formValue.phone || undefined,
         email: formValue.email || undefined,
-        operatingHours: formValue.operatingHours.map((hour: any) => ({
-          dayOfWeek: this.getDayOfWeekNumber(hour.dayOfWeek),
-          openingTime: hour.isOpen ? hour.openTime : undefined,
-          closingTime: hour.isOpen ? hour.closeTime : undefined,
-          isClosed: !hour.isOpen,
-          notes: hour.notes || undefined
-        }))
+        logoUrl: undefined
       };
 
-      // Los horarios ya se incluyen en el createRequest
-      const hasOperatingHours = formValue.operatingHours.some((hour: any) => hour.isOpen);
+      // Preparar horarios de operación usando el nuevo modelo
+      const operatingHours: BarbershopOperatingHoursRequest[] = formValue.operatingHours.map((hour: any) => ({
+        barbershopId: '', // Se asignará después de crear la barbería
+        dayOfWeek: this.getDayOfWeekEnum(hour.dayOfWeek) as DayOfWeek,
+        openingTime: hour.isOpen ? hour.openTime : null,
+        closingTime: hour.isOpen ? hour.closeTime : null,
+        isClosed: !hour.isOpen,
+        notes: hour.notes || null
+      }));
 
       // Crear la barbería primero
       this.barbershopService.createBarbershop(createRequest)
-        .pipe(
-          finalize(() => {
-            this.isSubmitting = false;
-          })
-        )
         .subscribe({
           next: (createdBarbershop) => {
             console.log('Barbería creada exitosamente:', createdBarbershop);
-
-            // La barbería se creó exitosamente con sus horarios
-            this.handleSuccess('Barbería creada exitosamente');
+            
+            // Asignar el barbershopId a todos los horarios
+            const hoursWithBarbershopId = operatingHours.map(hour => ({
+              ...hour,
+              barbershopId: createdBarbershop.barbershopId
+            }));
+            
+            // Ahora enviar los horarios de operación usando la nueva API
+            this.operatingHoursService.createOrUpdateOperatingHours(
+              createdBarbershop.barbershopId,
+              hoursWithBarbershopId
+            ).pipe(
+              finalize(() => {
+                this.isSubmitting = false;
+              })
+            ).subscribe({
+              next: (createdHours) => {
+                console.log('Horarios creados exitosamente:', createdHours);
+                this.handleSuccess('Barbería y horarios creados exitosamente');
+              },
+              error: (error) => {
+                console.error('Error al crear los horarios:', error);
+                this.errorMessage = 'Barbería creada, pero error al configurar horarios: ' + (error.message || 'Error desconocido');
+              }
+            });
           },
           error: (error) => {
             console.error('Error al crear la barbería:', error);
             this.errorMessage = error.message || 'Error al crear la barbería';
+            this.isSubmitting = false;
           }
         });
     } else {
@@ -145,6 +166,11 @@ export class BarbershopCreateComponent implements OnInit {
   }
 
 
+
+  private getDayOfWeekEnum(dayKey: string): DayOfWeek {
+    // El dayKey ya es el enum correcto (MONDAY, TUESDAY, etc.)
+    return dayKey as DayOfWeek;
+  }
 
   private getDayOfWeekNumber(dayKey: string): number {
     const dayMap: { [key: string]: number } = {
