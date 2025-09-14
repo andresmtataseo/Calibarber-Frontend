@@ -1,378 +1,192 @@
-<div class="page-container">
-  <!-- Header -->
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">Nueva Barbería</h1>
-      <p class="page-description">Registra una nueva barbería en el sistema</p>
-    </div>
-    <div class="header-actions">
-      <button 
-        type="button" 
-        class="btn btn-secondary" 
-        (click)="onCancel()"
-        [disabled]="loading">
-        <i class="fas fa-arrow-left"></i>
-        Volver
-      </button>
-    </div>
-  </div>
-
-  <!-- Form Container -->
-  <div class="form-container">
-    <form [formGroup]="barbershopForm" (ngSubmit)="onSubmit()" class="barbershop-form">
-      
-      <!-- Form Error Message -->
-      <div class="form-error" *ngIf="getFormError()">
-        <i class="fas fa-exclamation-triangle"></i>
-        {{ getFormError() }}
-      </div>
-      
-      <!-- Información Básica -->
-      <div class="form-section">
-        <h3 class="section-title">Información Básica</h3>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="name">Nombre de la Barbería *</label>
-            <input
-              type="text"
-              id="name"
-              class="form-control"
-              [class.error]="f['name'].invalid && f['name'].touched"
-              formControlName="name"
-              placeholder="Ingresa el nombre de la barbería">
-            <div class="error-message" *ngIf="getFieldError('name')">
-              {{ getFieldError('name') }}
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label" for="capacity">Capacidad (Sillas) *</label>
-            <input
-              type="number"
-              id="capacity"
-              class="form-control"
-              [class.error]="f['capacity'].invalid && f['capacity'].touched"
-              formControlName="capacity"
-              placeholder="Número de sillas"
-              min="1"
-              max="50">
-            <div class="error-message" *ngIf="getFieldError('capacity')">
-              {{ getFieldError('capacity') }}
-            </div>
-          </div>
+<div class="flex items-center justify-center bg-base-200 py-4 px-4">
+  <div class="card bg-base-100 shadow-xl max-w-5xl w-full">
+    <!-- Header -->
+    <div class="card-body">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="card-title text-2xl">Nueva Barbería</h2>
+          <p class="text-base-content/70 text-sm mt-2">Registra una nueva barbería en el sistema</p>
         </div>
-        
-        <div class="form-row">
-          <div class="form-group full-width">
-            <label class="form-label" for="description">Descripción</label>
-            <textarea
-              id="description"
-              class="form-control"
-              formControlName="description"
-              placeholder="Describe la barbería, su ambiente, especialidades..."
-              rows="3">
-            </textarea>
-            <div class="error-message" *ngIf="getFieldError('description')">
-              {{ getFieldError('description') }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Información de Contacto -->
-      <div class="form-section">
-        <h3 class="section-title">Información de Contacto</h3>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="phone">Teléfono *</label>
-            <input
-              type="tel"
-              id="phone"
-              class="form-control"
-              [class.error]="f['phone'].invalid && f['phone'].touched"
-              formControlName="phone"
-              placeholder="+57 300 123 4567">
-            <div class="error-message" *ngIf="getFieldError('phone')">
-              {{ getFieldError('phone') }}
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label" for="email">Email *</label>
-            <input
-              type="email"
-              id="email"
-              class="form-control"
-              [class.error]="f['email'].invalid && f['email'].touched"
-              formControlName="email"
-              placeholder="contacto@barberia.com">
-            <div class="error-message" *ngIf="getFieldError('email')">
-              {{ getFieldError('email') }}
-            </div>
-          </div>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group full-width">
-            <label class="form-label" for="website">Sitio Web</label>
-            <input
-              type="url"
-              id="website"
-              class="form-control"
-              formControlName="website"
-              placeholder="https://www.barberia.com">
-            <div class="error-message" *ngIf="getFieldError('website')">
-              {{ getFieldError('website') }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Dirección -->
-      <div class="form-section">
-        <h3 class="section-title">Dirección</h3>
-        
-        <div class="form-row">
-          <div class="form-group full-width">
-            <label class="form-label" for="address">Dirección Completa *</label>
-            <input
-              type="text"
-              id="address"
-              class="form-control"
-              [class.error]="f['address'].invalid && f['address'].touched"
-              formControlName="address"
-              placeholder="Calle 123 #45-67, Barrio Centro">
-            <div class="error-message" *ngIf="getFieldError('address')">
-              {{ getFieldError('address') }}
-            </div>
-          </div>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="city">Ciudad *</label>
-            <input
-              type="text"
-              id="city"
-              class="form-control"
-              [class.error]="f['city'].invalid && f['city'].touched"
-              formControlName="city"
-              placeholder="Bogotá">
-            <div class="error-message" *ngIf="getFieldError('city')">
-              {{ getFieldError('city') }}
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label" for="state">Departamento *</label>
-            <select
-              id="state"
-              class="form-control"
-              [class.error]="f['state'].invalid && f['state'].touched"
-              formControlName="state">
-              <option value="" disabled>Selecciona un departamento</option>
-              <option *ngFor="let state of states" [value]="state">
-                {{ state }}
-              </option>
-            </select>
-            <div class="error-message" *ngIf="getFieldError('state')">
-              {{ getFieldError('state') }}
-            </div>
-          </div>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="postalCode">Código Postal *</label>
-            <input
-              type="text"
-              id="postalCode"
-              class="form-control"
-              [class.error]="f['postalCode'].invalid && f['postalCode'].touched"
-              formControlName="postalCode"
-              placeholder="110111"
-              maxlength="6">
-            <div class="error-message" *ngIf="getFieldError('postalCode')">
-              {{ getFieldError('postalCode') }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Horarios de Atención -->
-      <div class="form-section">
-        <h3 class="section-title">Horarios de Atención</h3>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="openingTime">Hora de Apertura *</label>
-            <input
-              type="time"
-              id="openingTime"
-              class="form-control"
-              [class.error]="f['openingTime'].invalid && f['openingTime'].touched"
-              formControlName="openingTime">
-            <div class="error-message" *ngIf="getFieldError('openingTime')">
-              {{ getFieldError('openingTime') }}
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label" for="closingTime">Hora de Cierre *</label>
-            <input
-              type="time"
-              id="closingTime"
-              class="form-control"
-              [class.error]="f['closingTime'].invalid && f['closingTime'].touched"
-              formControlName="closingTime">
-            <div class="error-message" *ngIf="getFieldError('closingTime')">
-              {{ getFieldError('closingTime') }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Servicios Disponibles -->
-      <div class="form-section">
-        <h3 class="section-title">Servicios Disponibles</h3>
-        <p class="section-description">Selecciona los servicios que ofrece la barbería</p>
-        
-        <div class="services-grid">
-          <label 
-            *ngFor="let service of availableServices" 
-            class="service-checkbox">
-            <input
-              type="checkbox"
-              [checked]="isServiceSelected(service)"
-              (change)="onServiceChange(service, $event)">
-            <span class="checkmark"></span>
-            <span class="service-label">{{ service.name }}</span>
-          </label>
-        </div>
-        <div class="error-message" *ngIf="getServicesError()">
-          {{ getServicesError() }}
-        </div>
-      </div>
-
-      <!-- Comodidades -->
-      <div class="form-section">
-        <h3 class="section-title">Comodidades</h3>
-        
-        <div class="amenities-grid">
-          <label class="amenity-checkbox">
-            <input
-              type="checkbox"
-              formControlName="parkingAvailable">
-            <span class="checkmark"></span>
-            <span class="amenity-label">
-              <i class="fas fa-parking"></i>
-              Estacionamiento disponible
-            </span>
-          </label>
-          
-          <label class="amenity-checkbox">
-            <input
-              type="checkbox"
-              formControlName="wifiAvailable">
-            <span class="checkmark"></span>
-            <span class="amenity-label">
-              <i class="fas fa-wifi"></i>
-              WiFi gratuito
-            </span>
-          </label>
-          
-          <label class="amenity-checkbox">
-            <input
-              type="checkbox"
-              formControlName="airConditioning">
-            <span class="checkmark"></span>
-            <span class="amenity-label">
-              <i class="fas fa-snowflake"></i>
-              Aire acondicionado
-            </span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Imágenes -->
-      <div class="form-section">
-        <h3 class="section-title">Imágenes</h3>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="logoUrl">Logo (URL)</label>
-            <input
-              type="url"
-              id="logoUrl"
-              class="form-control"
-              formControlName="logoUrl"
-              placeholder="https://ejemplo.com/logo.jpg">
-            <div class="error-message" *ngIf="getFieldError('logoUrl')">
-              {{ getFieldError('logoUrl') }}
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label" for="coverImageUrl">Imagen de Portada (URL)</label>
-            <input
-              type="url"
-              id="coverImageUrl"
-              class="form-control"
-              formControlName="coverImageUrl"
-              placeholder="https://ejemplo.com/portada.jpg">
-            <div class="error-message" *ngIf="getFieldError('coverImageUrl')">
-              {{ getFieldError('coverImageUrl') }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Estado -->
-      <div class="form-section">
-        <h3 class="section-title">Estado</h3>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="status">Estado Inicial *</label>
-            <select
-              id="status"
-              class="form-control"
-              [class.error]="f['status'].invalid && f['status'].touched"
-              formControlName="status">
-              <option value="pending">Pendiente de Aprobación</option>
-              <option value="active">Activa</option>
-              <option value="inactive">Inactiva</option>
-            </select>
-            <div class="error-message" *ngIf="getFieldError('status')">
-              {{ getFieldError('status') }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Form Actions -->
-      <div class="form-actions">
-        <button 
-          type="button" 
-          class="btn btn-secondary" 
+        <button
+          type="button"
+          class="btn btn-ghost"
           (click)="onCancel()"
           [disabled]="loading">
-          Cancelar
-        </button>
-        
-        <button 
-          type="submit" 
-          class="btn btn-primary"
-          [disabled]="barbershopForm.invalid || getServicesError() || loading">
-          <span *ngIf="loading" class="loading-spinner"></span>
-          <span [class.loading-text]="loading">
-            {{ loading ? 'Creando...' : 'Crear Barbería' }}
-          </span>
+          Volver
         </button>
       </div>
-      
-    </form>
+
+      <form [formGroup]="barbershopForm" (ngSubmit)="onSubmit()" class="space-y-6">
+
+
+
+        <!-- Información Básica -->
+        <div class="space-y-6">
+          <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Información Básica</h3>
+
+          <!-- Nombre -->
+          <div class="form-control">
+            <label class="floating-label">
+              <span>Nombre de la Barbería *</span>
+              <input
+                type="text"
+                id="name"
+                class="input input-md w-full"
+                [class.input-error]="f['name'].invalid && f['name'].touched"
+                formControlName="name"
+                placeholder="Nombre de la Barbería *">
+            </label>
+            <div class="label" *ngIf="getFieldError('name')">
+              <span class="label-text-alt text-error">{{ getFieldError('name') }}</span>
+            </div>
+          </div>
+
+          <!-- Logo -->
+          <div class="form-control">
+            <label class="floating-label">
+              <span>Logo (URL)</span>
+              <input
+                type="url"
+                id="logoUrl"
+                class="input input-md w-full"
+                formControlName="logoUrl"
+                placeholder="Logo (URL)">
+            </label>
+            <div class="label" *ngIf="getFieldError('logoUrl')">
+              <span class="label-text-alt text-error">{{ getFieldError('logoUrl') }}</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Teléfono -->
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Teléfono</span>
+                <input
+                  type="tel"
+                  id="phoneNumber"
+                  class="input input-md w-full"
+                  [class.input-error]="f['phoneNumber'].invalid && f['phoneNumber'].touched"
+                  formControlName="phoneNumber"
+                  placeholder="Teléfono">
+              </label>
+              <div class="label" *ngIf="getFieldError('phoneNumber')">
+                <span class="label-text-alt text-error">{{ getFieldError('phoneNumber') }}</span>
+              </div>
+            </div>
+
+            <!-- Email -->
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Email</span>
+                <input
+                  type="email"
+                  id="email"
+                  class="input input-md w-full"
+                  [class.input-error]="f['email'].invalid && f['email'].touched"
+                  formControlName="email"
+                  placeholder="Email">
+              </label>
+              <div class="label" *ngIf="getFieldError('email')">
+                <span class="label-text-alt text-error">{{ getFieldError('email') }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-control">
+            <label class="floating-label">
+              <span>Dirección Completa *</span>
+              <input
+                type="text"
+                id="addressText"
+                class="input input-md w-full"
+                [class.input-error]="f['addressText'].invalid && f['addressText'].touched"
+                formControlName="addressText"
+                placeholder="Dirección Completa *">
+            </label>
+            <div class="label" *ngIf="getFieldError('addressText')">
+              <span class="label-text-alt text-error">{{ getFieldError('addressText') }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Horarios de Atención -->
+        <div class="mb-8">
+          <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Horarios de Atención</h3>
+
+          <div formArrayName="operatingHours" class="space-y-6">
+            <div *ngFor="let dayControl of getOperatingHoursControls(); let i = index"
+                 [formGroupName]="i"
+                 class="card bg-base-50">
+              <!-- Día de la semana -->
+              <div class="form-control mb-3">
+                <label class="label">
+                  <span class="label-text font-medium text-lg">{{ getDayName(dayControl.get('dayOfWeek')?.value) }}</span>
+                </label>
+              </div>
+
+              <!-- Campos en fila -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <!-- Cerrado -->
+                <div class="form-control">
+                  <label class="label cursor-pointer justify-start gap-2">
+                    <input type="checkbox" class="checkbox checkbox-primary" formControlName="isClosed">
+                    <span class="label-text">Cerrado</span>
+                  </label>
+                </div>
+
+                <!-- Hora de apertura -->
+                <div class="form-control" *ngIf="!dayControl.get('isClosed')?.value">
+                  <label class="floating-label">
+                    <span>Apertura</span>
+                    <input type="time" class="input input-sm" formControlName="openingTime">
+                  </label>
+                </div>
+
+                <!-- Hora de cierre -->
+                <div class="form-control" *ngIf="!dayControl.get('isClosed')?.value">
+                  <label class="floating-label">
+                    <span>Cierre</span>
+                    <input type="time" class="input input-sm" formControlName="closingTime">
+                  </label>
+                </div>
+
+                <!-- Notas -->
+                <div class="form-control" *ngIf="dayControl.get('isClosed')?.value">
+                  <label class="floating-label">
+                    <span>Notas (opcional)</span>
+                    <input type="text" class="input input-sm" formControlName="notes" placeholder="Notas (opcional)">
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+
+        <!-- Form Actions -->
+        <div class="flex flex-col-reverse sm:flex-row justify-end gap-4 pt-6 border-t border-base-300">
+          <button
+            type="button"
+            class="btn btn-secondary w-full sm:w-auto"
+            (click)="onCancel()"
+            [disabled]="loading">
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="btn btn-primary w-full sm:w-auto"
+            [disabled]="barbershopForm.invalid || loading">
+            <span *ngIf="loading" class="loading loading-spinner loading-sm"></span>
+            <span>
+              {{ loading ? 'Creando...' : 'Crear Barbería' }}
+            </span>
+          </button>
+        </div>
+
+      </form>
+    </div>
   </div>
 </div>
