@@ -35,7 +35,39 @@ export interface BarberAvailabilityResponse {
 export interface CreateBarberAvailabilityRequest {
   barberId: string;
   dayOfWeek: DayOfWeek;
-  startTime: string; // HH:mm format
-  endTime: string; // HH:mm format
+  startTime?: string; // HH:mm format - opcional para días no disponibles
+  endTime?: string; // HH:mm format - opcional para días no disponibles
   isAvailable: boolean;
+}
+
+// Pagination interfaces
+export interface PageableResponse {
+  pageNumber: number;
+  pageSize: number;
+  sort: {
+    empty: boolean;
+    sorted: boolean;
+    unsorted: boolean;
+  };
+  offset: number;
+  paged: boolean;
+  unpaged: boolean;
+}
+
+export interface BarberPageResponse {
+  content: BarberResponse[];
+  pageable: PageableResponse;
+  last: boolean;
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+  first: boolean;
+  numberOfElements: number;
+  sort: {
+    empty: boolean;
+    sorted: boolean;
+    unsorted: boolean;
+  };
+  empty: boolean;
 }

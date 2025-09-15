@@ -1,8 +1,11 @@
-import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 import { UrlService } from '../../../core/services/url.service';
+import { UserService } from '../../../features/user/services/user.service';
 import { UserDto } from '../../../shared/models/auth.models';
+import { UserResponse } from '../../../features/user/models/user.model';
 
 /**
  * Componente Mobile Sidebar
@@ -18,9 +21,13 @@ import { UserDto } from '../../../shared/models/auth.models';
   templateUrl: './mobile-sidebar.component.html',
   styleUrls: ['./mobile-sidebar.component.css']
 })
-export class MobileSidebarComponent {
+export class MobileSidebarComponent implements OnInit, OnDestroy, OnChanges {
 
   private urlService = inject(UrlService);
+  private userService = inject(UserService);
+  private destroy$ = new Subject<void>();
+
+  userProfile: UserResponse | null = null;
 
   /**
    * Props de entrada del componente
@@ -38,6 +45,46 @@ export class MobileSidebarComponent {
   @Output() userAction = new EventEmitter<string>();
   @Output() loginClick = new EventEmitter<void>();
   @Output() registerClick = new EventEmitter<void>();
+
+  ngOnInit(): void {
+    // Cargar perfil si ya hay un usuario autenticado
+    if (this.isAuthenticated && this.currentUser?.id) {
+      this.loadUserProfile(this.currentUser.id);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Detectar cambios en el usuario actual
+    if (changes['currentUser'] || changes['isAuthenticated']) {
+      if (this.isAuthenticated && this.currentUser?.id) {
+        this.loadUserProfile(this.currentUser.id);
+      } else {
+        this.userProfile = null;
+      }
+    }
+  }
+
+  /**
+   * Carga el perfil completo del usuario
+   */
+  private loadUserProfile(userId: string): void {
+    this.userService.getUserById(userId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (userProfile) => {
+          this.userProfile = userProfile;
+        },
+        error: (error) => {
+          console.warn('Error al cargar perfil del usuario en mobile-sidebar:', error);
+          this.userProfile = null;
+        }
+      });
+  }
 
   /**
    * Cierra el drawer
@@ -83,6 +130,21 @@ export class MobileSidebarComponent {
    */
   onOverlayClick(): void {
     this.onCloseDrawer();
+  }
+
+  /**
+   * Obtiene la URL del avatar del usuario
+   * Primero intenta usar la foto de perfil, luego genera un avatar
+   */
+  getUserAvatarUrl(size: number = 48): string {
+    // Intentar usar la foto de perfil del usuario
+    if (this.userProfile?.profilePictureUrl) {
+      return this.userProfile.profilePictureUrl;
+    }
+    
+    // Fallback: generar avatar usando el servicio centralizado
+    const fullName = this.getUserFullName();
+    return this.urlService.generateAvatarUrl(fullName, '570df8', 'fff', size);
   }
 
   /**

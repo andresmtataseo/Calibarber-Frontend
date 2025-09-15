@@ -2,250 +2,404 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { BarberService } from '../../../../barber/services';
+import { BarbershopService } from '../../../../barbershop/services';
+import { UserService } from '../../../../user/services';
+import { NotificationService } from '../../../../../shared/components/notification/notification.service';
+import { PreloaderComponent } from '../../../../../shared/components/preloader/preloader.component';
+import { BarbershopResponse } from '../../../../barbershop/models';
+import { UserResponse } from '../../../../user/models';
+import { BarberResponse, UpdateBarberRequest, CreateBarberAvailabilityRequest } from '../../../../barber/models';
+import { DayOfWeek } from '../../../../barbershop/models/operating-hours.model';
+import { forkJoin } from 'rxjs';
+
+interface DayAvailability {
+  dayOfWeek: DayOfWeek;
+  isAvailable: boolean;
+  startTime: string;
+  endTime: string;
+}
 
 @Component({
   selector: 'app-barber-edit',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
-  templateUrl: './barber-edit.component.html',
-  styleUrl: './barber-edit.component.css'
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, PreloaderComponent],
+  templateUrl: './barber-edit.component.html'
 })
 export class BarberEditComponent implements OnInit {
   barberForm: FormGroup;
   loading = false;
-  loadingBarber = true;
+  isSubmitting = false;
   barberId: string | null = null;
-  showPassword = false;
+  availableBarbershops: BarbershopResponse[] = [];
+  availableUsers: UserResponse[] = [];
+  currentBarber: BarberResponse | null = null;
 
-  barbershops = [
-    { id: 1, name: 'Barbería Central' },
-    { id: 2, name: 'Estilo Moderno' },
-    { id: 3, name: 'Barbería Clásica' },
-    { id: 4, name: 'Nuevo Estilo' }
-  ];
-
-  availableSpecialties = [
-    'Corte clásico',
-    'Corte moderno',
-    'Fade',
-    'Barba',
-    'Afeitado',
-    'Diseños',
-    'Corte infantil',
-    'Tratamientos capilares'
-  ];
-
-  experienceLevels = [
-    { value: 'junior', label: 'Junior (0-2 años)' },
-    { value: 'mid', label: 'Intermedio (2-5 años)' },
-    { value: 'senior', label: 'Senior (5+ años)' }
+  daysOfWeek = [
+    { name: 'Lunes', value: DayOfWeek.MONDAY },
+    { name: 'Martes', value: DayOfWeek.TUESDAY },
+    { name: 'Miércoles', value: DayOfWeek.WEDNESDAY },
+    { name: 'Jueves', value: DayOfWeek.THURSDAY },
+    { name: 'Viernes', value: DayOfWeek.FRIDAY },
+    { name: 'Sábado', value: DayOfWeek.SATURDAY },
+    { name: 'Domingo', value: DayOfWeek.SUNDAY }
   ];
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private barberService: BarberService,
+    private barbershopService: BarbershopService,
+    private userService: UserService,
+    private notificationService: NotificationService
   ) {
-    this.barberForm = this.fb.group({
-      // Información Personal
-      firstName: ['', [Validators.required, Validators.minLength(2)]],
-      lastName: ['', [Validators.required, Validators.minLength(2)]],
-      email: ['', [Validators.required, Validators.email]],
-      phone: ['', [Validators.required, Validators.pattern(/^\+?[1-9]\d{1,14}$/)]],
-      dateOfBirth: ['', [Validators.required]],
-      
-      // Credenciales (opcional en edición)
-      password: [''],
-      confirmPassword: [''],
-      
-      // Información Profesional
-      barbershopId: ['', [Validators.required]],
-      experienceLevel: ['', [Validators.required]],
-      yearsOfExperience: ['', [Validators.required, Validators.min(0), Validators.max(50)]],
-      specialties: this.fb.array([], [Validators.required]),
-      
-      // Configuración
-      status: ['active', [Validators.required]],
-      startDate: ['', [Validators.required]],
-      
-      // Información Adicional
-      bio: [''],
-      profileImage: ['']
-    }, { validators: this.passwordMatchValidator });
+    this.barberForm = this.initializeForm();
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.barberId = this.route.snapshot.paramMap.get('id');
+
     if (this.barberId) {
-      this.loadBarber(this.barberId);
+      // Primero cargar datos iniciales, luego los datos del barbero
+      this.loadInitialData();
+    } else {
+      this.notificationService.error('ID de barbero no válido');
+      this.router.navigate(['/admin/barbers']);
     }
   }
 
-  get specialtiesArray() {
-    return this.barberForm.get('specialties') as FormArray;
+  private initializeForm(): FormGroup {
+    return this.fb.group({
+      userId: [{value: '', disabled: true}, [Validators.required]],
+      barbershopId: ['', [Validators.required]],
+      specialization: [''],
+      isActive: [true, [Validators.required]],
+      availability: this.fb.array(this.createDefaultAvailability())
+    });
   }
 
-  passwordMatchValidator(form: FormGroup) {
-    const password = form.get('password');
-    const confirmPassword = form.get('confirmPassword');
-    
-    if (password?.value && confirmPassword?.value && password.value !== confirmPassword.value) {
-      confirmPassword.setErrors({ passwordMismatch: true });
-      return { passwordMismatch: true };
-    }
-    
-    return null;
+  private createDefaultAvailability(): FormGroup[] {
+    return this.daysOfWeek.map(day => {
+      const group = this.fb.group({
+        dayOfWeek: [day.value],
+        isAvailable: [false],
+        startTime: [{value: '09:00', disabled: true}],
+        endTime: [{value: '18:00', disabled: true}]
+      });
+
+      // Suscribirse a cambios en isAvailable para habilitar/deshabilitar campos de tiempo
+      group.get('isAvailable')?.valueChanges.subscribe(isAvailable => {
+        if (isAvailable) {
+          group.get('startTime')?.enable();
+          group.get('endTime')?.enable();
+        } else {
+          group.get('startTime')?.disable();
+          group.get('endTime')?.disable();
+        }
+      });
+
+      return group;
+    });
   }
 
-  loadBarber(id: string) {
-    this.loadingBarber = true;
-    
-    // Simular carga de datos del barbero
-    setTimeout(() => {
-      const barberData = {
-        id: 1,
-        firstName: 'Carlos',
-        lastName: 'Rodríguez',
-        email: 'carlos@barberia.com',
-        phone: '+57 300 123 4567',
-        dateOfBirth: '1990-05-15',
-        barbershopId: 1,
-        experienceLevel: 'senior',
-        yearsOfExperience: 5,
-        specialties: ['Corte clásico', 'Barba'],
-        status: 'active',
-        startDate: '2019-01-15',
-        bio: 'Barbero especializado en cortes clásicos y cuidado de barba con más de 5 años de experiencia.',
-        profileImage: 'https://example.com/profile.jpg'
-      };
-      
-      // Llenar el formulario con los datos existentes
-      this.barberForm.patchValue({
-        firstName: barberData.firstName,
-        lastName: barberData.lastName,
-        email: barberData.email,
-        phone: barberData.phone,
-        dateOfBirth: barberData.dateOfBirth,
-        barbershopId: barberData.barbershopId,
-        experienceLevel: barberData.experienceLevel,
-        yearsOfExperience: barberData.yearsOfExperience,
-        status: barberData.status,
-        startDate: barberData.startDate,
-        bio: barberData.bio,
-        profileImage: barberData.profileImage
-      });
-      
-      // Configurar especialidades
-      this.specialtiesArray.clear();
-      barberData.specialties.forEach(specialty => {
-        this.specialtiesArray.push(this.fb.control(specialty));
-      });
-      
-      this.loadingBarber = false;
-    }, 1000);
+  private loadInitialData(): void {
+    this.loading = true;
+
+    forkJoin({
+      barbershops: this.barbershopService.getAllBarbershops(),
+      users: this.userService.getAllUsers(0, 100) // Cargar más usuarios
+    }).subscribe({
+      next: (response) => {
+        // Manejar respuesta de barberías
+        if (response.barbershops?.data) {
+          this.availableBarbershops = Array.isArray(response.barbershops.data.content)
+            ? response.barbershops.data.content
+            : Array.isArray(response.barbershops.data)
+            ? response.barbershops.data
+            : [];
+        }
+
+        // Manejar respuesta de usuarios
+        if (response.users?.data) {
+          this.availableUsers = Array.isArray(response.users.data.content)
+            ? response.users.data.content
+            : Array.isArray(response.users.data)
+            ? response.users.data
+            : [];
+        }
+
+
+
+        // Después de cargar los datos iniciales, cargar los datos del barbero
+        if (this.barberId) {
+          this.loadBarberData(this.barberId);
+        } else {
+          this.loading = false;
+        }
+      },
+      error: (error) => {
+
+        this.notificationService.error('Error al cargar los datos iniciales');
+        this.loading = false;
+      }
+    });
+  }
+
+  private loadBarberData(id: string): void {
+    this.loading = true;
+
+    this.barberService.getBarberById(id).subscribe({
+      next: (barber) => {
+        this.currentBarber = barber;
+        this.populateForm(barber);
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error loading barber data:', error);
+
+        // Manejo específico de errores
+        let errorMessage = 'Error al cargar los datos del barbero';
+        if (error.message && error.message.includes('no encontrado')) {
+          errorMessage = `Barbero con ID ${id} no encontrado`;
+        } else if (error.status === 404) {
+          errorMessage = `Barbero con ID ${id} no existe`;
+        } else if (error.status === 403) {
+          errorMessage = 'No tienes permisos para acceder a este barbero';
+        } else if (error.status === 0) {
+          errorMessage = 'Error de conexión con el servidor';
+        }
+
+        this.notificationService.error(errorMessage);
+        this.loading = false;
+        this.router.navigate(['/admin/barbers']);
+      }
+    });
+  }
+
+  private populateForm(barber: BarberResponse): void {
+
+    this.barberForm.patchValue({
+      userId: barber.userId,
+      barbershopId: barber.barbershopId,
+      specialization: barber.specialization || '',
+      isActive: barber.isActive
+    });
+
+    // Deshabilitar el campo de usuario para edición
+    this.barberForm.get('userId')?.disable();
+
+
+    // Cargar disponibilidades del barbero si existen
+    this.loadBarberAvailabilities(barber.barberId);
+  }
+
+  private loadBarberAvailabilities(barberId: string): void {
+    this.barberService.getBarberAvailability(barberId).subscribe({
+      next: (response) => {
+        if (response.data && response.data.length > 0) {
+          this.updateAvailabilityForm(response.data);
+        }
+      },
+      error: (error) => {
+        console.warn('No se pudieron cargar las disponibilidades del barbero:', error);
+        // No mostrar error al usuario, las disponibilidades son opcionales
+      }
+    });
+  }
+
+  private updateAvailabilityForm(availabilities: any[]): void {
+    const availabilityArray = this.barberForm.get('availability') as FormArray;
+
+    availabilities.forEach(availability => {
+      const dayIndex = this.daysOfWeek.findIndex(day => day.value === availability.dayOfWeek);
+      if (dayIndex !== -1) {
+        const dayControl = availabilityArray.at(dayIndex) as FormGroup;
+        dayControl.patchValue({
+          isAvailable: availability.isAvailable,
+          startTime: availability.startTime,
+          endTime: availability.endTime
+        });
+      }
+    });
   }
 
   get f() {
     return this.barberForm.controls;
   }
 
-  togglePasswordVisibility() {
-    this.showPassword = !this.showPassword;
+  getAvailabilityControls() {
+    const availabilityArray = this.barberForm.get('availability') as FormArray;
+    return availabilityArray ? availabilityArray.controls as FormGroup[] : [];
   }
 
-  onSpecialtyChange(specialty: string, event: any) {
-    const specialtiesArray = this.specialtiesArray;
-    
-    if (event.target.checked) {
-      specialtiesArray.push(this.fb.control(specialty));
-    } else {
-      const index = specialtiesArray.controls.findIndex(x => x.value === specialty);
-      if (index >= 0) {
-        specialtiesArray.removeAt(index);
-      }
-    }
+  getDayName(dayOfWeek: DayOfWeek): string {
+    const day = this.daysOfWeek.find(d => d.value === dayOfWeek);
+    return day ? day.name : '';
   }
 
-  isSpecialtySelected(specialty: string): boolean {
-    return this.specialtiesArray.controls.some(control => control.value === specialty);
+  isDayAvailable(dayControl: any): boolean {
+    return dayControl.get('isAvailable')?.value || false;
   }
 
-  onSubmit() {
-    if (this.barberForm.valid) {
-      this.loading = true;
-      
-      const barberData = {
-        ...this.barberForm.value,
-        id: this.barberId,
-        name: `${this.barberForm.value.firstName} ${this.barberForm.value.lastName}`,
-        specialties: this.specialtiesArray.value
+  getDayOfWeekFromControl(dayControl: any): DayOfWeek {
+    return dayControl.get('dayOfWeek')?.value;
+  }
+
+  onSubmit(): void {
+    if (this.barberForm.valid && this.barberId) {
+      this.isSubmitting = true;
+
+      // Obtener valores del formulario incluyendo campos deshabilitados
+      const formValue = this.barberForm.getRawValue();
+      const availabilities = formValue.availability as DayAvailability[];
+
+      const updateData: UpdateBarberRequest = {
+        specialization: formValue.specialization,
+        isActive: formValue.isActive
       };
-      
-      // Remover campos de contraseña si están vacíos
-      if (!barberData.password) {
-        delete barberData.password;
-        delete barberData.confirmPassword;
-      }
-      
-      // Simular actualización de barbero
-      setTimeout(() => {
-        console.log('Barbero actualizado:', barberData);
-        this.loading = false;
-        this.router.navigate(['/admin/barbers']);
-      }, 2000);
+
+
+
+      this.barberService.updateBarber(this.barberId, updateData).subscribe({
+        next: (updatedBarber) => {
+          this.notificationService.success('Barbero actualizado exitosamente');
+
+          // Actualizar disponibilidades si hay cambios
+          if (availabilities && availabilities.length > 0) {
+            this.updateBarberAvailabilities(updatedBarber.barberId, availabilities);
+          } else {
+            this.router.navigate(['/admin/barbers']);
+            this.isSubmitting = false;
+          }
+        },
+        error: (error) => {
+
+          this.notificationService.error('Error al actualizar el barbero');
+          this.isSubmitting = false;
+        }
+      });
     } else {
+
       this.markFormGroupTouched();
     }
   }
 
-  onCancel() {
-    this.router.navigate(['/admin/barbers']);
-  }
 
-  private markFormGroupTouched() {
-    Object.keys(this.barberForm.controls).forEach(key => {
-      const control = this.barberForm.get(key);
-      control?.markAsTouched();
-    });
-  }
 
-  getFieldError(fieldName: string): string {
+  getFieldError(fieldName: string): string | null {
     const field = this.barberForm.get(fieldName);
-    
+
     if (field?.errors && field.touched) {
       if (field.errors['required']) {
         return 'Este campo es requerido';
       }
       if (field.errors['email']) {
-        return 'Ingresa un email válido';
-      }
-      if (field.errors['minlength']) {
-        return `Mínimo ${field.errors['minlength'].requiredLength} caracteres`;
-      }
-      if (field.errors['pattern']) {
-        return 'Formato de teléfono inválido';
-      }
-      if (field.errors['passwordMismatch']) {
-        return 'Las contraseñas no coinciden';
-      }
-      if (field.errors['min']) {
-        return `El valor mínimo es ${field.errors['min'].min}`;
-      }
-      if (field.errors['max']) {
-        return `El valor máximo es ${field.errors['max'].max}`;
+        return 'Formato de email inválido';
       }
     }
-    
-    return '';
+
+    return null;
   }
 
-  getSpecialtiesError(): string {
-    const specialtiesArray = this.specialtiesArray;
-    if (specialtiesArray.invalid && specialtiesArray.touched) {
-      if (specialtiesArray.errors?.['required']) {
-        return 'Selecciona al menos una especialidad';
+  private updateBarberAvailabilities(barberId: string, availabilities: DayAvailability[]): void {
+    // Primero obtener las disponibilidades existentes para eliminarlas
+    this.barberService.getBarberAvailability(barberId).subscribe({
+      next: (response) => {
+        const existingAvailabilities = response.data || [];
+
+        // Eliminar todas las disponibilidades existentes
+        const deleteRequests = existingAvailabilities.map(availability =>
+          this.barberService.deleteAvailability(availability.barberAvailabilityId)
+        );
+
+        // Si no hay disponibilidades existentes, proceder directamente a crear las nuevas
+        const deleteObservable = deleteRequests.length > 0 ? forkJoin(deleteRequests) : forkJoin([]);
+
+        deleteObservable.subscribe({
+          next: () => {
+            // Crear las nuevas disponibilidades
+            this.createNewAvailabilities(barberId, availabilities);
+          },
+          error: (error) => {
+            console.error('Error al eliminar disponibilidades existentes:', error);
+            this.notificationService.error('Error al actualizar las disponibilidades');
+            this.isSubmitting = false;
+          }
+        });
+      },
+      error: (error) => {
+        console.error('Error al obtener disponibilidades existentes:', error);
+        // Si no se pueden obtener las existentes, intentar crear las nuevas directamente
+        this.createNewAvailabilities(barberId, availabilities);
       }
+    });
+  }
+
+  private createNewAvailabilities(barberId: string, availabilities: DayAvailability[]): void {
+    const availabilityRequests: CreateBarberAvailabilityRequest[] = availabilities
+      .filter(availability => availability.isAvailable)
+      .map(availability => ({
+        barberId,
+        dayOfWeek: availability.dayOfWeek,
+        startTime: availability.startTime,
+        endTime: availability.endTime,
+        isAvailable: availability.isAvailable
+      }));
+
+    if (availabilityRequests.length === 0) {
+      this.notificationService.success('Barbero actualizado exitosamente');
+      this.router.navigate(['/admin/barbers']);
+      this.isSubmitting = false;
+      return;
     }
-    return '';
+
+    forkJoin(
+      availabilityRequests.map(request =>
+        this.barberService.createAvailability(request)
+      )
+    ).subscribe({
+      next: () => {
+        this.notificationService.success('Barbero y disponibilidades actualizados exitosamente');
+        this.router.navigate(['/admin/barbers']);
+        this.isSubmitting = false;
+      },
+      error: (error) => {
+        console.error('Error al crear nuevas disponibilidades:', error);
+        this.notificationService.error('Barbero actualizado, pero hubo un error al configurar las disponibilidades');
+        this.isSubmitting = false;
+      }
+    });
+  }
+
+  onCancel(): void {
+    this.router.navigate(['/admin/barbers']);
+  }
+
+  trackByUserId(index: number, user: UserResponse): string {
+    return user.userId;
+  }
+
+  trackByBarbershopId(index: number, barbershop: BarbershopResponse): string {
+    return barbershop.barbershopId;
+  }
+
+
+
+  private markFormGroupTouched(): void {
+    Object.keys(this.barberForm.controls).forEach(key => {
+      const control = this.barberForm.get(key);
+      control?.markAsTouched();
+
+      if (control instanceof FormArray) {
+        control.controls.forEach(arrayControl => {
+          if (arrayControl instanceof FormGroup) {
+            Object.keys(arrayControl.controls).forEach(nestedKey => {
+              arrayControl.get(nestedKey)?.markAsTouched();
+            });
+          }
+        });
+      }
+    });
   }
 }

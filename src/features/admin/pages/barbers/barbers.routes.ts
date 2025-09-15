@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { BarberCreateComponent } from './barber-create/barber-create.component';
 import { BarberEditComponent } from './barber-edit/barber-edit.component';
+import { BarberViewComponent } from './barber-view/barber-view.component';
 
 export const barbersRoutes: Routes = [
   {
@@ -19,7 +20,12 @@ export const barbersRoutes: Routes = [
     title: 'Crear Barbero - CaliBarber'
   },
   {
-    path: 'edit/:id',
+    path: ':id',
+    component: BarberViewComponent,
+    title: 'Ver Barbero - CaliBarber'
+  },
+  {
+    path: ':id/edit',
     component: BarberEditComponent,
     title: 'Editar Barbero - CaliBarber'
   }

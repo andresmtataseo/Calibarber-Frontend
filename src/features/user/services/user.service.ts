@@ -74,6 +74,46 @@ export class UserService {
   }
 
   /**
+   * Obtiene todos los usuarios con paginación
+   *
+   * @param page - Número de página (0-indexed)
+   * @param size - Tamaño de página
+   * @param sortBy - Campo por el cual ordenar
+   * @param sortDir - Dirección del ordenamiento (asc/desc)
+   * @returns Observable con la página de usuarios
+   *
+   * @example
+   * ```typescript
+   * this.userService.getAllUsers(0, 10, 'firstName', 'asc')
+   *   .subscribe({
+   *     next: (response) => console.log('Usuarios obtenidos:', response),
+   *     error: (error) => console.error('Error:', error.message)
+   *   });
+   * ```
+   */
+  getAllUsers(
+    page: number = 0,
+    size: number = 10,
+    sortBy: string = 'firstName',
+    sortDir: string = 'asc'
+  ): Observable<ApiResponseDto<any>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sortBy', sortBy)
+      .set('sortDir', sortDir);
+
+    return this.http.get<ApiResponseDto<any>>(
+      USER_URLS.BASE,
+      { params }
+    ).pipe(
+      timeout(this.DEFAULT_TIMEOUT),
+      retry(this.MAX_RETRIES),
+      catchError((error) => this.handleError(error, 'obtener todos los usuarios'))
+    );
+  }
+
+  /**
    * Obtiene múltiples usuarios por sus IDs
    *
    * @param userIds - Array de IDs de usuarios

@@ -5,7 +5,9 @@ import { Subject, takeUntil } from 'rxjs';
 import { MobileSidebarComponent } from '../mobile-sidebar';
 import { UrlService } from '../../../core/services/url.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { UserService } from '../../../features/user/services/user.service';
 import { UserDto } from '../../../shared/models/auth.models';
+import { UserResponse } from '../../../features/user/models/user.model';
 
 @Component({
   selector: 'app-header',
@@ -23,11 +25,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   private urlService = inject(UrlService);
   private authService = inject(AuthService);
+  private userService = inject(UserService);
   private destroy$ = new Subject<void>();
 
   // Estado de autenticación reactivo
   isAuthenticated = false;
   currentUser: UserDto | null = null;
+  userProfile: UserResponse | null = null;
 
   constructor(private router: Router) {}
 
@@ -38,6 +42,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
       .subscribe(authState => {
         this.isAuthenticated = authState.isAuthenticated;
         this.currentUser = authState.user;
+        
+        // Cargar perfil completo del usuario si está autenticado
+        if (authState.isAuthenticated && authState.user?.id) {
+          this.loadUserProfile(authState.user.id);
+        } else {
+          this.userProfile = null;
+        }
       });
   }
 
@@ -123,6 +134,38 @@ export class HeaderComponent implements OnInit, OnDestroy {
    */
   onRegister(): void {
     this.router.navigate(['/register']);
+  }
+
+  /**
+   * Carga el perfil completo del usuario
+   */
+  private loadUserProfile(userId: string): void {
+    this.userService.getUserById(userId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (userProfile) => {
+          this.userProfile = userProfile;
+        },
+        error: (error) => {
+          console.warn('Error al cargar perfil del usuario:', error);
+          this.userProfile = null;
+        }
+      });
+  }
+
+  /**
+   * Obtiene la URL del avatar del usuario
+   * Primero intenta usar la foto de perfil, luego genera un avatar
+   */
+  getUserAvatarUrl(size: number = 48): string {
+    // Intentar usar la foto de perfil del usuario
+    if (this.userProfile?.profilePictureUrl) {
+      return this.userProfile.profilePictureUrl;
+    }
+    
+    // Fallback: generar avatar usando el servicio centralizado
+    const fullName = this.getUserFullName();
+    return this.urlService.generateAvatarUrl(fullName, '570df8', 'fff', size);
   }
 
   /**

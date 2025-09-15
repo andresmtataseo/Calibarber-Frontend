@@ -1,315 +1,169 @@
-<div class="page-container">
-  <!-- Header -->
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">Editar Barbero</h1>
-      <p class="page-description">Modifica la información del barbero seleccionado</p>
-    </div>
-    <div class="header-actions">
-      <button 
-        type="button" 
-        class="btn btn-secondary" 
-        (click)="onCancel()"
-        [disabled]="loading">
-        <i class="fas fa-arrow-left"></i>
-        Volver
-      </button>
-    </div>
-  </div>
+<!-- Preloader -->
+<app-preloader [show]="loading || isSubmitting" size="xl"></app-preloader>
 
-  <!-- Loading State -->
-  <div *ngIf="loadingBarber" class="loading-container">
-    <div class="loading-spinner"></div>
-    <p>Cargando información del barbero...</p>
-  </div>
-
-  <!-- Form Container -->
-  <div *ngIf="!loadingBarber" class="form-container">
-    <form [formGroup]="barberForm" (ngSubmit)="onSubmit()" class="barber-form">
-      
-      <!-- Información Personal -->
-      <div class="form-section">
-        <h3 class="section-title">Información Personal</h3>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="firstName">Nombre *</label>
-            <input
-              type="text"
-              id="firstName"
-              class="form-control"
-              [class.error]="f['firstName'].invalid && f['firstName'].touched"
-              formControlName="firstName"
-              placeholder="Ingresa el nombre">
-            <div class="error-message" *ngIf="getFieldError('firstName')">
-              {{ getFieldError('firstName') }}
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label" for="lastName">Apellido *</label>
-            <input
-              type="text"
-              id="lastName"
-              class="form-control"
-              [class.error]="f['lastName'].invalid && f['lastName'].touched"
-              formControlName="lastName"
-              placeholder="Ingresa el apellido">
-            <div class="error-message" *ngIf="getFieldError('lastName')">
-              {{ getFieldError('lastName') }}
-            </div>
-          </div>
+<div class="flex items-center justify-center bg-base-200">
+  <div class="card bg-base-100 shadow-xl max-w-4xl w-full">
+    <!-- Header -->
+    <div class="card-body">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="card-title text-2xl">Editar Barbero</h2>
+          <p class="text-base-content/70 text-sm mt-2">Modifica la información del barbero seleccionado</p>
         </div>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="email">Email *</label>
-            <input
-              type="email"
-              id="email"
-              class="form-control"
-              [class.error]="f['email'].invalid && f['email'].touched"
-              formControlName="email"
-              placeholder="ejemplo@correo.com">
-            <div class="error-message" *ngIf="getFieldError('email')">
-              {{ getFieldError('email') }}
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label" for="phone">Teléfono *</label>
-            <input
-              type="tel"
-              id="phone"
-              class="form-control"
-              [class.error]="f['phone'].invalid && f['phone'].touched"
-              formControlName="phone"
-              placeholder="+57 300 123 4567">
-            <div class="error-message" *ngIf="getFieldError('phone')">
-              {{ getFieldError('phone') }}
-            </div>
-          </div>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="dateOfBirth">Fecha de Nacimiento *</label>
-            <input
-              type="date"
-              id="dateOfBirth"
-              class="form-control"
-              [class.error]="f['dateOfBirth'].invalid && f['dateOfBirth'].touched"
-              formControlName="dateOfBirth">
-            <div class="error-message" *ngIf="getFieldError('dateOfBirth')">
-              {{ getFieldError('dateOfBirth') }}
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label" for="profileImage">Foto de Perfil</label>
-            <input
-              type="url"
-              id="profileImage"
-              class="form-control"
-              formControlName="profileImage"
-              placeholder="URL de la imagen">
-          </div>
-        </div>
-      </div>
-
-      <!-- Cambiar Contraseña (Opcional) -->
-      <div class="form-section">
-        <h3 class="section-title">Cambiar Contraseña (Opcional)</h3>
-        <p class="section-description">Deja estos campos vacíos si no deseas cambiar la contraseña</p>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="password">Nueva Contraseña</label>
-            <div class="password-input">
-              <input
-                [type]="showPassword ? 'text' : 'password'"
-                id="password"
-                class="form-control"
-                [class.error]="f['password'].invalid && f['password'].touched"
-                formControlName="password"
-                placeholder="Ingresa la nueva contraseña">
-              <button
-                type="button"
-                class="password-toggle"
-                (click)="togglePasswordVisibility()">
-                <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
-              </button>
-            </div>
-            <div class="error-message" *ngIf="getFieldError('password')">
-              {{ getFieldError('password') }}
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label" for="confirmPassword">Confirmar Nueva Contraseña</label>
-            <input
-              [type]="showPassword ? 'text' : 'password'"
-              id="confirmPassword"
-              class="form-control"
-              [class.error]="f['confirmPassword'].invalid && f['confirmPassword'].touched"
-              formControlName="confirmPassword"
-              placeholder="Confirma la nueva contraseña">
-            <div class="error-message" *ngIf="getFieldError('confirmPassword')">
-              {{ getFieldError('confirmPassword') }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Información Profesional -->
-      <div class="form-section">
-        <h3 class="section-title">Información Profesional</h3>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="barbershopId">Barbería *</label>
-            <select
-              id="barbershopId"
-              class="form-control"
-              [class.error]="f['barbershopId'].invalid && f['barbershopId'].touched"
-              formControlName="barbershopId">
-              <option value="" disabled>Selecciona una barbería</option>
-              <option *ngFor="let barbershop of barbershops" [value]="barbershop.id">
-                {{ barbershop.name }}
-              </option>
-            </select>
-            <div class="error-message" *ngIf="getFieldError('barbershopId')">
-              {{ getFieldError('barbershopId') }}
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label" for="experienceLevel">Nivel de Experiencia *</label>
-            <select
-              id="experienceLevel"
-              class="form-control"
-              [class.error]="f['experienceLevel'].invalid && f['experienceLevel'].touched"
-              formControlName="experienceLevel">
-              <option value="" disabled>Selecciona el nivel</option>
-              <option *ngFor="let level of experienceLevels" [value]="level.value">
-                {{ level.label }}
-              </option>
-            </select>
-            <div class="error-message" *ngIf="getFieldError('experienceLevel')">
-              {{ getFieldError('experienceLevel') }}
-            </div>
-          </div>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="yearsOfExperience">Años de Experiencia *</label>
-            <input
-              type="number"
-              id="yearsOfExperience"
-              class="form-control"
-              [class.error]="f['yearsOfExperience'].invalid && f['yearsOfExperience'].touched"
-              formControlName="yearsOfExperience"
-              placeholder="0"
-              min="0"
-              max="50">
-            <div class="error-message" *ngIf="getFieldError('yearsOfExperience')">
-              {{ getFieldError('yearsOfExperience') }}
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label" for="startDate">Fecha de Inicio *</label>
-            <input
-              type="date"
-              id="startDate"
-              class="form-control"
-              [class.error]="f['startDate'].invalid && f['startDate'].touched"
-              formControlName="startDate">
-            <div class="error-message" *ngIf="getFieldError('startDate')">
-              {{ getFieldError('startDate') }}
-            </div>
-          </div>
-        </div>
-        
-        <!-- Especialidades -->
-        <div class="form-group full-width">
-          <label class="form-label">Especialidades *</label>
-          <div class="specialties-grid">
-            <label 
-              *ngFor="let specialty of availableSpecialties" 
-              class="specialty-checkbox">
-              <input
-                type="checkbox"
-                [checked]="isSpecialtySelected(specialty)"
-                (change)="onSpecialtyChange(specialty, $event)">
-              <span class="checkmark"></span>
-              <span class="specialty-label">{{ specialty }}</span>
-            </label>
-          </div>
-          <div class="error-message" *ngIf="getSpecialtiesError()">
-            {{ getSpecialtiesError() }}
-          </div>
-        </div>
-      </div>
-
-      <!-- Información Adicional -->
-      <div class="form-section">
-        <h3 class="section-title">Información Adicional</h3>
-        
-        <div class="form-row">
-          <div class="form-group full-width">
-            <label class="form-label" for="bio">Biografía</label>
-            <textarea
-              id="bio"
-              class="form-control"
-              formControlName="bio"
-              placeholder="Describe la experiencia y habilidades del barbero..."
-              rows="4">
-            </textarea>
-          </div>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="status">Estado *</label>
-            <select
-              id="status"
-              class="form-control"
-              [class.error]="f['status'].invalid && f['status'].touched"
-              formControlName="status">
-              <option value="active">Activo</option>
-              <option value="inactive">Inactivo</option>
-              <option value="pending">Pendiente</option>
-            </select>
-            <div class="error-message" *ngIf="getFieldError('status')">
-              {{ getFieldError('status') }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Form Actions -->
-      <div class="form-actions">
-        <button 
-          type="button" 
-          class="btn btn-secondary" 
+        <button
+          type="button"
+          class="btn btn-ghost"
           (click)="onCancel()"
-          [disabled]="loading">
-          Cancelar
-        </button>
-        
-        <button 
-          type="submit" 
-          class="btn btn-primary"
-          [disabled]="barberForm.invalid || loading">
-          <span *ngIf="loading" class="loading-spinner"></span>
-          <span [class.loading-text]="loading">
-            {{ loading ? 'Actualizando...' : 'Actualizar Barbero' }}
-          </span>
+          [disabled]="loading || isSubmitting">
+          Volver
         </button>
       </div>
-      
-    </form>
-  </div>
-</div>
+
+      <form [formGroup]="barberForm" (ngSubmit)="onSubmit()" class="space-y-6">
+
+         <!-- Información Básica -->
+         <div class="space-y-6">
+           <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Información Básica</h3>
+
+           <!-- Usuario -->
+           <div class="form-control">
+             <label class="floating-label">
+               <span>Usuario *</span>
+               <select
+                 id="userId"
+                 class="select select-md w-full select-disabled"
+                 [class.select-error]="f['userId'].invalid && f['userId'].touched"
+                 formControlName="userId"
+                 [disabled]="true">
+                 <option value="" disabled>Selecciona un usuario</option>
+                 <option *ngFor="let user of availableUsers; trackBy: trackByUserId" [value]="user.userId">
+                   {{ user.firstName }} {{ user.lastName }} - {{ user.email }}
+                 </option>
+               </select>
+             </label>
+           </div>
+
+           <!-- Barbería -->
+           <div class="form-control">
+             <label class="floating-label">
+               <span>Barbería *</span>
+               <select
+                 id="barbershopId"
+                 class="select select-md w-full"
+                 [class.select-error]="f['barbershopId'].invalid && f['barbershopId'].touched"
+                 formControlName="barbershopId">
+                 <option value="" disabled>Selecciona una barbería</option>
+                 <option *ngFor="let barbershop of availableBarbershops; trackBy: trackByBarbershopId" [value]="barbershop.barbershopId">
+                   {{ barbershop.name }}
+                 </option>
+               </select>
+             </label>
+             <div class="label" *ngIf="getFieldError('barbershopId')">
+               <span class="label-text-alt text-error">{{ getFieldError('barbershopId') }}</span>
+             </div>
+           </div>
+
+           <!-- Especialización -->
+           <div class="form-control">
+             <label class="floating-label">
+               <span>Especialización</span>
+               <textarea
+                 id="specialization"
+                 class="textarea textarea-md w-full"
+                 [class.textarea-error]="f['specialization'].invalid && f['specialization'].touched"
+                 formControlName="specialization"
+                 placeholder="Describe las especialidades del barbero (opcional)"
+                 rows="3"></textarea>
+             </label>
+             <div class="label" *ngIf="getFieldError('specialization')">
+               <span class="label-text-alt text-error">{{ getFieldError('specialization') }}</span>
+             </div>
+           </div>
+
+           <!-- Estado -->
+           <div class="form-control">
+             <label class="floating-label">
+               <span>Estado *</span>
+               <select
+                 id="isActive"
+                 class="select select-md w-full"
+                 [class.select-error]="f['isActive'].invalid && f['isActive'].touched"
+                 formControlName="isActive">
+                 <option [value]="true">Activo</option>
+                 <option [value]="false">Inactivo</option>
+               </select>
+             </label>
+             <div class="label" *ngIf="getFieldError('isActive')">
+               <span class="label-text-alt text-error">{{ getFieldError('isActive') }}</span>
+             </div>
+           </div>
+         </div>
+
+         <!-- Horarios de Disponibilidad -->
+         <div class="mb-8">
+           <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Horarios de Disponibilidad</h3>
+           <p class="text-sm text-base-content/70 mb-4">Define los horarios en los que el barbero estará disponible para atender clientes</p>
+
+           <div formArrayName="availability" class="space-y-6" *ngIf="barberForm">
+             <div *ngFor="let dayControl of getAvailabilityControls(); let i = index"
+                  [formGroupName]="i"
+                  class="card bg-base-50">
+               <!-- Día de la semana -->
+               <div class="form-control mb-3">
+                 <label class="label">
+                   <span class="label-text font-medium text-lg">{{ getDayName(getDayOfWeekFromControl(dayControl)) }}</span>
+                 </label>
+               </div>
+
+               <!-- Campos en fila -->
+               <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                 <!-- Disponible -->
+                 <div class="form-control">
+                   <label class="label cursor-pointer justify-start gap-2">
+                     <input type="checkbox" class="checkbox checkbox-primary" formControlName="isAvailable">
+                     <span class="label-text">Disponible</span>
+                   </label>
+                 </div>
+
+                 <!-- Hora de inicio -->
+                 <div class="form-control" [class.opacity-50]="!isDayAvailable(dayControl)">
+                   <label class="floating-label">
+                     <span>Hora Inicio</span>
+                     <input type="time" class="input input-sm" formControlName="startTime">
+                   </label>
+                 </div>
+
+                 <!-- Hora de fin -->
+                 <div class="form-control" [class.opacity-50]="!isDayAvailable(dayControl)">
+                   <label class="floating-label">
+                     <span>Hora Fin</span>
+                     <input type="time" class="input input-sm" formControlName="endTime">
+                   </label>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
+
+         <!-- Form Actions -->
+         <div class="flex flex-col-reverse sm:flex-row justify-end gap-4 pt-6 border-t border-base-300">
+           <button
+             type="button"
+             class="btn btn-ghost w-full sm:w-auto"
+             (click)="onCancel()"
+             [disabled]="loading || isSubmitting">
+             Cancelar
+           </button>
+
+           <button
+             type="submit"
+             class="btn btn-primary w-full sm:w-auto"
+             [disabled]="barberForm.invalid || loading || isSubmitting">
+             {{ isSubmitting ? 'Actualizando...' : 'Actualizar Barbero' }}
+           </button>
+         </div>
+
+       </form>
+     </div>
+   </div>
+ </div>

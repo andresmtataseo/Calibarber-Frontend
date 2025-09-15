@@ -1,0 +1,1 @@
+export { BarberService } from './barber.service';

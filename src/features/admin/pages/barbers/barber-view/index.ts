@@ -1,0 +1,1 @@
+export { BarberViewComponent } from './barber-view.component';
