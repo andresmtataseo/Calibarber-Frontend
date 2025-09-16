@@ -17,6 +17,11 @@ export const servicesRoutes: Routes = [
     title: 'Crear Servicio - CaliBarber'
   },
   {
+    path: 'view/:id',
+    loadComponent: () => import('./service-view/service-view.component').then(m => m.ServiceViewComponent),
+    title: 'Detalles del Servicio - CaliBarber'
+  },
+  {
     path: 'edit/:id',
     loadComponent: () => import('./service-edit/service-edit.component').then(m => m.ServiceEditComponent),
     title: 'Editar Servicio - CaliBarber'
