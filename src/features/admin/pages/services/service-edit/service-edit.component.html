@@ -1,0 +1,158 @@
+<!-- Preloader -->
+<app-preloader [show]="loading || isSubmitting" size="xl"></app-preloader>
+
+<div class="flex items-center justify-center bg-base-200">
+  <div class="card bg-base-100 shadow-xl max-w-4xl w-full">
+    <!-- Header -->
+    <div class="card-body">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="card-title text-2xl">Editar Servicio</h2>
+          <p class="text-base-content/70 text-sm mt-2">Modifica la información del servicio seleccionado</p>
+        </div>
+        <button
+          type="button"
+          class="btn btn-ghost"
+          (click)="onCancel()"
+          [disabled]="loading || isSubmitting">
+          Volver
+        </button>
+      </div>
+
+      <form [formGroup]="serviceForm" (ngSubmit)="onSubmit()" class="space-y-6">
+        <!-- Información Básica -->
+        <div class="space-y-6">
+          <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Información del Servicio</h3>
+
+          <!-- Barbería -->
+          <div class="form-control">
+            <label class="floating-label">
+              <span>Barbería *</span>
+              <select
+                id="barbershopId"
+                class="select select-md w-full select-disabled"
+                [class.select-error]="f['barbershopId'].invalid && f['barbershopId'].touched"
+                formControlName="barbershopId"
+                [disabled]="true">
+                <option value="" disabled>Selecciona una barbería</option>
+                <option *ngFor="let barbershop of availableBarbershops; trackBy: trackByBarbershopId" [value]="barbershop.barbershopId">
+                  {{ barbershop.name }}
+                </option>
+              </select>
+            </label>
+            <div class="label" *ngIf="getFieldError('barbershopId')">
+              <span class="label-text-alt text-error">{{ getFieldError('barbershopId') }}</span>
+            </div>
+          </div>
+
+          <!-- Nombre -->
+          <div class="form-control">
+            <label class="floating-label">
+              <span>Nombre del Servicio *</span>
+              <input
+                type="text"
+                id="name"
+                class="input input-md w-full"
+                [class.input-error]="f['name'].invalid && f['name'].touched"
+                formControlName="name"
+                placeholder="Ej: Corte de cabello">
+            </label>
+            <div class="label" *ngIf="getFieldError('name')">
+              <span class="label-text-alt text-error">{{ getFieldError('name') }}</span>
+            </div>
+          </div>
+
+          <!-- Descripción -->
+          <div class="form-control">
+            <label class="floating-label">
+              <span>Descripción</span>
+              <textarea
+                id="description"
+                class="textarea textarea-md w-full"
+                [class.textarea-error]="f['description'].invalid && f['description'].touched"
+                formControlName="description"
+                placeholder="Describe el servicio (opcional)"
+                rows="3"></textarea>
+            </label>
+            <div class="label" *ngIf="getFieldError('description')">
+              <span class="label-text-alt text-error">{{ getFieldError('description') }}</span>
+            </div>
+          </div>
+
+          <!-- Duración -->
+          <div class="form-control">
+            <label class="floating-label">
+              <span>Duración (minutos) *</span>
+              <input
+                type="number"
+                id="durationMinutes"
+                class="input input-md w-full"
+                [class.input-error]="f['durationMinutes'].invalid && f['durationMinutes'].touched"
+                formControlName="durationMinutes"
+                min="5"
+                max="480">
+            </label>
+            <div class="label" *ngIf="getFieldError('durationMinutes')">
+              <span class="label-text-alt text-error">{{ getFieldError('durationMinutes') }}</span>
+            </div>
+          </div>
+
+          <!-- Precio -->
+          <div class="form-control">
+            <label class="floating-label">
+              <span>Precio *</span>
+              <input
+                type="number"
+                id="price"
+                class="input input-md w-full"
+                [class.input-error]="f['price'].invalid && f['price'].touched"
+                formControlName="price"
+                min="0.01"
+                max="999999.99"
+                step="0.01">
+            </label>
+            <div class="label" *ngIf="getFieldError('price')">
+              <span class="label-text-alt text-error">{{ getFieldError('price') }}</span>
+            </div>
+          </div>
+
+          <!-- Estado -->
+          <div class="form-control">
+            <label class="floating-label">
+              <span>Estado *</span>
+              <select
+                id="isActive"
+                class="select select-md w-full"
+                [class.select-error]="f['isActive'].invalid && f['isActive'].touched"
+                formControlName="isActive">
+                <option [value]="true">Activo</option>
+                <option [value]="false">Inactivo</option>
+              </select>
+            </label>
+            <div class="label" *ngIf="getFieldError('isActive')">
+              <span class="label-text-alt text-error">{{ getFieldError('isActive') }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex flex-col-reverse sm:flex-row justify-end gap-4 pt-6 border-t border-base-300">
+          <button
+            type="button"
+            class="btn btn-ghost w-full sm:w-auto"
+            (click)="onCancel()"
+            [disabled]="loading || isSubmitting">
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="btn btn-primary w-full sm:w-auto"
+            [disabled]="serviceForm.invalid || loading || isSubmitting">
+            {{ isSubmitting ? 'Actualizando...' : 'Actualizar Servicio' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
