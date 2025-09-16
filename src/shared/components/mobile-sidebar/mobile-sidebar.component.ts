@@ -18,8 +18,7 @@ import { UserResponse } from '../../../features/user/models/user.model';
   selector: 'app-mobile-sidebar',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './mobile-sidebar.component.html',
-  styleUrls: ['./mobile-sidebar.component.css']
+  templateUrl: './mobile-sidebar.component.html'
 })
 export class MobileSidebarComponent implements OnInit, OnDestroy, OnChanges {
 
@@ -141,7 +140,7 @@ export class MobileSidebarComponent implements OnInit, OnDestroy, OnChanges {
     if (this.userProfile?.profilePictureUrl) {
       return this.userProfile.profilePictureUrl;
     }
-    
+
     // Fallback: generar avatar usando el servicio centralizado
     const fullName = this.getUserFullName();
     return this.urlService.generateAvatarUrl(fullName, '570df8', 'fff', size);

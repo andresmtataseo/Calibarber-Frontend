@@ -61,9 +61,16 @@ export const BARBER_URLS = {
 // URLs de servicios
 export const SERVICE_URLS = {
   BASE: `${API_CONFIG.API_BASE}/services`,
-  BY_ID: (id: string) => `${API_CONFIG.API_BASE}/services/${id}`,
-  BY_CATEGORY: (category: string) => `${API_CONFIG.API_BASE}/services/category/${category}`,
-  POPULAR: `${API_CONFIG.API_BASE}/services/popular`
+  CREATE: `${API_CONFIG.API_BASE}/services`,
+  BY_ID: `${API_CONFIG.API_BASE}/services/by-id`,
+  ALL: `${API_CONFIG.API_BASE}/services/all`,
+  BY_BARBERSHOP: `${API_CONFIG.API_BASE}/services/by-barbershop`,
+  SEARCH_BY_NAME: `${API_CONFIG.API_BASE}/services/search/name`,
+  SEARCH_BY_PRICE: `${API_CONFIG.API_BASE}/services/search/price`,
+  SEARCH_BY_DURATION: `${API_CONFIG.API_BASE}/services/search/duration`,
+  UPDATE: `${API_CONFIG.API_BASE}/services/update`,
+  DELETE: `${API_CONFIG.API_BASE}/services/delete`,
+  RESTORE: `${API_CONFIG.API_BASE}/services/restore`
 } as const;
 
 // URLs de citas

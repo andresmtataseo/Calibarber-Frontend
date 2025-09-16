@@ -73,16 +73,9 @@ export class UrlService {
   /**
    * Obtiene una URL del módulo de servicios
    * @param endpoint - El endpoint deseado
-   * @param param - Parámetro requerido para endpoints dinámicos (id o category)
    */
-  getServiceUrl(endpoint: keyof typeof API_URLS.SERVICE, param?: string): string {
-    const url = API_URLS.SERVICE[endpoint];
-    
-    if (typeof url === 'function' && param) {
-      return url(param);
-    }
-    
-    return url as string;
+  getServiceUrl(endpoint: keyof typeof API_URLS.SERVICE): string {
+    return API_URLS.SERVICE[endpoint];
   }
 
   /**
