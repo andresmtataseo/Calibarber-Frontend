@@ -4,7 +4,7 @@ import { Observable, throwError, timeout, retry, catchError } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { USER_URLS } from '../../../core/config/api-urls.config';
 import { ApiResponseDto } from '../../../shared/models/auth.models';
-import { UserResponse } from '../models/user.model';
+import { UserResponse, CreateUserRequest, UpdateUserRequest } from '../models/user.model';
 
 /**
  * Servicio para gestionar operaciones relacionadas con usuarios
@@ -74,6 +74,56 @@ export class UserService {
   }
 
   /**
+   * Crea un nuevo usuario en el sistema
+   *
+   * @param createData - Datos del usuario a crear
+   * @returns Observable con los datos del usuario creado
+   * @throws Error con mensaje descriptivo en caso de fallo
+   *
+   * @example
+   * ```typescript
+   * const newUser = {
+   *   email: 'usuario@email.com',
+   *   password: 'password123',
+   *   firstName: 'Juan',
+   *   lastName: 'Pérez',
+   *   role: UserRole.ROLE_CLIENT
+   * };
+   * 
+   * this.userService.createUser(newUser)
+   *   .subscribe({
+   *     next: (user) => console.log('Usuario creado:', user),
+   *     error: (error) => console.error('Error:', error.message)
+   *   });
+   * ```
+   */
+  createUser(createData: CreateUserRequest): Observable<UserResponse> {
+    if (!createData) {
+      return throwError(() => new Error('Los datos del usuario son requeridos'));
+    }
+
+    if (!createData.email || !createData.password || !createData.firstName || !createData.lastName) {
+      return throwError(() => new Error('Email, contraseña, nombre y apellido son campos obligatorios'));
+    }
+
+    return this.http.post<ApiResponseDto<UserResponse>>(USER_URLS.BASE, createData)
+      .pipe(
+        timeout(this.DEFAULT_TIMEOUT),
+        retry({
+          count: this.MAX_RETRIES,
+          delay: this.RETRY_DELAY
+        }),
+        map(response => {
+          if (!response.data) {
+            throw new Error('No se recibieron datos del usuario creado');
+          }
+          return response.data;
+        }),
+        catchError(error => this.handleError(error, 'crear usuario'))
+      );
+  }
+
+  /**
    * Obtiene todos los usuarios con paginación
    *
    * @param page - Número de página (0-indexed)
@@ -113,83 +163,7 @@ export class UserService {
     );
   }
 
-  /**
-   * Obtiene múltiples usuarios por sus IDs
-   *
-   * @param userIds - Array de IDs de usuarios
-   * @returns Observable con array de usuarios
-   */
-  getUsersByIds(userIds: string[]): Observable<UserResponse[]> {
-    if (!userIds || userIds.length === 0) {
-      return throwError(() => new Error('Se requiere al menos un ID de usuario'));
-    }
 
-    // Filtrar IDs válidos
-    const validIds = userIds.filter(id => id && id.trim() !== '');
-    if (validIds.length === 0) {
-      return throwError(() => new Error('No se proporcionaron IDs válidos'));
-    }
-
-    // Crear requests paralelos para cada usuario
-    const requests = validIds.map(id => this.getUserById(id));
-
-    // Usar forkJoin para ejecutar todas las peticiones en paralelo
-    return new Observable<UserResponse[]>(observer => {
-      let completedRequests = 0;
-      let hasError = false;
-      const results: UserResponse[] = [];
-      const errors: Error[] = [];
-
-      requests.forEach((request, index) => {
-        request.subscribe({
-          next: (user) => {
-            if (!hasError) {
-              results[index] = user;
-              completedRequests++;
-
-              if (completedRequests === requests.length) {
-                observer.next(results.filter(result => result !== undefined));
-                observer.complete();
-              }
-            }
-          },
-          error: (error) => {
-            errors.push(error);
-            completedRequests++;
-
-            if (completedRequests === requests.length) {
-              if (results.filter(result => result !== undefined).length > 0) {
-                // Si al menos un usuario se obtuvo correctamente, devolver los resultados parciales
-                observer.next(results.filter(result => result !== undefined));
-                observer.complete();
-              } else {
-                // Si todos fallaron, devolver el primer error
-                hasError = true;
-                observer.error(errors[0] || new Error('Error al obtener usuarios'));
-              }
-            }
-          }
-        });
-      });
-    });
-  }
-
-  /**
-   * Verifica si un usuario existe
-   *
-   * @param userId - ID del usuario a verificar
-   * @returns Observable<boolean> - true si existe, false si no
-   */
-  userExists(userId: string): Observable<boolean> {
-    return this.getUserById(userId)
-      .pipe(
-        map(() => true),
-        catchError(() => {
-          // Si hay error, asumimos que el usuario no existe
-          return [false];
-        })
-      );
-  }
 
   /**
    * Actualiza los datos de un usuario específico
@@ -214,7 +188,7 @@ export class UserService {
    *   });
    * ```
    */
-  updateUser(userId: string, updateData: Partial<UserResponse>): Observable<UserResponse> {
+  updateUser(userId: string, updateData: UpdateUserRequest): Observable<UserResponse> {
     if (!userId || userId.trim() === '') {
       return throwError(() => new Error('El ID del usuario es requerido'));
     }
@@ -250,6 +224,122 @@ export class UserService {
 
         // Manejo centralizado de errores
         catchError(error => this.handleError(error, 'actualizar usuario'))
+      );
+  }
+
+  /**
+   * Elimina un usuario del sistema (soft delete)
+   *
+   * @param userId - ID único del usuario a eliminar
+   * @returns Observable que se completa cuando la eliminación es exitosa
+   * @throws Error con mensaje descriptivo en caso de fallo
+   *
+   * @example
+   * ```typescript
+   * this.userService.deleteUser('user-id')
+   *   .subscribe({
+   *     next: () => console.log('Usuario eliminado exitosamente'),
+   *     error: (error) => console.error('Error:', error.message)
+   *   });
+   * ```
+   */
+  deleteUser(userId: string): Observable<void> {
+    if (!userId || userId.trim() === '') {
+      return throwError(() => new Error('El ID del usuario es requerido'));
+    }
+
+    const params = new HttpParams().set('id', userId.trim());
+
+    return this.http.delete<ApiResponseDto<void>>(USER_URLS.BASE, { params })
+      .pipe(
+        timeout(this.DEFAULT_TIMEOUT),
+        retry({
+          count: this.MAX_RETRIES,
+          delay: this.RETRY_DELAY
+        }),
+        map(() => void 0), // Convertir a void
+        catchError(error => this.handleError(error, 'eliminar usuario'))
+      );
+  }
+
+  /**
+   * Restaura un usuario que fue eliminado previamente
+   *
+   * @param userId - ID único del usuario a restaurar
+   * @returns Observable con los datos del usuario restaurado
+   * @throws Error con mensaje descriptivo en caso de fallo
+   *
+   * @example
+   * ```typescript
+   * this.userService.restoreUser('user-id')
+   *   .subscribe({
+   *     next: (user) => console.log('Usuario restaurado:', user),
+   *     error: (error) => console.error('Error:', error.message)
+   *   });
+   * ```
+   */
+  restoreUser(userId: string): Observable<UserResponse> {
+    if (!userId || userId.trim() === '') {
+      return throwError(() => new Error('El ID del usuario es requerido'));
+    }
+
+    const params = new HttpParams().set('id', userId.trim());
+    const url = `${USER_URLS.BASE}/restore`;
+
+    return this.http.post<ApiResponseDto<UserResponse>>(url, {}, { params })
+      .pipe(
+        timeout(this.DEFAULT_TIMEOUT),
+        retry({
+          count: this.MAX_RETRIES,
+          delay: this.RETRY_DELAY
+        }),
+        map(response => {
+          if (!response.data) {
+            throw new Error('No se recibieron datos del usuario restaurado');
+          }
+          return response.data;
+        }),
+        catchError(error => this.handleError(error, 'restaurar usuario'))
+      );
+  }
+
+  /**
+   * Obtiene todos los usuarios eliminados con paginación
+   *
+   * @param page - Número de página (0-indexed)
+   * @param size - Tamaño de página
+   * @param sortBy - Campo por el cual ordenar
+   * @param sortDir - Dirección del ordenamiento (asc/desc)
+   * @returns Observable con la página de usuarios eliminados
+   *
+   * @example
+   * ```typescript
+   * this.userService.getDeletedUsers(0, 10, 'firstName', 'asc')
+   *   .subscribe({
+   *     next: (response) => console.log('Usuarios eliminados:', response),
+   *     error: (error) => console.error('Error:', error.message)
+   *   });
+   * ```
+   */
+  getDeletedUsers(
+    page: number = 0,
+    size: number = 10,
+    sortBy: string = 'firstName',
+    sortDir: string = 'asc'
+  ): Observable<ApiResponseDto<any>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sortBy', sortBy)
+      .set('sortDir', sortDir);
+
+    const url = `${USER_URLS.BASE}/deleted`;
+
+    return this.http.get<ApiResponseDto<any>>(url, { params })
+      .pipe(
+        timeout(this.DEFAULT_TIMEOUT),
+        retry(this.MAX_RETRIES),
+        catchError((error) => this.handleError(error, 'obtener usuarios eliminados'))
       );
   }
 

@@ -147,11 +147,11 @@ export class BarberListComponent implements OnInit {
   }
 
   editBarber(id: string): void {
-    this.router.navigate(['/admin/barbers', id, 'edit']);
+    this.router.navigate(['/admin/barbers/edit', id]);
   }
 
   viewBarber(id: string): void {
-    this.router.navigate(['/admin/barbers', id]);
+    this.router.navigate(['/admin/barbers/view', id]);
   }
 
   deleteBarber(barber: BarberResponse & { user?: UserResponse }): void {

@@ -20,12 +20,12 @@ export const barbersRoutes: Routes = [
     title: 'Crear Barbero - CaliBarber'
   },
   {
-    path: ':id',
+    path: 'view/:id',
     component: BarberViewComponent,
     title: 'Ver Barbero - CaliBarber'
   },
   {
-    path: ':id/edit',
+    path: 'edit/:id',
     component: BarberEditComponent,
     title: 'Editar Barbero - CaliBarber'
   }

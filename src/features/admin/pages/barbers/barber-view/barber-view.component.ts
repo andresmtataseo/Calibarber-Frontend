@@ -259,7 +259,7 @@ export class BarberViewComponent implements OnInit {
   }
 
   editBarber(): void {
-    this.router.navigate(['/admin/barbers', this.barberId, 'edit']);
+    this.router.navigate(['/admin/barbers/edit', this.barberId]);
   }
 
   deleteBarber(): void {

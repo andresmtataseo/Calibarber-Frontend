@@ -1,67 +1,172 @@
-<div class="p-6">
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
-    <div>
-      <h1 class="text-3xl font-bold text-base-content">Gestión de Usuarios</h1>
-      <p class="text-base-content/70 mt-1">Administra los usuarios del sistema</p>
+<!-- Preloader compartido -->
+<app-preloader [show]="loading" [size]="'lg'"></app-preloader>
+
+  <div class="grid grid-cols-1">
+<!-- Encabezado -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+  <div>
+    <h1 class="text-3xl font-bold text-primary">Gestión de Usuarios</h1>
+    <p class="text-base-content/70 mt-1">Administra todos los usuarios del sistema</p>
+  </div>
+  <button (click)="createUser()" class="btn btn-primary btn-sm md:btn-md">
+    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+    </svg>
+    Crear Usuario
+  </button>
+</div>
+
+  <!-- Search and Filters -->
+  <div class="card bg-base-100 shadow-lg mb-6">
+    <div class="card-body p-4">
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+        <!-- Search -->
+        <div class="col-span-2">
+          <label class="input input-bordered flex items-center gap-2">
+            <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <g
+                stroke-linejoin="round"
+                stroke-linecap="round"
+                stroke-width="2.5"
+                fill="none"
+                stroke="currentColor"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.3-4.3"></path>
+              </g>
+            </svg>
+            <input
+              type="search"
+              placeholder="Buscar usuarios..."
+              class="grow"
+              (input)="onSearch($event)"
+              [value]="searchTerm"
+            />
+          </label>
+        </div>
+
+        <!-- Sort Controls -->
+        <div class="col-span-2 flex items-center justify-center gap-2">
+          <span class="text-sm text-base-content/70">Ordenar por:</span>
+          <select class="select select-bordered select-sm" [value]="sortBy" (change)="onSort($any($event.target).value)">
+            <option value="userId">ID</option>
+            <option value="firstName">Nombre</option>
+            <option value="lastName">Apellido</option>
+            <option value="email">Email</option>
+            <option value="role">Rol</option>
+            <option value="createdAt">Fecha Creación</option>
+            <option value="isActive">Estado</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" (click)="toggleSortDirection()" [title]="sortDir === 'asc' ? 'Cambiar a descendente' : 'Cambiar a ascendente'">
+            <svg class="w-4 h-4" [class.rotate-180]="sortDir === 'desc'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Page Size Selector -->
+        <div class="col-span-1 flex items-center justify-end gap-2 w-auto">
+          <span class="text-sm text-base-content/70">Mostrar:</span>
+          <select class="select select-bordered select-sm" [value]="pageSize" (change)="onPageSizeChange(+$any($event.target).value)">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+      </div>
     </div>
-    <button 
-      class="btn btn-primary gap-2"
-      (click)="createUser()">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-      </svg>
-      Crear Usuario
-    </button>
   </div>
 
-  <!-- Tabla de usuarios -->
-  <div class="card bg-base-100 shadow-lg">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="card bg-base-100 shadow-lg">
+    <div class="card-body">
+      <div class="flex justify-center items-center py-12">
+        <span class="loading loading-spinner loading-lg"></span>
+        <span class="ml-3 text-base-content/70">Cargando usuarios...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Users Table -->
+  <div *ngIf="!loading" class="card bg-base-100 shadow-lg">
     <div class="card-body p-0">
       <div class="overflow-x-auto">
-        <table class="table table-zebra w-full">
+        <table class="table table-zebra">
           <thead>
-            <tr class="bg-base-200">
-              <th class="font-semibold">Nombre</th>
-              <th class="font-semibold">Email</th>
-              <th class="font-semibold">Rol</th>
-              <th class="font-semibold">Estado</th>
-              <th class="font-semibold">Fecha de Registro</th>
-              <th class="font-semibold text-center">Acciones</th>
+            <tr>
+              <th>Usuario</th>
+              <th>Email</th>
+              <th>Teléfono</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Fecha de Registro</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let user of users" class="hover:bg-base-50">
-              <td class="font-medium">{{ user.name }}</td>
-              <td class="text-base-content/70">{{ user.email }}</td>
+            <tr *ngFor="let user of filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize); trackBy: trackByUserId">
+              <!-- Usuario (Avatar + Nombre) -->
               <td>
-                <span class="badge badge-outline">{{ user.role }}</span>
+                <div class="flex items-center gap-3">
+                  <div class="avatar">
+                    <div class="mask mask-circle w-12 h-12">
+                      <img [src]="getAvatarUrl(user)" [alt]="getUserFullName(user)" />
+                    </div>
+                  </div>
+                  <div>
+                    <div class="font-bold">{{ getUserFullName(user) }}</div>
+                  </div>
+                </div>
               </td>
+
+              <!-- Email -->
               <td>
-                <span 
-                  class="badge"
-                  [class.badge-success]="user.status === 'Activo'"
-                  [class.badge-error]="user.status === 'Inactivo'">
-                  {{ user.status }}
-                </span>
+                <div class="text-sm">{{ user.email }}</div>
               </td>
-              <td class="text-base-content/70">{{ user.createdAt }}</td>
+
+              <!-- Teléfono -->
               <td>
-                <div class="flex justify-center gap-2">
-                  <button 
-                    class="btn btn-sm btn-ghost btn-square"
-                    (click)="editUser(user.id)"
-                    title="Editar usuario">
+                <div class="text-sm">{{ user.phoneNumber || 'N/A' }}</div>
+              </td>
+
+              <!-- Rol -->
+              <td>
+                <div class="badge {{ getRoleBadgeClass(user.role) }} badge-sm">
+                  {{ getUserRoleDisplay(user.role) }}
+                </div>
+              </td>
+
+              <!-- Estado -->
+              <td>
+                <div class="badge {{ getStatusBadgeClass(user) }} badge-sm">
+                  {{ getUserStatusDisplay(user) }}
+                </div>
+              </td>
+
+              <!-- Fecha de registro -->
+              <td>
+                <div class="text-sm">{{ formatDate(user.createdAt) }}</div>
+              </td>
+
+              <!-- Acciones -->
+              <td>
+                <div class="flex gap-2">
+                  <button (click)="viewUser(user.userId)" class="btn btn-ghost btn-xs" title="Ver detalles">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                      </path>
                     </svg>
                   </button>
-                  <button 
-                    class="btn btn-sm btn-ghost btn-square text-error hover:bg-error hover:text-error-content"
-                    (click)="deleteUser(user.id)"
-                    title="Eliminar usuario">
+                  <button (click)="editUser(user.userId)" class="btn btn-ghost btn-xs" title="Editar usuario">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                      </path>
                     </svg>
                   </button>
                 </div>
@@ -70,18 +175,47 @@
           </tbody>
         </table>
       </div>
-    </div>
-  </div>
 
-  <!-- Estado vacío -->
-  <div *ngIf="users.length === 0" class="text-center py-12">
-    <svg class="w-16 h-16 mx-auto text-base-content/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-    </svg>
-    <h3 class="text-lg font-medium text-base-content/70 mb-2">No hay usuarios registrados</h3>
-    <p class="text-base-content/50 mb-4">Comienza creando tu primer usuario</p>
-    <button class="btn btn-primary" (click)="createUser()">
-      Crear Usuario
-    </button>
+      <!-- Empty State -->
+      <div *ngIf="filteredUsers.length === 0 && !loading" class="text-center py-12">
+        <svg class="w-16 h-16 mx-auto text-base-content/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+          </path>
+        </svg>
+        <h3 class="text-lg font-medium text-base-content/70 mb-2">
+          {{ searchTerm ? 'No se encontraron usuarios' : 'No hay usuarios registrados' }}
+        </h3>
+        <p class="text-base-content/50 mb-4">
+          {{ searchTerm ? 'Intenta con otros términos de búsqueda' : 'Comienza registrando tu primer usuario' }}
+        </p>
+        <button *ngIf="!searchTerm" class="btn btn-primary" (click)="createUser()">
+          Registrar Primer Usuario
+        </button>
+      </div>
+
+      <!-- Pagination -->
+      <div *ngIf="totalPages > 1" class="flex justify-between items-center p-4 border-t">
+        <div class="text-sm text-base-content/70">
+          Mostrando {{ (currentPage - 1) * pageSize + 1 }} a
+          {{ Math.min(currentPage * pageSize, totalItems) }} de {{ totalItems }} usuarios
+        </div>
+
+        <div class="join">
+          <button class="join-item btn btn-sm" [disabled]="currentPage === 1" (click)="previousPage()">
+            «
+          </button>
+
+          <button *ngFor="let page of getVisiblePages()" class="join-item btn btn-sm"
+            [class.btn-active]="page === currentPage" (click)="goToPage(page)">
+            {{ page }}
+          </button>
+
+          <button class="join-item btn btn-sm" [disabled]="currentPage === totalPages" (click)="nextPage()">
+            »
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

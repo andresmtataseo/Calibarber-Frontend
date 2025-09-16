@@ -1,175 +1,165 @@
-<div class="page-container">
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">Crear Nuevo Usuario</h1>
-      <p class="page-description">Completa la información para registrar un nuevo usuario</p>
-    </div>
-    <div class="header-actions">
-      <button type="button" class="btn btn-secondary" (click)="onCancel()">
-        <span class="material-icons">arrow_back</span>
-        Volver
-      </button>
-    </div>
-  </div>
+<!-- Preloader -->
+<app-preloader [show]="loading || isSubmitting" size="xl"></app-preloader>
 
-  <div class="page-content">
-    <div class="form-container">
-      <form [formGroup]="userForm" (ngSubmit)="onSubmit()" class="user-form">
-        <div class="form-section">
-          <h3 class="section-title">Información Personal</h3>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="firstName" class="form-label">Nombre *</label>
-              <input
-                type="text"
-                id="firstName"
-                formControlName="firstName"
-                class="form-control"
-                [class.error]="f['firstName'].invalid && f['firstName'].touched"
-                placeholder="Ingresa el nombre">
-              <div class="error-message" *ngIf="getFieldError('firstName')">
-                {{ getFieldError('firstName') }}
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="lastName" class="form-label">Apellido *</label>
-              <input
-                type="text"
-                id="lastName"
-                formControlName="lastName"
-                class="form-control"
-                [class.error]="f['lastName'].invalid && f['lastName'].touched"
-                placeholder="Ingresa el apellido">
-              <div class="error-message" *ngIf="getFieldError('lastName')">
-                {{ getFieldError('lastName') }}
-              </div>
-            </div>
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="email" class="form-label">Email *</label>
-              <input
-                type="email"
-                id="email"
-                formControlName="email"
-                class="form-control"
-                [class.error]="f['email'].invalid && f['email'].touched"
-                placeholder="ejemplo@correo.com">
-              <div class="error-message" *ngIf="getFieldError('email')">
-                {{ getFieldError('email') }}
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="phone" class="form-label">Teléfono *</label>
-              <input
-                type="tel"
-                id="phone"
-                formControlName="phone"
-                class="form-control"
-                [class.error]="f['phone'].invalid && f['phone'].touched"
-                placeholder="+57 300 123 4567">
-              <div class="error-message" *ngIf="getFieldError('phone')">
-                {{ getFieldError('phone') }}
-              </div>
-            </div>
-          </div>
+<div class="flex items-center justify-center bg-base-200">
+  <div class="card bg-base-100 shadow-xl max-w-4xl w-full">
+    <!-- Header -->
+    <div class="card-body">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="card-title text-2xl">Nuevo Usuario</h2>
+          <p class="text-base-content/70 text-sm mt-2">Registra un nuevo usuario en el sistema</p>
         </div>
+        <button
+          type="button"
+          class="btn btn-ghost"
+          (click)="onCancel()"
+          [disabled]="loading || isSubmitting">
+          Volver
+        </button>
+      </div>
 
-        <div class="form-section">
-          <h3 class="section-title">Credenciales de Acceso</h3>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="password" class="form-label">Contraseña *</label>
-              <div class="password-input">
-                <input
-                  [type]="showPassword ? 'text' : 'password'"
-                  id="password"
-                  formControlName="password"
-                  class="form-control"
-                  [class.error]="f['password'].invalid && f['password'].touched"
-                  placeholder="Mínimo 8 caracteres">
-                <button
-                  type="button"
-                  class="password-toggle"
-                  (click)="togglePasswordVisibility()">
-                  <span class="material-icons">
-                    {{ showPassword ? 'visibility_off' : 'visibility' }}
-                  </span>
-                </button>
-              </div>
-              <div class="error-message" *ngIf="getFieldError('password')">
-                {{ getFieldError('password') }}
+      <form [formGroup]="userForm" (ngSubmit)="onSubmit()" class="space-y-6">
+
+        <!-- Información Básica -->
+        <div class="space-y-6">
+          <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Información Básica</h3>
+
+          <!-- Nombre y Apellido -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Nombre *</span>
+                <input 
+                  type="text" 
+                  class="input input-md w-full" 
+                  formControlName="firstName"
+                  [class.input-error]="f['firstName'].invalid && f['firstName'].touched">
+              </label>
+              <div class="label" *ngIf="getFieldError('firstName')">
+                <span class="label-text-alt text-error">{{ getFieldError('firstName') }}</span>
               </div>
             </div>
-            
-            <div class="form-group">
-              <label for="confirmPassword" class="form-label">Confirmar Contraseña *</label>
-              <input
-                [type]="showPassword ? 'text' : 'password'"
-                id="confirmPassword"
-                formControlName="confirmPassword"
-                class="form-control"
-                [class.error]="f['confirmPassword'].invalid && f['confirmPassword'].touched"
-                placeholder="Repite la contraseña">
-              <div class="error-message" *ngIf="getFieldError('confirmPassword')">
-                {{ getFieldError('confirmPassword') }}
+
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Apellido *</span>
+                <input 
+                  type="text" 
+                  class="input input-md w-full" 
+                  formControlName="lastName"
+                  [class.input-error]="f['lastName'].invalid && f['lastName'].touched">
+              </label>
+              <div class="label" *ngIf="getFieldError('lastName')">
+                <span class="label-text-alt text-error">{{ getFieldError('lastName') }}</span>
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="form-section">
-          <h3 class="section-title">Configuración de Cuenta</h3>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="role" class="form-label">Rol *</label>
-              <select
-                id="role"
+          <!-- Email y Teléfono -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Email *</span>
+                <input 
+                  type="email" 
+                  class="input input-md w-full" 
+                  formControlName="email"
+                  [class.input-error]="f['email'].invalid && f['email'].touched">
+              </label>
+              <div class="label" *ngIf="getFieldError('email')">
+                <span class="label-text-alt text-error">{{ getFieldError('email') }}</span>
+              </div>
+            </div>
+
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Teléfono</span>
+                <input 
+                  type="tel" 
+                  class="input input-md w-full" 
+                  formControlName="phoneNumber"
+                  [class.input-error]="f['phoneNumber'].invalid && f['phoneNumber'].touched">
+              </label>
+              <div class="label" *ngIf="getFieldError('phoneNumber')">
+                <span class="label-text-alt text-error">{{ getFieldError('phoneNumber') }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rol -->
+          <div class="form-control">
+            <label class="floating-label">
+              <span>Rol *</span>
+              <select 
+                class="select select-md w-full" 
                 formControlName="role"
-                class="form-control"
-                [class.error]="f['role'].invalid && f['role'].touched">
+                [class.select-error]="f['role'].invalid && f['role'].touched">
                 <option value="" disabled>Selecciona un rol</option>
-                <option *ngFor="let role of roles" [value]="role.value">
-                  {{ role.label }}
-                </option>
+                <option value="Admin">Administrador</option>
+                <option value="Customer">Cliente</option>
               </select>
-              <div class="error-message" *ngIf="getFieldError('role')">
-                {{ getFieldError('role') }}
+            </label>
+            <div class="label" *ngIf="getFieldError('role')">
+              <span class="label-text-alt text-error">{{ getFieldError('role') }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información de Seguridad -->
+        <div class="space-y-6">
+          <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Información de Seguridad</h3>
+
+          <!-- Contraseñas -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Contraseña *</span>
+                <input 
+                  type="password" 
+                  class="input input-md w-full" 
+                  formControlName="password"
+                  [class.input-error]="f['password'].invalid && f['password'].touched">
+              </label>
+              <div class="label" *ngIf="getFieldError('password')">
+                <span class="label-text-alt text-error">{{ getFieldError('password') }}</span>
               </div>
             </div>
-            
-            <div class="form-group">
-              <label for="status" class="form-label">Estado *</label>
-              <select
-                id="status"
-                formControlName="status"
-                class="form-control"
-                [class.error]="f['status'].invalid && f['status'].touched">
-                <option value="active">Activo</option>
-                <option value="inactive">Inactivo</option>
-              </select>
-              <div class="error-message" *ngIf="getFieldError('status')">
-                {{ getFieldError('status') }}
+
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Confirmar Contraseña *</span>
+                <input 
+                  type="password" 
+                  class="input input-md w-full" 
+                  formControlName="confirmPassword"
+                  [class.input-error]="f['confirmPassword'].invalid && f['confirmPassword'].touched">
+              </label>
+              <div class="label" *ngIf="getFieldError('confirmPassword')">
+                <span class="label-text-alt text-error">{{ getFieldError('confirmPassword') }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="form-actions">
-          <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="loading">
+        <!-- Form Actions -->
+        <div class="flex flex-col-reverse sm:flex-row justify-end gap-4 pt-6 border-t border-base-300">
+          <button
+            type="button"
+            class="btn btn-ghost w-full sm:w-auto"
+            (click)="onCancel()"
+            [disabled]="loading || isSubmitting">
             Cancelar
           </button>
-          <button type="submit" class="btn btn-primary" [disabled]="loading">
-            <span class="loading-spinner" *ngIf="loading"></span>
-            <span [class.loading-text]="loading">{{ loading ? 'Creando...' : 'Crear Usuario' }}</span>
+
+          <button
+            type="submit"
+            class="btn btn-primary w-full sm:w-auto"
+            [disabled]="userForm.invalid || isSubmitting">
+            {{ isSubmitting ? 'Creando...' : 'Crear Usuario' }}
           </button>
         </div>
+
       </form>
     </div>
   </div>

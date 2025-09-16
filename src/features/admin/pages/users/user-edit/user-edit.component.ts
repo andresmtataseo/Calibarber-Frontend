@@ -2,41 +2,48 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { PreloaderComponent } from '../../../../../shared/components/preloader/preloader.component';
+import { UserService } from '../../../../user/services/user.service';
+import { UpdateUserRequest, UserRole } from '../../../../user/models/user.model';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-user-edit',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
-  templateUrl: './user-edit.component.html',
-  styleUrl: './user-edit.component.css'
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, PreloaderComponent],
+  templateUrl: './user-edit.component.html'
 })
 export class UserEditComponent implements OnInit {
   userForm: FormGroup;
   loading = false;
   loadingUser = true;
+  isSubmitting = false;
   userId: string | null = null;
   showPassword = false;
+  error: string | null = null;
+  success: string | null = null;
 
   roles = [
-    { value: 'cliente', label: 'Cliente' },
-    { value: 'barbero', label: 'Barbero' },
-    { value: 'admin', label: 'Administrador' }
+    { value: UserRole.ROLE_CLIENT, label: 'Cliente' },
+    { value: UserRole.ROLE_BARBER, label: 'Barbero' },
+    { value: UserRole.ROLE_ADMIN, label: 'Administrador' }
   ];
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private userService: UserService
   ) {
     this.userForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.minLength(2)]],
       lastName: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
-      phone: ['', [Validators.required, Validators.pattern(/^\+?[1-9]\d{1,14}$/)]],
+      phoneNumber: ['', [Validators.pattern(/^\+?[1-9]\d{1,14}$/)]],
       password: [''],
       confirmPassword: [''],
-      role: ['cliente', [Validators.required]],
-      status: ['active', [Validators.required]]
+      role: [UserRole.ROLE_CLIENT, [Validators.required]],
+      isActive: [true, [Validators.required]]
     }, { validators: this.passwordMatchValidator });
   }
 
@@ -50,33 +57,39 @@ export class UserEditComponent implements OnInit {
   passwordMatchValidator(form: FormGroup) {
     const password = form.get('password');
     const confirmPassword = form.get('confirmPassword');
-    
+
     if (password?.value && confirmPassword?.value && password.value !== confirmPassword.value) {
       confirmPassword.setErrors({ passwordMismatch: true });
       return { passwordMismatch: true };
     }
-    
+
     return null;
   }
 
   loadUser(id: string) {
     this.loadingUser = true;
-    
-    // Simular carga de datos del usuario
-    setTimeout(() => {
-      const userData = {
-        id: 1,
-        firstName: 'Juan',
-        lastName: 'Pérez',
-        email: 'juan@example.com',
-        phone: '+57 300 123 4567',
-        role: 'cliente',
-        status: 'active'
-      };
-      
-      this.userForm.patchValue(userData);
-      this.loadingUser = false;
-    }, 1000);
+    this.error = null;
+
+    this.userService.getUserById(id).subscribe({
+      next: (user) => {
+        this.userForm.patchValue({
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phoneNumber: user.phoneNumber || '',
+          role: user.role,
+          isActive: user.isActive,
+          password: '',
+          confirmPassword: ''
+        });
+        this.loadingUser = false;
+      },
+      error: (error: Error) => {
+        this.error = error.message || 'Error al cargar el usuario';
+        console.error('Error loading user:', error);
+        this.loadingUser = false;
+      }
+    });
   }
 
   get f() {
@@ -88,27 +101,43 @@ export class UserEditComponent implements OnInit {
   }
 
   onSubmit() {
-    if (this.userForm.valid) {
-      this.loading = true;
-      
-      const userData = {
-        ...this.userForm.value,
-        name: `${this.userForm.value.firstName} ${this.userForm.value.lastName}`,
-        id: this.userId
+    if (this.userForm.valid && this.userId) {
+      this.isSubmitting = true;
+      this.error = null;
+      this.success = null;
+
+      const formValue = this.userForm.value;
+      const updateUserRequest: UpdateUserRequest = {
+        firstName: formValue.firstName,
+        lastName: formValue.lastName,
+        phoneNumber: formValue.phoneNumber || undefined,
+        role: formValue.role,
+        isActive: formValue.isActive
       };
-      
-      // Remover campos de contraseña si están vacíos
-      if (!userData.password) {
-        delete userData.password;
-        delete userData.confirmPassword;
+
+      // Note: UpdateUserRequest doesn't support password updates
+      // Password updates would need a separate endpoint or interface
+      if (formValue.password && formValue.password.trim() !== '') {
+        console.log('Password update functionality needs separate implementation');
+        alert('La actualización de contraseña requiere implementación adicional');
       }
-      
-      // Simular actualización de usuario
-      setTimeout(() => {
-        console.log('Usuario actualizado:', userData);
-        this.loading = false;
-        this.router.navigate(['/admin/users']);
-      }, 2000);
+
+      this.userService.updateUser(this.userId, updateUserRequest).subscribe({
+        next: (user) => {
+          this.success = 'Usuario actualizado exitosamente';
+          console.log('Usuario actualizado:', user);
+          
+          // Redirigir después de un breve delay para mostrar el mensaje de éxito
+          setTimeout(() => {
+            this.router.navigate(['/admin/users']);
+          }, 1500);
+        },
+        error: (error: Error) => {
+          this.error = error.message || 'Error al actualizar el usuario';
+          console.error('Error updating user:', error);
+          this.isSubmitting = false;
+        }
+      });
     } else {
       this.markFormGroupTouched();
     }
@@ -127,7 +156,7 @@ export class UserEditComponent implements OnInit {
 
   getFieldError(fieldName: string): string {
     const field = this.userForm.get(fieldName);
-    
+
     if (field?.errors && field.touched) {
       if (field.errors['required']) {
         return 'Este campo es requerido';
@@ -145,7 +174,7 @@ export class UserEditComponent implements OnInit {
         return 'Las contraseñas no coinciden';
       }
     }
-    
+
     return '';
   }
 }

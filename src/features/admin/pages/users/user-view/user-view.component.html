@@ -1,0 +1,223 @@
+<!-- Preloader -->
+<app-preloader [show]="loading" size="xl"></app-preloader>
+
+<div class="flex items-center justify-center bg-base-200">
+  <div class="card bg-base-100 shadow-xl max-w-4xl w-full">
+    <!-- Header -->
+    <div class="card-body">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="card-title text-2xl">Detalles del Usuario</h2>
+          <p class="text-base-content/70 text-sm mt-2">Información completa del usuario (solo lectura)</p>
+        </div>
+        <div class="flex gap-3">
+          <button
+            type="button"
+            class="btn btn-ghost"
+            (click)="goBack()">
+            Volver
+          </button>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="error" class="alert alert-error mb-6">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>{{ error }}</span>
+      </div>
+
+      <!-- User Not Found -->
+      <div *ngIf="!loading && !user && !error" class="text-center py-12">
+        <svg class="w-16 h-16 mx-auto text-base-content/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+        </svg>
+        <h3 class="text-lg font-medium text-base-content/70 mb-2">Usuario no encontrado</h3>
+        <p class="text-base-content/50 mb-4">El usuario que buscas no existe o ha sido eliminado</p>
+        <button class="btn btn-primary" (click)="goBack()">Volver a la lista</button>
+      </div>
+
+      <!-- User Details (Read-only) -->
+      <div *ngIf="user" class="space-y-6">
+
+        <!-- Información Personal -->
+        <div class="space-y-6">
+          <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Información Personal</h3>
+
+          <!-- Nombre y Apellido -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Nombre</span>
+                <input 
+                  type="text" 
+                  class="input input-md w-full input-disabled" 
+                  [value]="user.firstName || 'Sin información'"
+                  [disabled]="true">
+              </label>
+            </div>
+
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Apellido</span>
+                <input 
+                  type="text" 
+                  class="input input-md w-full input-disabled" 
+                  [value]="user.lastName || 'Sin información'"
+                  [disabled]="true">
+              </label>
+            </div>
+          </div>
+
+          <!-- Email y Teléfono -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Email</span>
+                <input 
+                  type="email" 
+                  class="input input-md w-full input-disabled" 
+                  [value]="user.email || 'Sin información'"
+                  [disabled]="true">
+              </label>
+            </div>
+
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Teléfono</span>
+                <input 
+                  type="tel" 
+                  class="input input-md w-full input-disabled" 
+                  [value]="user.phoneNumber || 'Sin información'"
+                  [disabled]="true">
+              </label>
+            </div>
+          </div>
+
+          <!-- Nombre Completo -->
+          <div class="form-control">
+            <label class="floating-label">
+              <span>Nombre Completo</span>
+              <input 
+                type="text" 
+                class="input input-md w-full input-disabled" 
+                [value]="getFullName()"
+                [disabled]="true">
+            </label>
+          </div>
+        </div>
+
+        <!-- Configuración de Cuenta -->
+        <div class="space-y-6">
+          <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Configuración de Cuenta</h3>
+
+          <!-- Rol y Estado -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Rol</span>
+                <select 
+                  class="select select-md w-full select-disabled" 
+                  [disabled]="true">
+                  <option [value]="user.role" selected>
+                    {{ getRoleLabel(user.role) }}
+                  </option>
+                </select>
+              </label>
+            </div>
+
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Estado</span>
+                <select 
+                  class="select select-md w-full select-disabled" 
+                  [disabled]="true">
+                  <option [value]="user.isActive" selected>
+                    {{ getStatusLabel(user.isActive) }}
+                  </option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <!-- ID del Usuario -->
+          <div class="form-control">
+            <label class="floating-label">
+              <span>ID del Usuario</span>
+              <input 
+                type="text" 
+                class="input input-md w-full input-disabled" 
+                [value]="user.userId || 'Sin información'"
+                [disabled]="true">
+            </label>
+          </div>
+        </div>
+
+        <!-- Información Adicional -->
+        <div class="space-y-6">
+          <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Información Adicional</h3>
+
+          <!-- Fechas -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Fecha de Creación</span>
+                <input 
+                  type="text" 
+                  class="input input-md w-full input-disabled" 
+                  [value]="formatDate(user.createdAt)"
+                  [disabled]="true">
+              </label>
+            </div>
+
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Última Actualización</span>
+                <input 
+                  type="text" 
+                  class="input input-md w-full input-disabled" 
+                  [value]="formatDate(user.updatedAt)"
+                  [disabled]="true">
+              </label>
+            </div>
+          </div>
+
+          <!-- Información adicional que podría agregarse en el futuro -->
+          <!-- 
+          <div class="form-control">
+            <label class="label cursor-pointer justify-start gap-2">
+              <input
+                type="checkbox"
+                class="checkbox checkbox-primary checkbox-disabled"
+                [checked]="false"
+                [disabled]="true">
+              <span class="label-text">Email Verificado (No disponible)</span>
+            </label>
+          </div>
+          -->
+        </div>
+
+        <!-- Botones al final -->
+        <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-base-300">
+          <button
+            type="button"
+            class="btn btn-ghost"
+            (click)="goBack()">
+            Volver
+          </button>
+          <button
+            class="btn btn-primary"
+            (click)="editUser()"
+            title="Editar usuario">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            Editar
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
