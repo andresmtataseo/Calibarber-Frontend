@@ -1,40 +1,36 @@
 export interface AppointmentResponse {
   appointmentId: string;
-  clientId: string;
   barberId: string;
+  userId: string;
   serviceId: string;
-  appointmentDate: string; // ISO date string
-  appointmentTime: string; // HH:mm format
+  appointmentDateTime: string; // ISO LocalDateTime format: yyyy-MM-dd'T'HH:mm:ss
+  durationMinutes: number;
+  price: number;
   status: AppointmentStatus;
   notes?: string;
-  totalAmount: number;
-  createdAt: string; // ISO date string
-  updatedAt: string; // ISO date string
-  client: ClientInfo;
+  createdAt: string; // ISO LocalDateTime format: yyyy-MM-dd'T'HH:mm:ss
+  updatedAt: string; // ISO LocalDateTime format: yyyy-MM-dd'T'HH:mm:ss
   barber: BarberInfo;
+  user: UserInfo;
   service: ServiceInfo;
-  payment?: PaymentInfo;
 }
 
 export interface CreateAppointmentRequest {
-  clientId: string;
   barberId: string;
+  userId: string;
   serviceId: string;
-  appointmentDate: string; // yyyy-MM-dd format
-  appointmentTime: string; // HH:mm format
+  appointmentDateTime: string; // ISO LocalDateTime format: yyyy-MM-dd'T'HH:mm:ss
+  durationMinutes: number;
+  price: number; // Will be converted to BigDecimal on backend
+  status?: AppointmentStatus; // Optional, defaults to SCHEDULED in backend
   notes?: string;
 }
 
 export interface UpdateAppointmentRequest {
-  appointmentDate?: string; // yyyy-MM-dd format
-  appointmentTime?: string; // HH:mm format
+  appointmentDateTime?: string; // ISO LocalDateTime format: yyyy-MM-dd'T'HH:mm:ss
+  durationMinutes?: number;
+  price?: number;
   status?: AppointmentStatus;
-  notes?: string;
-}
-
-export interface RescheduleAppointmentRequest {
-  appointmentDate: string; // yyyy-MM-dd format
-  appointmentTime: string; // HH:mm format
   notes?: string;
 }
 
@@ -47,7 +43,7 @@ export enum AppointmentStatus {
   NO_SHOW = 'NO_SHOW'
 }
 
-export interface ClientInfo {
+export interface UserInfo {
   userId: string;
   firstName: string;
   lastName: string;
@@ -69,12 +65,4 @@ export interface ServiceInfo {
   description?: string;
   durationMinutes: number;
   price: number;
-}
-
-export interface PaymentInfo {
-  paymentId: string;
-  amount: number;
-  paymentMethod: string;
-  status: string;
-  transactionReference?: string;
 }

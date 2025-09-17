@@ -96,8 +96,7 @@
                 formControlName="role"
                 [class.select-error]="f['role'].invalid && f['role'].touched">
                 <option value="" disabled>Selecciona un rol</option>
-                <option value="Admin">Administrador</option>
-                <option value="Customer">Cliente</option>
+                <option *ngFor="let role of roles" [value]="role.value">{{ role.label }}</option>
               </select>
             </label>
             <div class="label" *ngIf="getFieldError('role')">

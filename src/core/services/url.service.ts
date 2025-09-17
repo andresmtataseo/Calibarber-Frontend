@@ -3,20 +3,20 @@ import { API_URLS, EXTERNAL_URLS } from '../config/api-urls.config';
 
 /**
  * Servicio para gestión centralizada de URLs
- * 
+ *
  * Proporciona métodos utilitarios para acceder a las URLs de la aplicación
  * de manera consistente y type-safe.
- * 
+ *
  * @example
  * ```typescript
  * constructor(private urlService: UrlService) {}
- * 
+ *
  * // Obtener URL de autenticación
  * const signInUrl = this.urlService.getAuthUrl('SIGN_IN');
- * 
+ *
  * // Obtener URL de barbería por ID
  * const barbershopUrl = this.urlService.getBarbershopUrl('BY_ID', '123');
- * 
+ *
  * // Generar avatar
  * const avatarUrl = this.urlService.generateAvatarUrl('Juan Pérez');
  * ```
@@ -47,11 +47,11 @@ export class UrlService {
    */
   getBarbershopUrl(endpoint: keyof typeof API_URLS.BARBERSHOP, id?: string): string {
     const url = API_URLS.BARBERSHOP[endpoint];
-    
+
     if (typeof url === 'function' && id) {
       return url(id);
     }
-    
+
     return url as string;
   }
 
@@ -62,11 +62,11 @@ export class UrlService {
    */
   getBarberUrl(endpoint: keyof typeof API_URLS.BARBER, id?: string): string {
     const url = API_URLS.BARBER[endpoint];
-    
+
     if (typeof url === 'function' && id) {
       return url(id);
     }
-    
+
     return url as string;
   }
 
@@ -79,18 +79,12 @@ export class UrlService {
   }
 
   /**
-   * Obtiene una URL del módulo de citas
-   * @param endpoint - El endpoint deseado
-   * @param id - ID requerido para endpoints dinámicos
+   * Obtiene URLs relacionadas con citas
+   * @param endpoint Endpoint específico de citas
+   * @returns URL completa del endpoint
    */
-  getAppointmentUrl(endpoint: keyof typeof API_URLS.APPOINTMENT, id?: string): string {
-    const url = API_URLS.APPOINTMENT[endpoint];
-    
-    if (typeof url === 'function' && id) {
-      return url(id);
-    }
-    
-    return url as string;
+  getAppointmentUrl(endpoint: keyof typeof API_URLS.APPOINTMENT): string {
+    return API_URLS.APPOINTMENT[endpoint] as string;
   }
 
   /**
@@ -100,11 +94,11 @@ export class UrlService {
    */
   getPaymentUrl(endpoint: keyof typeof API_URLS.PAYMENT, id?: string): string {
     const url = API_URLS.PAYMENT[endpoint];
-    
+
     if (typeof url === 'function' && id) {
       return url(id);
     }
-    
+
     return url as string;
   }
 
@@ -116,9 +110,9 @@ export class UrlService {
    * @param size - Tamaño del avatar en píxeles
    */
   generateAvatarUrl(
-    name: string, 
-    background: string = '570df8', 
-    color: string = 'fff', 
+    name: string,
+    background: string = '570df8',
+    color: string = 'fff',
     size: number = 40
   ): string {
     return EXTERNAL_URLS.UI_AVATARS.GENERATE(name, background, color, size);
@@ -152,11 +146,11 @@ export class UrlService {
    */
   buildUrlWithParams(baseUrl: string, params: Record<string, string | number | boolean>): string {
     const url = new URL(baseUrl);
-    
+
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.append(key, String(value));
     });
-    
+
     return url.toString();
   }
 

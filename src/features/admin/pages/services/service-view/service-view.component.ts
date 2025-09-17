@@ -137,5 +137,55 @@ export class ServiceViewComponent implements OnInit {
     this.router.navigate(['/admin/services/edit', this.serviceId]);
   }
 
-  // Los métodos deleteService y toggleStatus han sido eliminados
+  deleteService(): void {
+    const serviceName = this.getServiceName();
+
+    if (confirm(`¿Estás seguro de que deseas eliminar el servicio "${serviceName}"? Esta acción no se puede deshacer.`)) {
+      this.serviceService.deleteService(this.serviceId).subscribe({
+        next: () => {
+          console.log('Service deleted successfully');
+          this.router.navigate(['/admin/services']);
+        },
+        error: (error) => {
+          console.error('Error deleting service:', error);
+          alert('Error al eliminar el servicio. Por favor, inténtalo de nuevo.');
+        }
+      });
+    }
+  }
+
+  toggleStatus(): void {
+    if (!this.service) return;
+
+    const newStatus = !this.service.isActive;
+    const action = newStatus ? 'activar' : 'desactivar';
+    const serviceName = this.getServiceName();
+
+    if (confirm(`¿Estás seguro de que deseas ${action} el servicio "${serviceName}"?`)) {
+      const updatedService: UpdateServiceRequestDto = {
+        name: this.service.name,
+        description: this.service.description,
+        price: this.service.price,
+        durationMinutes: this.service.durationMinutes
+      };
+
+      this.serviceService.updateService(this.serviceId, updatedService).subscribe({
+        next: (updated) => {
+          // Actualizar el servicio en la interfaz después de la respuesta exitosa
+          if (updated) {
+            // Crear una copia del servicio actual y actualizar su estado
+            this.service = {
+              ...updated,
+              isActive: newStatus
+            };
+          }
+          console.log(`Service status updated to ${newStatus}`);
+        },
+        error: (error) => {
+          console.error('Error updating service status:', error);
+          alert(`Error al ${action} el servicio. Por favor, inténtalo de nuevo.`);
+        }
+      });
+    }
+  }
 }

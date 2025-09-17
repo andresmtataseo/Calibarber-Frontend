@@ -20,7 +20,8 @@ export interface UpdateServiceRequestDto {
 
 // Response DTOs
 export interface ServiceResponseDto {
-  id: string;
+  id?: string;
+  serviceId?: string;
   name: string;
   description: string;
   price: number;

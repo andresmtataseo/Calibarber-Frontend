@@ -54,8 +54,9 @@ export const BARBERSHOP_URLS = {
 export const BARBER_URLS = {
   BASE: `${API_CONFIG.API_BASE}/barbers`,
   BY_ID: (id: string) => `${API_CONFIG.API_BASE}/barbers/${id}`,
-  AVAILABILITY: (id: string) => `${API_CONFIG.API_BASE}/barbers/${id}/availability`,
-  SCHEDULE: (id: string) => `${API_CONFIG.API_BASE}/barbers/${id}/schedule`
+  AVAILABILITY: `${API_CONFIG.API_BASE}/barbers/availability`,
+  SCHEDULE: (id: string) => `${API_CONFIG.API_BASE}/barbers/${id}/schedule`,
+  AVAILABLE: `${API_CONFIG.API_BASE}/barbers/available`
 } as const;
 
 // URLs de servicios
@@ -76,13 +77,24 @@ export const SERVICE_URLS = {
 // URLs de citas
 export const APPOINTMENT_URLS = {
   BASE: `${API_CONFIG.API_BASE}/appointments`,
-  BY_ID: (id: string) => `${API_CONFIG.API_BASE}/appointments/${id}`,
-  USER_APPOINTMENTS: `${API_CONFIG.API_BASE}/appointments/user`,
-  BARBER_APPOINTMENTS: `${API_CONFIG.API_BASE}/appointments/barber`,
   CREATE: `${API_CONFIG.API_BASE}/appointments`,
-  UPDATE: (id: string) => `${API_CONFIG.API_BASE}/appointments/${id}`,
-  CANCEL: (id: string) => `${API_CONFIG.API_BASE}/appointments/${id}/cancel`,
-  CONFIRM: (id: string) => `${API_CONFIG.API_BASE}/appointments/${id}/confirm`
+  BY_ID: `${API_CONFIG.API_BASE}/appointments/by-id`,
+  ALL: `${API_CONFIG.API_BASE}/appointments/all`,
+  UPDATE: `${API_CONFIG.API_BASE}/appointments/update`,
+  DELETE: `${API_CONFIG.API_BASE}/appointments/delete`,
+  BY_CLIENT: `${API_CONFIG.API_BASE}/appointments/by-client`,
+  BY_BARBER: `${API_CONFIG.API_BASE}/appointments/by-barber`,
+  BY_STATUS: `${API_CONFIG.API_BASE}/appointments/by-status`,
+  UPCOMING_CLIENT: `${API_CONFIG.API_BASE}/appointments/upcoming/client`,
+  UPCOMING_BARBER: `${API_CONFIG.API_BASE}/appointments/upcoming/barber`,
+  CONFIRM: `${API_CONFIG.API_BASE}/appointments/confirm`,
+  START: `${API_CONFIG.API_BASE}/appointments/start`,
+  COMPLETE: `${API_CONFIG.API_BASE}/appointments/complete`,
+  CANCEL: `${API_CONFIG.API_BASE}/appointments/cancel`,
+  NO_SHOW: `${API_CONFIG.API_BASE}/appointments/no-show`,
+  AVAILABLE_SLOTS: `${API_CONFIG.API_BASE}/appointments/available-slots`,
+  CHECK_AVAILABILITY: `${API_CONFIG.API_BASE}/appointments/check-availability`,
+  STATS: `${API_CONFIG.API_BASE}/appointments/stats`
 } as const;
 
 // URLs de pagos

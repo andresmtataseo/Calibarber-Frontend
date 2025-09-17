@@ -1,49 +1,267 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { AppointmentService } from '../../../../appointment/services/appointment.service';
+import { AppointmentResponse, AppointmentStatus } from '../../../../appointment/models/appointment.model';
+import { HttpErrorResponse } from '@angular/common/http';
+import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import { NotificationService } from '../../../../../shared/components/notification/notification.service';
+import { PreloaderComponent } from '../../../../../shared/components/preloader/preloader.component';
+import { AuthService } from '../../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-appointment-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
-  template: `
-    <div class="p-6">
-      <div class="flex justify-between items-center mb-6">
-        <div>
-          <h1 class="text-3xl font-bold text-base-content">Gestión de Citas</h1>
-          <p class="text-base-content/70 mt-1">Administra las citas del sistema</p>
-        </div>
-        <button class="btn btn-primary" (click)="createAppointment()">
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-          </svg>
-          Crear Cita
-        </button>
-      </div>
-      
-      <div class="card bg-base-100 shadow-lg">
-        <div class="card-body">
-          <div class="text-center py-12">
-            <svg class="w-16 h-16 mx-auto text-base-content/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
-            <h3 class="text-lg font-medium text-base-content/70 mb-2">Lista de Citas</h3>
-            <p class="text-base-content/50">Aquí se mostrarán todas las citas programadas</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  `
+  imports: [CommonModule, RouterModule, FormsModule, PreloaderComponent],
+  templateUrl: './appointment-list.component.html'
 })
 export class AppointmentListComponent implements OnInit {
+  appointments: AppointmentResponse[] = [];
+  loading = false;
 
-  constructor(private router: Router) {}
+  // Pagination
+  currentPage = 0;
+  pageSize = 10;
+  totalElements = 0;
+  totalPages = 0;
+
+  // Search
+  searchTerm = '';
+  private searchSubject = new Subject<string>();
+
+  // Sorting
+  sortBy = 'appointmentDatetimeStart';
+  sortDir = 'desc';
+
+  // Filters
+  statusFilter: AppointmentStatus | null = null;
+
+  private readonly router = inject(Router);
+  private readonly appointmentService = inject(AppointmentService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly authService = inject(AuthService);
+
+  constructor() {}
 
   ngOnInit(): void {
-    // Cargar citas desde el servicio
+    // Verificar si el usuario tiene permisos de administrador
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      this.notificationService.error('Debes iniciar sesión para acceder a las citas.');
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+    
+    if (currentUser.role !== 'ROLE_ADMIN') {
+      this.notificationService.error('Solo los administradores pueden acceder a esta sección.');
+      this.router.navigate(['/dashboard']);
+      return;
+    }
+
+    this.loadAppointments();
+    this.setupSearch();
+  }
+
+  private setupSearch(): void {
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(searchTerm => {
+      this.searchTerm = searchTerm;
+      this.currentPage = 0;
+      this.loadAppointments();
+    });
+  }
+
+  loadAppointments(): void {
+    this.loading = true;
+
+    this.appointmentService.getAllAppointments(
+      this.currentPage,
+      this.pageSize,
+      this.sortBy,
+      this.sortDir,
+      this.searchTerm,
+      this.statusFilter
+    ).subscribe({
+      next: (response) => {
+        if (response.data) {
+          this.appointments = response.data.content || [];
+          this.totalElements = response.data.totalElements || 0;
+          this.totalPages = response.data.totalPages || 0;
+        } else {
+          this.appointments = [];
+          this.totalElements = 0;
+          this.totalPages = 0;
+        }
+        this.loading = false;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.notificationService.error(this.getErrorMessage(error));
+        this.loading = false;
+        console.error('Error loading appointments:', error);
+      }
+    });
+  }
+
+  onSearch(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.searchSubject.next(target.value);
+  }
+
+  onPageChange(page: number): void {
+    if (page >= 0 && page < this.totalPages) {
+      this.currentPage = page;
+      this.loadAppointments();
+    }
+  }
+
+  onPageSizeChange(newSize: number): void {
+    this.pageSize = newSize;
+    this.currentPage = 0; // Reset to first page
+    this.loadAppointments();
+  }
+
+  onSort(field: string): void {
+    this.sortBy = field;
+    this.loadAppointments();
+  }
+
+  toggleSortDirection(): void {
+    this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+    this.loadAppointments();
+  }
+
+  onStatusFilterChange(status: AppointmentStatus | null): void {
+    this.statusFilter = status;
+    this.currentPage = 0;
+    this.loadAppointments();
+  }
+
+  viewAppointment(id: string): void {
+    this.router.navigate(['/admin/appointments/view', id]);
+  }
+
+  editAppointment(id: string): void {
+    this.router.navigate(['/admin/appointments/edit', id]);
+  }
+
+  cancelAppointment(appointment: AppointmentResponse): void {
+    const clientName = `${appointment.user.firstName} ${appointment.user.lastName}`;
+    const appointmentDate = new Date(appointment.appointmentDateTime);
+    const formattedDate = appointmentDate.toLocaleDateString() + ' ' + appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    if (confirm(`¿Estás seguro de que deseas cancelar la cita de "${clientName}" programada para el ${formattedDate}?`)) {
+      const updateRequest = {
+        status: AppointmentStatus.CANCELLED
+      };
+      
+      this.appointmentService.updateAppointment(appointment.appointmentId, updateRequest).subscribe({
+        next: () => {
+          this.notificationService.success('Cita cancelada exitosamente');
+          this.loadAppointments();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.notificationService.error(this.getErrorMessage(error));
+          console.error('Error cancelling appointment:', error);
+        }
+      });
+    }
   }
 
   createAppointment(): void {
     this.router.navigate(['/admin/appointments/create']);
+  }
+
+  getPaginationArray(): number[] {
+    const pages: number[] = [];
+    const maxVisiblePages = 5;
+    const halfVisible = Math.floor(maxVisiblePages / 2);
+
+    let startPage = Math.max(0, this.currentPage - halfVisible);
+    let endPage = Math.min(this.totalPages - 1, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(0, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return pages;
+  }
+
+  private getErrorMessage(error: HttpErrorResponse): string {
+    if (error.error?.message) {
+      return error.error.message;
+    }
+    if (error.status === 0) {
+      return 'Error de conexión. Verifica tu conexión a internet y que el servidor esté ejecutándose.';
+    }
+    if (error.status === 401) {
+      const currentUser = this.authService.getCurrentUser();
+      if (!currentUser) {
+        return 'No autorizado. Por favor, inicia sesión para acceder a las citas.';
+      }
+      return 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.';
+    }
+    if (error.status === 403) {
+      const currentUser = this.authService.getCurrentUser();
+      if (currentUser && currentUser.role !== 'ROLE_ADMIN') {
+        return 'Acceso denegado. Solo los administradores pueden ver todas las citas del sistema.';
+      }
+      return 'No tienes permisos para acceder a esta información.';
+    }
+    if (error.status >= 500) {
+      return 'Error interno del servidor. Inténtalo más tarde.';
+    }
+    return 'Ha ocurrido un error inesperado al cargar las citas.';
+  }
+
+  // Método auxiliar para usar Math.min en el template
+  mathMin(a: number, b: number): number {
+    return Math.min(a, b);
+  }
+
+  // Método para obtener la clase CSS del estado
+  getStatusBadgeClass(status: AppointmentStatus): string {
+    switch (status) {
+      case AppointmentStatus.SCHEDULED:
+        return 'badge-info';
+      case AppointmentStatus.CONFIRMED:
+        return 'badge-primary';
+      case AppointmentStatus.IN_PROGRESS:
+        return 'badge-warning';
+      case AppointmentStatus.COMPLETED:
+        return 'badge-success';
+      case AppointmentStatus.CANCELLED:
+        return 'badge-error';
+      case AppointmentStatus.NO_SHOW:
+        return 'badge-ghost';
+      default:
+        return 'badge-neutral';
+    }
+  }
+
+  // Método para obtener el texto del estado en español
+  getStatusText(status: AppointmentStatus): string {
+    switch (status) {
+      case AppointmentStatus.SCHEDULED:
+        return 'Programada';
+      case AppointmentStatus.CONFIRMED:
+        return 'Confirmada';
+      case AppointmentStatus.IN_PROGRESS:
+        return 'En progreso';
+      case AppointmentStatus.COMPLETED:
+        return 'Completada';
+      case AppointmentStatus.CANCELLED:
+        return 'Cancelada';
+      case AppointmentStatus.NO_SHOW:
+        return 'No asistió';
+      default:
+        return 'Desconocido';
+    }
   }
 }

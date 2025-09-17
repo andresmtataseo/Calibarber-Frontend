@@ -1,0 +1,158 @@
+<!-- Preloader -->
+<app-preloader [show]="isLoading || isSubmitting" size="xl"></app-preloader>
+
+<div class="flex items-center justify-center bg-base-200">
+  <div class="card bg-base-100 shadow-xl max-w-4xl w-full">
+    <!-- Header -->
+    <div class="card-body">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="card-title text-2xl">Crear Nueva Cita</h2>
+          <p class="text-base-content/70 text-sm mt-2">Complete los datos para agendar una nueva cita</p>
+        </div>
+        <button
+          type="button"
+          class="btn btn-ghost"
+          (click)="onCancel()"
+          [disabled]="isLoading || isSubmitting">
+          Volver
+        </button>
+      </div>
+          <form [formGroup]="appointmentForm" (ngSubmit)="onSubmit()" class="space-y-6">
+
+            <!-- Información de la Cita -->
+            <div class="space-y-6">
+              <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Información de la Cita</h3>
+
+              <div class="card bg-base-50">
+                <div class="p-4 space-y-6">
+                  <!-- Cliente -->
+                  <div class="form-control">
+                    <label class="floating-label">
+                      <span>Cliente *</span>
+                      <select
+                        id="userId"
+                        class="select select-md w-full"
+                        [class.select-error]="appointmentForm.get('userId')?.invalid && appointmentForm.get('userId')?.touched"
+                        formControlName="userId">
+                        <option value="" disabled>Selecciona un cliente</option>
+                        <option *ngFor="let client of clients" [value]="client.userId">
+                          {{ client.firstName }} {{ client.lastName }} - {{ client.email }}
+                        </option>
+                      </select>
+                    </label>
+                    <div class="label" *ngIf="getFieldError('userId')">
+                      <span class="label-text-alt text-error">{{ getFieldError('userId') }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Barbero -->
+                  <div class="form-control">
+                    <label class="floating-label">
+                      <span>Barbero *</span>
+                      <select
+                        id="barberId"
+                        class="select select-md w-full"
+                        [class.select-error]="appointmentForm.get('barberId')?.invalid && appointmentForm.get('barberId')?.touched"
+                        formControlName="barberId">
+                        <option value="" disabled>Selecciona un barbero</option>
+                        <option *ngFor="let barber of barbers" [value]="barber.barberId">
+                          {{ getBarberFullName(barber) }} - {{ barber.specialization || 'Sin especialización' }}
+                        </option>
+                      </select>
+                    </label>
+                    <div class="label" *ngIf="getFieldError('barberId')">
+                      <span class="label-text-alt text-error">{{ getFieldError('barberId') }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Servicio -->
+                  <div class="form-control">
+                    <label class="floating-label">
+                      <span>Servicio *</span>
+                      <select
+                        id="serviceId"
+                        class="select select-md w-full"
+                        [class.select-error]="appointmentForm.get('serviceId')?.invalid && appointmentForm.get('serviceId')?.touched"
+                        formControlName="serviceId"
+                        (change)="onServiceChange()">
+                        <option value="" disabled>Selecciona un servicio</option>
+                        <option *ngFor="let service of services" [value]="service.serviceId || service.id">
+                          {{ service.name }} - ${{ service.price }} ({{ service.durationMinutes }} min)
+                        </option>
+                      </select>
+                    </label>
+                    <div class="label" *ngIf="getFieldError('serviceId')">
+                      <span class="label-text-alt text-error">{{ getFieldError('serviceId') }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Fecha y Hora -->
+              <div class="card bg-base-50">
+                <div class="p-4 space-y-6">
+                  <!-- Fecha y Hora -->
+                  <div class="form-control">
+                    <label class="floating-label">
+                      <span>Fecha y Hora *</span>
+                      <input
+                        type="datetime-local"
+                        id="appointmentDateTime"
+                        class="input input-md w-full"
+                        [class.input-error]="appointmentForm.get('appointmentDateTime')?.invalid && appointmentForm.get('appointmentDateTime')?.touched"
+                        formControlName="appointmentDateTime"
+                        [min]="getMinDateTime()">
+                    </label>
+                    <div class="label" *ngIf="getFieldError('appointmentDateTime')">
+                      <span class="label-text-alt text-error">{{ getFieldError('appointmentDateTime') }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Notas -->
+              <div class="card bg-base-50">
+                <div class="p-4 space-y-6">
+                  <!-- Notas -->
+                  <div class="form-control">
+                    <label class="floating-label">
+                      <span>Notas</span>
+                      <textarea
+                        id="notes"
+                        class="textarea textarea-md w-full"
+                        [class.textarea-error]="appointmentForm.get('notes')?.invalid && appointmentForm.get('notes')?.touched"
+                        formControlName="notes"
+                        placeholder="Ingrese cualquier información adicional sobre la cita..."
+                        rows="3"></textarea>
+                    </label>
+                    <div class="label" *ngIf="getFieldError('notes')">
+                      <span class="label-text-alt text-error">{{ getFieldError('notes') }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex flex-col-reverse sm:flex-row justify-end gap-4 pt-6 border-t border-base-300">
+              <button
+                type="button"
+                class="btn btn-ghost w-full sm:w-auto"
+                (click)="onCancel()"
+                [disabled]="isLoading || isSubmitting">
+                Cancelar
+              </button>
+
+              <button
+                type="submit"
+                class="btn btn-primary w-full sm:w-auto"
+                [disabled]="appointmentForm.invalid || isLoading || isSubmitting">
+                {{ isSubmitting ? 'Creando...' : 'Crear Cita' }}
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
