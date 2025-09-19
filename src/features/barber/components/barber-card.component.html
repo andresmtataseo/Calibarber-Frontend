@@ -1,0 +1,27 @@
+<div class="card card-side bg-secondary shadow-sm border-1 border-base-content/10">
+  <!-- Loading state -->
+  <div *ngIf="loading" class="flex justify-center items-center p-8 w-full">
+    <div class="loading loading-spinner loading-md text-primary"></div>
+  </div>
+
+  <!-- Error state -->
+  <div *ngIf="error && !loading" class="p-6 text-center w-full">
+    <div class="text-error text-sm">{{ error }}</div>
+    <div class="text-xs mt-2">Mostrando información básica</div>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!loading" class="flex w-full">
+    <!-- Foto - 50% del ancho -->
+    <figure class="w-1/2 flex-shrink-0">
+      <img [src]="profileImage" [alt]="'Foto de ' + displayName" class="object-cover w-full h-full"
+        (error)="onImageError($event)" />
+    </figure>
+
+    <!-- Datos - 50% del ancho -->
+    <div class="card-body w-1/2">
+      <h2 class="card-title">{{ displayName }}</h2>
+      <p>{{ barber.specialization || 'Especialización no disponible' }}</p>
+    </div>
+  </div>
+</div>

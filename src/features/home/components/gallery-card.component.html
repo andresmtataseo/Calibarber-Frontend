@@ -1,0 +1,26 @@
+<div class="card bg-base-100 shadow-xl hover:shadow-2xl">
+  <figure class="relative overflow-hidden">
+    <img
+      [src]="photo.imageUrl"
+      [alt]="photo.name"
+      class="w-full h-100 object-cover transition-transform duration-300 hover:scale-110"
+    />
+    <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+  </figure>
+
+  <div class="card-body p-4">
+    <h3 class="card-title text-lg font-bold text-base-content">
+      {{ photo.name }}
+    </h3>
+
+    <p class="text-base-content/70 text-sm" *ngIf="photo.description">
+      {{ photo.description }}
+    </p>
+
+    <div class="flex justify-start items-center mt-3" *ngIf="photo.category">
+      <div class="badge badge-primary badge-outline">
+        {{ photo.category }}
+      </div>
+    </div>
+  </div>
+</div>

@@ -17,3 +17,411 @@
     </div>
   </div>
 </div>
+
+  <!-- Sección de servicios -->
+  <section id="servicios" class="py-16 bg-base-100">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-4xl font-bold text-primary mb-4">
+SERVICIOS
+        </h2>
+        <p class="text-lg text-base-content/70 max-w-2xl mx-auto">
+          Descubre nuestra amplia gama de servicios profesionales de barbería
+        </p>
+      </div>
+
+      <!-- Estados de carga y error -->
+      <div class="flex justify-center mb-8" *ngIf="isLoading">
+        <div class="loading loading-spinner loading-lg text-primary"></div>
+      </div>
+
+      <div class="text-center mb-8" *ngIf="hasError">
+        <div class="alert alert-error max-w-md mx-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{{ errorMessage }}</span>
+        </div>
+        <button class="btn btn-primary mt-4" (click)="retryLoadServices()">
+          Reintentar
+        </button>
+      </div>
+
+      <!-- Swiper de servicios -->
+      <div class="relative" *ngIf="!isLoading && !hasError && services.length > 0">
+        <swiper-container
+          #serviceSwiperRef
+          slides-per-view="1"
+          space-between="24"
+          centered-slides="false"
+          loop="true"
+          navigation="false"
+          pagination="false"
+          pagination-clickable="false"
+          breakpoints='{"768": {"slidesPerView": 2}, "1024": {"slidesPerView": 2}}'
+          class="service-swiper">
+          <swiper-slide *ngFor="let service of services">
+            <div class="px-4">
+              <app-service-card
+                [service]="service">
+              </app-service-card>
+            </div>
+          </swiper-slide>
+        </swiper-container>
+
+        <!-- Botones de navegación personalizados para servicios -->
+        <button
+          (click)="previousServiceSlide()"
+          class="absolute left-2 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-primary btn-sm opacity-80 hover:opacity-100 transition-opacity">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <button
+          (click)="nextServiceSlide()"
+          class="absolute right-2 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-primary btn-sm opacity-80 hover:opacity-100 transition-opacity">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Mensaje cuando no hay servicios -->
+      <div class="text-center py-12" *ngIf="!isLoading && !hasError && services.length === 0">
+        <div class="text-base-content/50">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <p class="text-lg">No hay servicios disponibles en este momento</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- Sección de Equipo/Barberos -->
+  <section id="equipo" class="py-16 bg-neutral text-neutral-content">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-4xl font-bold text-white mb-4">
+          EQUIPO
+        </h2>
+        <p class="text-lg text-neutral-content/70 max-w-2xl mx-auto">
+          Conoce a nuestros barberos profesionales, cada uno con su estilo único y años de experiencia
+        </p>
+      </div>
+
+      <!-- Estados de carga y error para barberos -->
+      <div class="flex justify-center mb-8" *ngIf="isBarbersLoading">
+        <div class="loading loading-spinner loading-lg text-primary"></div>
+      </div>
+
+      <div class="text-center mb-8" *ngIf="hasBarbersError">
+        <div class="alert alert-error max-w-md mx-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{{ barbersErrorMessage }}</span>
+        </div>
+        <button class="btn btn-primary mt-4" (click)="retryLoadBarbers()">
+          Reintentar
+        </button>
+      </div>
+
+      <!-- Swiper de barberos -->
+      <div class="relative" *ngIf="!isBarbersLoading && !hasBarbersError && barbers.length > 0">
+        <swiper-container
+          #barberSwiperRef
+          slides-per-view="1"
+          space-between="24"
+          centered-slides="false"
+          loop="true"
+          navigation="false"
+          pagination="false"
+          pagination-clickable="false"
+          breakpoints='{"768": {"slidesPerView": 2}, "1024": {"slidesPerView": 2}}'
+          class="barber-swiper">
+          <swiper-slide *ngFor="let barber of barbers">
+            <div class="px-4">
+              <app-barber-card
+                [barber]="barber"
+                (barberSelected)="onBarberSelected($event)">
+              </app-barber-card>
+            </div>
+          </swiper-slide>
+        </swiper-container>
+
+        <!-- Botones de navegación personalizados para barberos -->
+        <button
+          (click)="previousBarberSlide()"
+          class="absolute left-2 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-primary btn-sm opacity-80 hover:opacity-100 transition-opacity">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <button
+          (click)="nextBarberSlide()"
+          class="absolute right-2 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-primary btn-sm opacity-80 hover:opacity-100 transition-opacity">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Mensaje cuando no hay barberos -->
+      <div class="text-center py-12" *ngIf="!isBarbersLoading && !hasBarbersError && barbers.length === 0">
+        <div class="text-neutral-content/50">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <p class="text-lg">Nuestro equipo estará disponible pronto</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sección de Galería -->
+  <section id="galeria" class="py-16 bg-base-200">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-4xl font-bold text-primary mb-4">
+          GALERÍA
+        </h2>
+        <p class="text-lg text-base-content/70 max-w-2xl mx-auto">
+          Descubre nuestros trabajos más destacados y encuentra la inspiración para tu próximo look
+        </p>
+      </div>
+
+      <!-- Galería con Swiper -->
+      <div class="relative bg-neutral rounded-box p-4">
+        <swiper-container
+          #swiperRef
+          slides-per-view="auto"
+          space-between="24"
+          centered-slides="false"
+          loop="true"
+          navigation="false"
+          pagination="false"
+          pagination-clickable="false"
+          class="gallery-swiper">
+          <swiper-slide *ngFor="let photo of galleryPhotos; let i = index" style="width: 320px;">
+            <app-gallery-card [photo]="photo"></app-gallery-card>
+          </swiper-slide>
+        </swiper-container>
+
+        <!-- Botones de navegación personalizados -->
+        <button
+          (click)="previousSlide()"
+          class="absolute left-2 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-primary btn-sm opacity-80 hover:opacity-100 transition-opacity">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <button
+          (click)="nextSlide()"
+          class="absolute right-2 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-primary btn-sm opacity-80 hover:opacity-100 transition-opacity">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sección NOSOTROS -->
+  <section id="nosotros" class="py-16 bg-neutral text-neutral-content">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-4xl font-bold text-white mb-4">
+          NOSOTROS
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
+        <!-- Imagen del barbero -->
+        <div class="order-2 lg:order-1">
+          <div class="relative">
+            <img
+              src="/hero.png"
+              alt="Barbero trabajando"
+              class="w-full h-96 lg:h-[500px] object-cover rounded-lg shadow-2xl"
+            >
+            <div class="absolute inset-0 bg-gradient-to-t from-neutral/50 to-transparent rounded-lg"></div>
+          </div>
+        </div>
+
+        <!-- Contenido de texto -->
+        <div class="order-1 lg:order-2">
+          <div class="text-base-100">
+            <p class="text-lg leading-relaxed text-base-100">
+              Abrió sus puertas en 2023 en el corazón de Fort Lauderdale, Florida, con el objetivo de ofrecer una <span class="font-semibold text-base-100">experiencia única de estilo</span> y cuidado personal. Fundada por <span class="font-semibold text-base-100">Juan Moreno</span>, un barbero venezolano apasionado por su oficio, nuestra misión es brindar a cada cliente un servicio de <span class="font-semibold text-base-100">excelencia</span>, combinando <span class="font-semibold text-base-100">técnicas clásicas</span> con un <span class="font-semibold text-base-100">enfoque moderno</span> y personalizado.
+              Desde el principio, nos hemos comprometido a crear un <span class="font-semibold text-base-100">espacio exclusivo</span> donde cada persona pueda disfrutar de un <span class="font-semibold text-base-100">trato único</span>, en un ambiente que refleja tanto <span class="font-semibold text-base-100">elegancia</span> como <span class="font-semibold text-base-100">comodidad</span>. En nuestra barbería, no solo cuidamos tu apariencia, sino que también creamos momentos que van <span class="font-semibold text-base-100">más allá de un simple corte</span> de cabello o arreglo de barba.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sección CONTACTO -->
+  <section id="contacto" class="py-16 bg-base-200">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-4xl font-bold text-primary mb-4">
+          CONTACTO
+        </h2>
+        <p class="text-lg text-base-content/70 max-w-2xl mx-auto">
+          En CaliBarber, estamos aquí para atenderte. No dudes en ponerte en contacto con nosotros para hacer tu reservación o resolver cualquier duda. <span class="font-semibold text-primary">¡Nos encantaría ser parte de tu próximo cambio de look!</span>
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+        <!-- Información de contacto -->
+        <div class="space-y-8">
+          <div class="bg-base-100 p-8 rounded-lg shadow-xl">
+            <div class="space-y-6">
+              <!-- Dirección -->
+              <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0">
+                  <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg text-base-content mb-1">Dirección:</h3>
+                  <p class="text-base-content/80">123 Calle Principal, Fort Lauderdale, Florida</p>
+                </div>
+              </div>
+
+              <!-- Teléfono -->
+              <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0">
+                  <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg text-base-content mb-1">Teléfono:</h3>
+                  <p class="text-base-content/80">+1 (555) 123-4567</p>
+                </div>
+              </div>
+
+              <!-- Email -->
+              <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0">
+                  <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg text-base-content mb-1">Correo electrónico:</h3>
+                  <p class="text-base-content/80">info@calibarber.com</p>
+                </div>
+              </div>
+
+              <!-- Horarios -->
+              <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0">
+                  <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg text-base-content mb-2">Horario de atención:</h3>
+                  <div class="space-y-1 text-base-content/80">
+                    <p>• Lunes a Viernes: 9:00 AM - 7:00 PM</p>
+                    <p>• Sábados: 9:00 AM - 5:00 PM</p>
+                    <p>• Domingos: Cerrado</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formulario de contacto -->
+        <div class="bg-base-100 rounded-lg shadow-xl p-8">
+          <h3 class="text-center text-base-content mb-6">
+            O también puedes contactarnos a través del siguiente formulario:
+          </h3>
+
+          <form class="space-y-6" (ngSubmit)="sendEmail($event)">
+            <!-- Nombre -->
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Nombre</span>
+                <input
+                  type="text"
+                  name="nombre"
+                  id="nombre"
+                  placeholder="Nombre"
+                  class="input input-md w-full"
+                  required />
+              </label>
+            </div>
+
+            <!-- Apellido -->
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Apellido</span>
+                <input
+                  type="text"
+                  name="apellido"
+                  id="apellido"
+                  placeholder="Apellido"
+                  class="input input-md w-full"
+                  required />
+              </label>
+            </div>
+
+            <!-- Email -->
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Email</span>
+                <input
+                  type="email"
+                  name="email"
+                  id="email"
+                  placeholder="Email"
+                  class="input input-md w-full"
+                  required />
+              </label>
+            </div>
+
+            <!-- Mensaje -->
+            <div class="form-control">
+              <label class="floating-label">
+                <span>Mensaje</span>
+                <textarea
+                  name="mensaje"
+                  id="mensaje"
+                  placeholder="Mensaje"
+                  rows="4"
+                  class="textarea textarea-md w-full"
+                  required></textarea>
+              </label>
+            </div>
+
+            <!-- Botón de envío -->
+            <div class="form-control mt-6">
+              <button
+                type="submit"
+                class="btn btn-primary w-full">
+                Enviar por Email
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>

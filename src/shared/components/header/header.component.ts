@@ -1,6 +1,7 @@
 import { Component, Input, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { ViewportScroller } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { MobileSidebarComponent } from '../mobile-sidebar';
 import { UrlService } from '../../../core/services/url.service';
@@ -26,6 +27,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private urlService = inject(UrlService);
   private authService = inject(AuthService);
   private userService = inject(UserService);
+  private viewportScroller = inject(ViewportScroller);
   private destroy$ = new Subject<void>();
 
   // Estado de autenticación reactivo
@@ -66,12 +68,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
    * Items del menú de navegación
    */
   navigationItems = [
-    { label: 'INICIO', route: '/', active: true },
-    { label: 'SERVICIOS', route: '/servicios', active: false },
-    { label: 'EQUIPO', route: '/equipo', active: false },
-    { label: 'GALERÍA', route: '/galeria', active: false },
-    { label: 'NOSOTROS', route: '/nosotros', active: false },
-    { label: 'CONTACTO', route: '/contacto', active: false }
+    { label: 'INICIO', route: '/', fragment: '', active: true },
+    { label: 'SERVICIOS', route: '/', fragment: 'servicios', active: false },
+    { label: 'EQUIPO', route: '/', fragment: 'equipo', active: false },
+    { label: 'GALERÍA', route: '/', fragment: 'galeria', active: false },
+    { label: 'NOSOTROS', route: '/', fragment: 'nosotros', active: false },
+    { label: 'CONTACTO', route: '/', fragment: 'contacto', active: false }
   ];
 
   /**
@@ -96,6 +98,24 @@ export class HeaderComponent implements OnInit, OnDestroy {
     // Actualizar el estado activo
     this.navigationItems.forEach(navItem => navItem.active = false);
     item.active = true;
+    
+    // Navegar con fragment si existe
+    if (item.fragment) {
+      this.router.navigate([item.route], { fragment: item.fragment }).then(() => {
+        // Usar ViewportScroller como respaldo para asegurar el scroll
+        setTimeout(() => {
+          this.viewportScroller.scrollToAnchor(item.fragment);
+        }, 100);
+      });
+    } else {
+      this.router.navigate([item.route]).then(() => {
+        // Scroll al top para la página de inicio
+        this.viewportScroller.scrollToPosition([0, 0]);
+      });
+    }
+    
+    // Cerrar el menú móvil si está abierto
+    this.closeMobileSidebar();
   }
 
   /**
