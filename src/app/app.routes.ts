@@ -60,6 +60,12 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'book-appointment',
+    loadComponent: () => import('../features/appointment/pages/book-appointment.component').then(m => m.BookAppointmentComponent),
+    title: 'Reservar Cita - CaliBarber',
+    canActivate: [authGuard]
+  },
+  {
     path: 'admin',
     component: AdminDashboardComponent,
     title: 'Panel de Administración - CaliBarber',

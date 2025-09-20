@@ -66,3 +66,43 @@ export interface ServiceInfo {
   durationMinutes: number;
   price: number;
 }
+
+// Interfaces para el endpoint de disponibilidad
+export interface AvailabilityResponse {
+  availability: DayAvailability[];
+}
+
+export interface DayAvailability {
+  date: string; // ISO date format: yyyy-MM-dd
+  status: AvailabilityStatus;
+}
+
+export enum AvailabilityStatus {
+  LIBRE = 'LIBRE',
+  PARCIALMENTE_DISPONIBLE = 'PARCIALMENTE_DISPONIBLE',
+  SIN_DISPONIBILIDAD = 'SIN_DISPONIBILIDAD'
+}
+
+// Interfaces para el endpoint de disponibilidad diaria en bloques de 30 minutos
+export interface DayAvailabilityResponse {
+  date: string; // ISO date format: yyyy-MM-dd
+  slots: DayAvailabilitySlot[];
+}
+
+export interface DayAvailabilitySlot {
+  time: string; // ISO time format: HH:mm:ss
+  available: boolean;
+}
+
+// Interfaces para el endpoint de disponibilidad de barberos con tiempo libre
+export interface BarbersAvailabilityResponse {
+  dateTime: string; // ISO LocalDateTime format: yyyy-MM-dd'T'HH:mm:ss
+  barbers: BarberAvailability[];
+}
+
+export interface BarberAvailability {
+  id: string;
+  name: string;
+  available: boolean;
+  freeMinutes: number;
+}

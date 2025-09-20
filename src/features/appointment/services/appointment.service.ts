@@ -7,7 +7,10 @@ import {
   AppointmentResponse,
   CreateAppointmentRequest,
   UpdateAppointmentRequest,
-  AppointmentStatus
+  AppointmentStatus,
+  DayAvailability,
+  DayAvailabilityResponse,
+  BarbersAvailabilityResponse
 } from '../models/appointment.model';
 
 @Injectable({
@@ -287,6 +290,35 @@ export class AppointmentService {
     return this.http.get<any>(this.urlService.getAppointmentUrl('STATS'), { params });
   }
 
+  // ========== ENDPOINTS DE DISPONIBILIDAD ==========
+
+  /**
+   * Obtiene la disponibilidad de un día específico en bloques de 30 minutos
+   * @param barberId ID único del barbero
+   * @param date Fecha en formato yyyy-MM-dd
+   * @returns Observable con la disponibilidad del día en bloques de 30 minutos
+   */
+  getDayAvailabilityBySlots(barberId: string, date: string): Observable<DayAvailabilityResponse> {
+    const params = new HttpParams()
+      .set('barberId', barberId)
+      .set('date', date);
+
+    return this.http.get<any>(this.urlService.getAppointmentUrl('AVAILABILITY_DAY'), { params }).pipe(
+      map((response: any) => {
+        console.log('Respuesta completa del backend para slots:', response);
+        if (response.status === 200 && response.data) {
+          console.log('Extrayendo data de slots:', response.data);
+          return response.data;
+        }
+        throw new Error('Error al obtener la disponibilidad de slots del día');
+      }),
+      catchError((error) => {
+        console.error('Error al obtener la disponibilidad de slots:', error);
+        return throwError(() => new Error('Error al obtener la disponibilidad de slots del día'));
+      })
+    );
+  }
+
   // ========== MÉTODOS DE UTILIDAD ==========
 
   /**
@@ -353,6 +385,52 @@ export class AppointmentService {
       catchError((error) => {
         console.error('Error al obtener el conteo de citas del día:', error);
         return throwError(() => new Error('Error al obtener el total de citas del día'));
+      })
+    );
+  }
+
+  /**
+   * Obtiene la disponibilidad de la barbería en un rango de fechas
+   * @param startDate Fecha de inicio en formato yyyy-MM-dd
+   * @param endDate Fecha de fin en formato yyyy-MM-dd
+   * @returns Observable con la disponibilidad por días
+   */
+  getBarbershopAvailability(startDate: string, endDate: string): Observable<DayAvailability[]> {
+    const params = new HttpParams()
+      .set('startDate', startDate)
+      .set('endDate', endDate);
+
+    return this.http.get<any>(this.urlService.getAppointmentUrl('AVAILABILITY'), { params }).pipe(
+      map((response: any) => {
+        console.log('Respuesta completa del backend:', response);
+        if (response.status === 200 && response.data && response.data.availability) {
+          console.log('Extrayendo availability:', response.data.availability);
+          return response.data.availability;
+        }
+        throw new Error('Error al obtener la disponibilidad de la barbería');
+      }),
+      catchError((error) => {
+        console.error('Error al obtener la disponibilidad:', error);
+        return throwError(() => new Error('Error al obtener la disponibilidad de la barbería'));
+      })
+    );
+  }
+
+  /**
+   * Obtiene la disponibilidad de todos los barberos para una fecha y hora específica
+   * @param dateTime Fecha y hora en formato ISO (yyyy-MM-dd'T'HH:mm:ss)
+   * @returns Observable con la disponibilidad de barberos y su tiempo libre
+   */
+  getBarbersAvailability(dateTime: string): Observable<BarbersAvailabilityResponse> {
+    const params = new HttpParams().set('dateTime', dateTime);
+
+    return this.http.get<BarbersAvailabilityResponse>(
+      this.urlService.getAppointmentUrl('AVAILABILITY_BARBERS'), 
+      { params }
+    ).pipe(
+      catchError((error) => {
+        console.error('Error al obtener la disponibilidad de barberos:', error);
+        return throwError(() => new Error('Error al obtener la disponibilidad de barberos'));
       })
     );
   }

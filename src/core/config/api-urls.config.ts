@@ -96,6 +96,9 @@ export const APPOINTMENT_URLS = {
   NO_SHOW: `${API_CONFIG.API_BASE}/appointments/no-show`,
   AVAILABLE_SLOTS: `${API_CONFIG.API_BASE}/appointments/available-slots`,
   CHECK_AVAILABILITY: `${API_CONFIG.API_BASE}/appointments/check-availability`,
+  AVAILABILITY: `${API_CONFIG.API_BASE}/appointments/availability`,
+  AVAILABILITY_DAY: `${API_CONFIG.API_BASE}/appointments/availability/day`,
+  AVAILABILITY_BARBERS: `${API_CONFIG.API_BASE}/appointments/availability/barbers`,
   STATS: `${API_CONFIG.API_BASE}/appointments/stats`,
   COUNT_TODAY: `${API_CONFIG.API_BASE}/appointments/count/today`
 } as const;

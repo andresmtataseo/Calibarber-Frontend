@@ -1,0 +1,232 @@
+<div class="min-h-screen bg-base-100 p-4">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-base-content mb-2">Reservar cita</h1>
+      <p class="text-lg text-base-content/70">{{ getMonthYearText() }}</p>
+    </div>
+
+    <!-- Calendar Section -->
+    <div class="card bg-base-100 shadow-xl mb-6">
+      <div class="card-body">
+        <!-- Error message -->
+        <div *ngIf="error" class="alert alert-error mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{{ error }}</span>
+          <button class="btn btn-sm btn-ghost" (click)="loadWeekAvailability()">
+            Reintentar
+          </button>
+        </div>
+
+        <!-- Calendar navigation and days - only show when no error -->
+        <div *ngIf="!error" class="flex items-center justify-between mb-4">
+          <!-- Previous week button -->
+          <button
+            class="btn btn-ghost btn-sm"
+            [disabled]="!canGoToPreviousWeek() || isLoading"
+            (click)="goToPreviousWeek()"
+            title="Semana anterior">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+          </button>
+
+          <!-- Calendar days -->
+          <div class="flex gap-2 flex-wrap justify-center relative">
+            <!-- Loading overlay -->
+            <div *ngIf="isLoading" class="absolute inset-0 bg-base-100 bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
+              <span class="loading loading-spinner loading-md"></span>
+            </div>
+
+            <div
+              *ngFor="let day of calendarDays"
+              class="flex flex-col items-center p-3 rounded-lg cursor-pointer transition-all duration-200 min-w-[80px]"
+              [class]="selectedDate?.fullDate?.toDateString() === day.fullDate?.toDateString() ? 'bg-primary text-primary-content' : 'bg-base-200 hover:bg-base-300'"
+              [class.opacity-50]="!day.available"
+              [class.cursor-not-allowed]="!day.available || isLoading"
+              (click)="selectDate(day)">
+              <span class="text-xs font-medium mb-1">{{ day.dayName }}</span>
+              <span class="text-xl font-bold">{{ day.date }}</span>
+              <div class="w-8 h-1 rounded-full mt-2" [ngClass]="getStatusClass(day.status)"></div>
+
+              <!-- Availability status indicator -->
+              <div class="text-xs mt-1 opacity-75" *ngIf="day.availabilityStatus">
+                <span *ngIf="day.availabilityStatus === 'LIBRE'" class="text-success">Libre</span>
+                <span *ngIf="day.availabilityStatus === 'PARCIALMENTE_DISPONIBLE'" class="text-warning">Parcial</span>
+                <span *ngIf="day.availabilityStatus === 'SIN_DISPONIBILIDAD'" class="text-error">Ocupado</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Next week button -->
+          <button
+            class="btn btn-ghost btn-sm"
+            [disabled]="isLoading"
+            (click)="goToNextWeek()"
+            title="Semana siguiente">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Week indicator - only show when no error -->
+        <div *ngIf="!error" class="text-center text-sm opacity-75 mb-2">
+          {{ getWeekRangeText() }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Time Period Selection -->
+    <div class="card bg-base-100 shadow-xl mb-6">
+      <div class="card-body">
+        <div class="flex justify-center mb-4">
+          <div class="tabs tabs-boxed">
+            <button
+              class="tab"
+              [class.tab-active]="selectedTimePeriod === 'Mañana'"
+              [disabled]="isLoadingTimeSlots"
+              (click)="selectTimePeriod('Mañana')">
+              Mañana
+            </button>
+            <button
+              class="tab"
+              [class.tab-active]="selectedTimePeriod === 'Tarde'"
+              [disabled]="isLoadingTimeSlots"
+              (click)="selectTimePeriod('Tarde')">
+              Tarde
+            </button>
+            <button
+              class="tab"
+              [class.tab-active]="selectedTimePeriod === 'Noche'"
+              [disabled]="isLoadingTimeSlots"
+              (click)="selectTimePeriod('Noche')">
+              Noche
+            </button>
+          </div>
+        </div>
+
+        <!-- Time Slots -->
+        <div class="flex items-center justify-between">
+          <button 
+            class="btn btn-ghost btn-sm"
+            [disabled]="!canGoToPreviousTimePeriod() || isLoadingTimeSlots"
+            (click)="goToPreviousTimePeriod()">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+          </button>
+
+          <div class="flex gap-3 flex-wrap justify-center min-h-[3rem] items-center">
+            <!-- Loading state -->
+            <div *ngIf="isLoadingTimeSlots" class="flex items-center gap-2">
+              <span class="loading loading-spinner loading-sm"></span>
+              <span class="text-sm text-gray-500">Cargando horarios...</span>
+            </div>
+
+            <!-- No slots available -->
+            <div *ngIf="!isLoadingTimeSlots && timeSlots.length === 0" class="text-center text-gray-500">
+              <p class="text-sm">No hay horarios disponibles para este período</p>
+            </div>
+
+            <!-- Time slots -->
+            <button
+              *ngFor="let slot of timeSlots"
+              class="btn btn-outline transition-all duration-200"
+              [class.btn-primary]="selectedTimeSlot === slot.time"
+              [class.btn-disabled]="!slot.available"
+              [class.opacity-50]="!slot.available"
+              [class.cursor-not-allowed]="!slot.available"
+              [disabled]="!slot.available || isLoadingTimeSlots"
+              (click)="selectTimeSlot(slot.time)">
+              {{ slot.displayTime }}
+            </button>
+          </div>
+
+          <button 
+            class="btn btn-ghost btn-sm"
+            [disabled]="!canGoToNextTimePeriod() || isLoadingTimeSlots"
+            (click)="goToNextTimePeriod()">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Error message -->
+        <div *ngIf="timeSlotsError" class="alert alert-error mt-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{{ timeSlotsError }}</span>
+          <button class="btn btn-sm btn-ghost" (click)="loadDayTimeSlots()">
+            Reintentar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Service Selection -->
+    <div class="card bg-base-100 shadow-xl mb-6">
+      <div class="card-body">
+        <h2 class="card-title text-xl mb-4">Selecciona el servicio</h2>
+
+        <div class="space-y-4">
+          <div *ngFor="let service of selectedServices; let i = index" class="border border-base-300 rounded-lg p-4">
+            <div class="flex justify-between items-start mb-3">
+              <div class="flex-1">
+                <h3 class="font-semibold text-lg">{{ service.name }}</h3>
+                <p class="text-warning font-medium">{{ service.duration }}</p>
+                <p class="text-sm text-base-content/70 mt-1">• No personalizado</p>
+              </div>
+              <div class="text-right">
+                <p class="text-2xl font-bold text-success">USD {{ service.price.toFixed(2) }}</p>
+              </div>
+            </div>
+
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-2">
+                <span class="text-sm text-base-content/70">Empleado:</span>
+                <span class="font-medium">{{ service.employee }}</span>
+              </div>
+              <button
+                class="btn btn-sm btn-outline"
+                (click)="changeEmployee(service.id)">
+                Cambiar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Another Service -->
+        <button
+          class="btn btn-ghost btn-sm mt-4 self-start"
+          (click)="addService()">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Añadir otro servicio
+        </button>
+      </div>
+    </div>
+
+    <!-- Total and Reserve Button -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <div class="flex justify-between items-center mb-4">
+          <span class="text-xl font-semibold">Total:</span>
+          <span class="text-2xl font-bold">{{ getTotalPrice().toFixed(2) }} $</span>
+        </div>
+
+        <button
+          class="btn btn-primary btn-lg w-full"
+          [disabled]="!selectedDate || !selectedTimeSlot || selectedServices.length === 0"
+          (click)="makeReservation()">
+          Reservar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
