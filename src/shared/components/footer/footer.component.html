@@ -5,7 +5,14 @@
     <!-- Logo de CaliBarber -->
     <img src="/logo.png" alt="CaliBarber Logo" class="w-42 h-42 mb-4" />
     <p class="text-sm">
-      <strong class="text-base-100">{{ contactInfo.name }}</strong>
+      <strong class="text-base-100">
+        <ng-container *ngIf="!isLoading; else loadingName">
+          {{ contactInfo.name }}
+        </ng-container>
+        <ng-template #loadingName>
+          <span class="skeleton inline-block h-4 w-24"></span>
+        </ng-template>
+      </strong>
       <br />
       Tu estilo, nuestra pasión
     </p>
@@ -30,15 +37,30 @@
     <div class="space-y-2">
       <p class="text-sm">
         <strong>Dirección:</strong><br>
-        {{ contactInfo.address }}
+        <ng-container *ngIf="!isLoading; else loadingAddress">
+          {{ contactInfo.address }}
+        </ng-container>
+        <ng-template #loadingAddress>
+          <span class="skeleton inline-block h-4 w-48"></span>
+        </ng-template>
       </p>
       <p class="text-sm">
         <strong>Teléfono:</strong><br>
-        <a href="tel:{{ contactInfo.phone }}" class="link link-hover">{{ contactInfo.phone }}</a>
+        <ng-container *ngIf="!isLoading; else loadingPhone">
+          <a href="tel:{{ contactInfo.phone }}" class="link link-hover">{{ contactInfo.phone }}</a>
+        </ng-container>
+        <ng-template #loadingPhone>
+          <span class="skeleton inline-block h-4 w-32"></span>
+        </ng-template>
       </p>
       <p class="text-sm">
         <strong>Correo electrónico:</strong><br>
-        <a href="mailto:{{ contactInfo.email }}" class="link link-hover">{{ contactInfo.email }}</a>
+        <ng-container *ngIf="!isLoading; else loadingEmail">
+          <a href="mailto:{{ contactInfo.email }}" class="link link-hover">{{ contactInfo.email }}</a>
+        </ng-container>
+        <ng-template #loadingEmail>
+          <span class="skeleton inline-block h-4 w-40"></span>
+        </ng-template>
       </p>
     </div>
   </nav>
@@ -47,9 +69,16 @@
   <nav>
     <h6 class="footer-title">Horarios de atención</h6>
     <div class="space-y-2">
-      <p class="text-sm">{{ scheduleInfo.weekdays }}</p>
-      <p class="text-sm">{{ scheduleInfo.saturday }}</p>
-      <p class="text-sm">{{ scheduleInfo.sunday }}</p>
+      <ng-container *ngIf="!isLoading; else loadingSchedule">
+        <p class="text-sm">{{ scheduleInfo.weekdays }}</p>
+        <p class="text-sm">{{ scheduleInfo.saturday }}</p>
+        <p class="text-sm">{{ scheduleInfo.sunday }}</p>
+      </ng-container>
+      <ng-template #loadingSchedule>
+        <div class="skeleton h-4 w-36 mb-2"></div>
+        <div class="skeleton h-4 w-32 mb-2"></div>
+        <div class="skeleton h-4 w-28"></div>
+      </ng-template>
     </div>
   </nav>
 
@@ -73,7 +102,13 @@
 <footer class="footer footer-center bg-primary text-base-100 p-4">
   <aside>
     <p class="text-sm">
-      © {{ currentYear }} {{ contactInfo.name }}.
+      © {{ currentYear }} 
+      <ng-container *ngIf="!isLoading; else loadingCopyright">
+        {{ contactInfo.name }}
+      </ng-container>
+      <ng-template #loadingCopyright>
+        <span class="skeleton inline-block h-4 w-24"></span>
+      </ng-template>.
       <br>
       Todos los derechos reservados.
     </p>

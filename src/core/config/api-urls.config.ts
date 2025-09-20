@@ -1,9 +1,9 @@
 /**
  * Configuración centralizada de URLs de la aplicación
- * 
+ *
  * Este archivo contiene todas las URLs utilizadas en la aplicación,
  * organizadas por módulos para facilitar el mantenimiento y escalabilidad.
- * 
+ *
  * @author CaliBarber Team
  * @version 1.0.0
  */
@@ -37,7 +37,8 @@ export const USER_URLS = {
   PROFILE: `${API_CONFIG.API_BASE}/users/profile`,
   UPDATE_PROFILE: `${API_CONFIG.API_BASE}/users/profile`,
   CHANGE_PASSWORD: `${API_CONFIG.API_BASE}/users/change-password`,
-  UPLOAD_AVATAR: `${API_CONFIG.API_BASE}/users/avatar`
+  UPLOAD_AVATAR: `${API_CONFIG.API_BASE}/users/avatar`,
+  COUNT_ACTIVE: `${API_CONFIG.API_BASE}/users/count/active`
 } as const;
 
 // URLs de barberías
@@ -56,7 +57,8 @@ export const BARBER_URLS = {
   BY_ID: (id: string) => `${API_CONFIG.API_BASE}/barbers/${id}`,
   AVAILABILITY: `${API_CONFIG.API_BASE}/barbers/availability`,
   SCHEDULE: (id: string) => `${API_CONFIG.API_BASE}/barbers/${id}/schedule`,
-  AVAILABLE: `${API_CONFIG.API_BASE}/barbers/available`
+  AVAILABLE: `${API_CONFIG.API_BASE}/barbers/available`,
+  COUNT_ACTIVE: `${API_CONFIG.API_BASE}/barbers/count/active`
 } as const;
 
 // URLs de servicios
@@ -94,7 +96,8 @@ export const APPOINTMENT_URLS = {
   NO_SHOW: `${API_CONFIG.API_BASE}/appointments/no-show`,
   AVAILABLE_SLOTS: `${API_CONFIG.API_BASE}/appointments/available-slots`,
   CHECK_AVAILABILITY: `${API_CONFIG.API_BASE}/appointments/check-availability`,
-  STATS: `${API_CONFIG.API_BASE}/appointments/stats`
+  STATS: `${API_CONFIG.API_BASE}/appointments/stats`,
+  COUNT_TODAY: `${API_CONFIG.API_BASE}/appointments/count/today`
 } as const;
 
 // URLs de pagos
@@ -111,10 +114,10 @@ export const EXTERNAL_URLS = {
   // Servicio de avatares
   UI_AVATARS: {
     BASE: 'https://ui-avatars.com/api/',
-    GENERATE: (name: string, background = '570df8', color = 'fff', size = 40) => 
+    GENERATE: (name: string, background = '570df8', color = 'fff', size = 40) =>
       `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${background}&color=${color}&size=${size}`
   },
-  
+
   // Redes sociales
   SOCIAL_MEDIA: {
     INSTAGRAM: 'https://instagram.com/calibarber',

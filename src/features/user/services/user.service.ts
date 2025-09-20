@@ -89,7 +89,7 @@ export class UserService {
    *   lastName: 'Pérez',
    *   role: UserRole.ROLE_CLIENT
    * };
-   * 
+   *
    * this.userService.createUser(newUser)
    *   .subscribe({
    *     next: (user) => console.log('Usuario creado:', user),
@@ -180,7 +180,7 @@ export class UserService {
    *   firstName: 'Nuevo Nombre',
    *   lastName: 'Nuevo Apellido'
    * };
-   * 
+   *
    * this.userService.updateUser('user-id', updateData)
    *   .subscribe({
    *     next: (user) => console.log('Usuario actualizado:', user),
@@ -199,7 +199,7 @@ export class UserService {
 
     // Crear parámetros de consulta con el ID del usuario
     const params = new HttpParams().set('id', userId.trim());
-    
+
     // URL base para actualización de usuarios
     const url = USER_URLS.BASE;
 
@@ -340,6 +340,38 @@ export class UserService {
         timeout(this.DEFAULT_TIMEOUT),
         retry(this.MAX_RETRIES),
         catchError((error) => this.handleError(error, 'obtener usuarios eliminados'))
+      );
+  }
+
+  /**
+   * Obtiene el total de usuarios activos en el sistema
+   *
+   * @returns Observable con el número total de usuarios activos
+   * @throws Error con mensaje descriptivo en caso de fallo
+   *
+   * @example
+   * ```typescript
+   * this.userService.getTotalActiveUsers()
+   *   .subscribe({
+   *     next: (count) => console.log('Total usuarios activos:', count),
+   *     error: (error) => console.error('Error:', error.message)
+   *   });
+   * ```
+   */
+  getTotalActiveUsers(): Observable<number> {
+    const url = USER_URLS.COUNT_ACTIVE;
+
+    return this.http.get<ApiResponseDto<number>>(url)
+      .pipe(
+        timeout(this.DEFAULT_TIMEOUT),
+        retry(this.MAX_RETRIES),
+        map(response => {
+          if (response.data !== undefined) {
+            return response.data;
+          }
+          throw new Error('Error al obtener el total de usuarios activos');
+        }),
+        catchError(error => this.handleError(error, 'obtener el total de usuarios activos'))
       );
   }
 

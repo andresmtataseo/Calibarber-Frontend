@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { UrlService } from '../../../core/services/url.service';
 import {
   AppointmentResponse,
@@ -336,4 +337,25 @@ export class AppointmentService {
     };
     return statusClassMap[status] || 'badge-neutral';
   }
+
+  /**
+   * Obtiene el total de citas del día actual
+   * @returns Observable con el número total de citas del día
+   */
+  getTodayAppointmentsCount(): Observable<number> {
+    return this.http.get<any>(this.urlService.getAppointmentUrl('COUNT_TODAY')).pipe(
+      map((response: any) => {
+        if (response.data !== undefined) {
+          return response.data;
+        }
+        throw new Error('Error al obtener el total de citas del día');
+      }),
+      catchError((error) => {
+        console.error('Error al obtener el conteo de citas del día:', error);
+        return throwError(() => new Error('Error al obtener el total de citas del día'));
+      })
+    );
+  }
 }
+
+

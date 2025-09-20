@@ -429,4 +429,22 @@ export class BarberService {
     console.error('BarberService Error:', errorMessage, error);
     return throwError(() => new Error(errorMessage));
   }
+
+  /**
+   * Obtiene el total de barberos activos en el sistema
+   * @returns Observable con el número total de barberos activos
+   */
+  getTotalActiveBarbers(): Observable<number> {
+    return this.http.get<ApiResponseDto<number>>(
+      this.urlService.getBarberUrl('COUNT_ACTIVE')
+    ).pipe(
+      map(response => {
+        if (response.data !== undefined) {
+          return response.data;
+        }
+        throw new Error('Error al obtener el total de barberos activos');
+      }),
+      catchError(this.handleError.bind(this))
+    );
+  }
 }

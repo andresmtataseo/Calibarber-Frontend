@@ -33,7 +33,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   @ViewChild('swiperRef', { static: false }) swiperRef!: ElementRef;
   @ViewChild('barberSwiperRef', { static: false }) barberSwiperRef!: ElementRef;
   @ViewChild('serviceSwiperRef', { static: false }) serviceSwiperRef!: ElementRef;
-  
+
   private readonly serviceService = inject(ServiceService);
   private readonly barberService = inject(BarberService);
   private readonly destroy$ = new Subject<void>();
@@ -74,20 +74,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       category: 'Cortes'
     },
     {
-      id: '3',
-      name: 'Corte personalizado',
-      imageUrl: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-      description: 'Diseño único adaptado a tu estilo',
-      category: 'Especiales'
-    },
-    {
-      id: '4',
-      name: 'Barba y bigote',
-      imageUrl: 'https://images.unsplash.com/photo-1582095133179-bfd08e2fc6b3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-      description: 'Arreglo profesional de barba',
-      category: 'Barba'
-    },
-    {
       id: '5',
       name: 'Estilo vintage',
       imageUrl: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
@@ -120,7 +106,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     // Registrar elementos personalizados de Swiper
     register();
-    
+
     this.loadServices();
     this.loadBarbers();
   }

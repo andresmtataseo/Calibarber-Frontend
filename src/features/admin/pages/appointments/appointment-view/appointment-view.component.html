@@ -74,19 +74,19 @@
                 <label class="label">
                   <span class="label-text font-medium">Nombre</span>
                 </label>
-                <p class="text-base-content">{{ (appointment.user?.firstName && appointment.user?.lastName) ? (appointment.user.firstName + ' ' + appointment.user.lastName) : 'No especificado' }}</p>
+                <p class="text-base-content">{{ (appointment.user.firstName && appointment.user.lastName) ? (appointment.user.firstName + ' ' + appointment.user.lastName) : 'No especificado' }}</p>
               </div>
               <div>
                 <label class="label">
                   <span class="label-text font-medium">Email</span>
                 </label>
-                <p class="text-base-content">{{ appointment.user?.email || 'No especificado' }}</p>
+                <p class="text-base-content">{{ appointment.user.email || 'No especificado' }}</p>
               </div>
               <div>
                 <label class="label">
                   <span class="label-text font-medium">Teléfono</span>
                 </label>
-                <p class="text-base-content">{{ appointment.user?.phoneNumber || 'No especificado' }}</p>
+                <p class="text-base-content">{{ appointment.user.phoneNumber }}</p>
               </div>
             </div>
           </div>
@@ -101,7 +101,7 @@
                 <label class="label">
                   <span class="label-text font-medium">Nombre</span>
                 </label>
-                <p class="text-base-content">{{ (appointment.barber?.firstName && appointment.barber?.lastName) ? (appointment.barber.firstName + ' ' + appointment.barber.lastName) : 'No especificado' }}</p>
+                <p class="text-base-content">{{ (appointment.barber && appointment.barber) ? (appointment.barber.firstName + ' ' + appointment.barber.lastName) : 'No especificado' }}</p>
               </div>
               <div>
                 <label class="label">
@@ -128,25 +128,25 @@
                 <label class="label">
                   <span class="label-text font-medium">Nombre</span>
                 </label>
-                <p class="text-base-content">{{ appointment.service?.name || 'No especificado' }}</p>
+                <p class="text-base-content">{{ appointment.service.name || 'No especificado' }}</p>
               </div>
               <div>
                 <label class="label">
                   <span class="label-text font-medium">Precio</span>
                 </label>
-                <p class="text-base-content">{{ appointment.service?.price ? '$' + appointment.service.price : 'No especificado' }}</p>
+                <p class="text-base-content">{{ appointment.service.price ? '$' + appointment.service.price : 'No especificado' }}</p>
               </div>
               <div>
                 <label class="label">
                   <span class="label-text font-medium">Duración</span>
                 </label>
-                <p class="text-base-content">{{ appointment.service?.durationMinutes ? appointment.service.durationMinutes + ' min' : 'No especificada' }}</p>
+                <p class="text-base-content">{{ appointment.service.durationMinutes ? appointment.service.durationMinutes + ' min' : 'No especificada' }}</p>
               </div>
               <div class="md:col-span-2">
                 <label class="label">
                   <span class="label-text font-medium">Descripción</span>
                 </label>
-                <p class="text-base-content">{{ appointment.service?.description || 'No especificada' }}</p>
+                <p class="text-base-content">{{ appointment.service.description || 'No especificada' }}</p>
               </div>
             </div>
           </div>
