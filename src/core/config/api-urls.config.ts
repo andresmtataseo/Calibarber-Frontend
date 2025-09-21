@@ -8,10 +8,12 @@
  * @version 1.0.0
  */
 
+import { environment } from '../../environments/environment';
+
 // Configuración base del API
 export const API_CONFIG = {
-  BASE_URL: 'http://localhost:8080',
-  API_VERSION: 'v1',
+  BASE_URL: environment.apiBaseUrl,
+  API_VERSION: environment.apiVersion,
   get API_BASE() {
     return `${this.BASE_URL}/api/${this.API_VERSION}`;
   }
