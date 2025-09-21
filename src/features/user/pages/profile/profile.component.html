@@ -113,7 +113,7 @@
                     <p class="text-base-content/70">{{ formatAppointmentTime(appointment.appointmentDateTime) }}</p>
                   </div>
                   <div class="badge" [ngClass]="{
-                    'badge-info': appointment.status === 'SCHEDULED',
+                    'badge-primary': appointment.status === 'SCHEDULED',
                     'badge-success': appointment.status === 'CONFIRMED' || appointment.status === 'COMPLETED',
                     'badge-warning': appointment.status === 'IN_PROGRESS',
                     'badge-error': appointment.status === 'CANCELLED' || appointment.status === 'NO_SHOW'
@@ -171,32 +171,145 @@
           Historial
         </label>
         <div class="tab-content bg-base-100 border-base-300 p-6">
-          <h3 class="text-xl font-semibold mb-4 text-primary">Historial de Citas</h3>
-          <div class="space-y-4">
-            <!-- Ejemplo de cita pasada -->
-            <div class="card bg-base-200 shadow-sm">
+          <div class="space-y-6">
+
+            <!-- Filtros -->
+            <div class="card bg-base-100 shadow-sm border border-base-200">
               <div class="card-body p-4">
-                <div class="flex justify-between items-start">
-                  <div>
-                    <h4 class="font-semibold">Corte de Cabello</h4>
-                    <p class="text-sm text-base-content/70">Barbería El Clásico</p>
-                    <p class="text-sm text-base-content/70">15 de Enero, 2024 - 3:00 PM</p>
+                <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                  <h3 class="font-semibold text-base-content">Historial de Citas</h3>
+
+                  <!-- Filtro por estado -->
+                  <div class="flex items-center gap-2">
+                    <label class="text-sm font-medium text-base-content/70">Filtrar por:</label>
+                    <select
+                      class="select select-bordered select-sm w-full max-w-xs"
+                      [(ngModel)]="selectedStatusFilter"
+                      (ngModelChange)="onStatusFilterChange()">
+                      <option *ngFor="let option of statusFilterOptions" [value]="option.value">
+                        {{ option.label }}
+                      </option>
+                    </select>
                   </div>
-                  <div class="badge badge-success">Completada</div>
                 </div>
               </div>
             </div>
 
-            <div class="card bg-base-200 shadow-sm">
-              <div class="card-body p-4">
-                <div class="flex justify-between items-start">
+            <!-- Loading state -->
+            <div *ngIf="isLoadingHistory" class="flex justify-center py-8">
+              <span class="loading loading-spinner loading-lg text-primary"></span>
+            </div>
+
+            <!-- Error state -->
+            <div *ngIf="historyError && !isLoadingHistory" class="alert alert-error">
+              <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{{ historyError }}</span>
+              <div>
+                <button class="btn btn-sm btn-outline" (click)="loadAppointmentHistory(currentHistoryPage)">
+                  Reintentar
+                </button>
+              </div>
+            </div>
+
+            <!-- Appointment history list -->
+            <div *ngIf="!isLoadingHistory && !historyError" class="space-y-4">
+
+              <!-- No appointments message -->
+              <div *ngIf="appointmentHistory.length === 0" class="text-center py-12">
+                <div class="flex flex-col items-center gap-4">
                   <div>
-                    <h4 class="font-semibold">Afeitado Clásico</h4>
-                    <p class="text-sm text-base-content/70">Barbería El Clásico</p>
-                    <p class="text-sm text-base-content/70">8 de Enero, 2024 - 11:00 AM</p>
+                    <h3 class="text-xl font-semibold mb-2 text-base-content">No hay citas en el historial</h3>
+                    <p class="text-base-content/70 mb-6">
+                      <span *ngIf="selectedStatusFilter === 'ALL'">Aún no tienes citas registradas.</span>
+                      <span *ngIf="selectedStatusFilter !== 'ALL'">No hay citas con el estado seleccionado.</span>
+                    </p>
                   </div>
-                  <div class="badge badge-success">Completada</div>
                 </div>
+              </div>
+
+              <!-- Appointment cards -->
+              <div *ngFor="let appointment of appointmentHistory" class="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow">
+                <div class="card-body p-4">
+                  <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+
+                    <!-- Appointment info -->
+                    <div class="flex-1 space-y-2">
+                      <div class="flex items-start justify-between">
+                        <h3 class="font-semibold text-base-content text-lg">{{ appointment.service.name }}</h3>
+                        <span class="badge badge-sm ml-2" [ngClass]="getStatusClass(appointment.status)">
+                          {{ getStatusText(appointment.status) }}
+                        </span>
+                      </div>
+
+                      <div class="space-y-1 text-sm text-base-content/70">
+                        <p class="flex items-center gap-2">
+                          <span>{{ appointment.barber.firstName }} {{ appointment.barber.lastName }}</span>
+                        </p>
+
+                        <p class="flex items-center gap-2">
+                          <span>{{ formatAppointmentDate(appointment.appointmentDateTime) }}</span>
+                        </p>
+
+                        <p class="flex items-center gap-2">
+                          <span>Hora: {{ formatAppointmentTime(appointment.appointmentDateTime) }} {{ appointment.durationMinutes }}</span>
+                        </p>
+
+                        <p class="flex items-center gap-2 font-semibold text-primary">
+                          <span>${{ appointment.price.toLocaleString('es-CO') }}</span>
+                        </p>
+
+                        <p *ngIf="appointment.notes" class="flex items-start gap-2 text-xs bg-base-200 p-2 rounded">
+                          <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                          </svg>
+                          <span>{{ appointment.notes }}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pagination -->
+              <div *ngIf="totalHistoryPages > 1" class="flex justify-center mt-6">
+                <div class="join">
+                  <!-- Previous button -->
+                  <button
+                    class="join-item btn btn-sm"
+                    [disabled]="currentHistoryPage === 0"
+                    (click)="onHistoryPageChange(currentHistoryPage - 1)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                  </button>
+
+                  <!-- Page numbers -->
+                  <button
+                    *ngFor="let page of [].constructor(totalHistoryPages); let i = index"
+                    class="join-item btn btn-sm"
+                    [class.btn-active]="i === currentHistoryPage"
+                    (click)="onHistoryPageChange(i)">
+                    {{ i + 1 }}
+                  </button>
+
+                  <!-- Next button -->
+                  <button
+                    class="join-item btn btn-sm"
+                    [disabled]="currentHistoryPage === totalHistoryPages - 1"
+                    (click)="onHistoryPageChange(currentHistoryPage + 1)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Results info -->
+              <div *ngIf="appointmentHistory.length > 0" class="text-center text-sm text-base-content/60 mt-4">
+                Mostrando {{ appointmentHistory.length }} de {{ totalHistoryElements }} citas
+                <span *ngIf="totalHistoryPages > 1"> - Página {{ currentHistoryPage + 1 }} de {{ totalHistoryPages }}</span>
               </div>
             </div>
           </div>

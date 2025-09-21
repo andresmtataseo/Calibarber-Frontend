@@ -1,6 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subject } from 'rxjs';
+import { takeUntil, finalize } from 'rxjs/operators';
 import { PreloaderComponent } from '../../../../shared/components/preloader/preloader.component';
 import { UserResponse, UserRole } from '../../models/user.model';
 import { UserService } from '../../services/user.service';
@@ -8,15 +11,16 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { UrlService } from '../../../../core/services/url.service';
 import { NotificationService } from '../../../../shared/components/notification/notification.service';
 import { AppointmentService } from '../../../appointment/services/appointment.service';
-import { AppointmentResponse } from '../../../appointment/models/appointment.model';
+import { AppointmentResponse, AppointmentStatus } from '../../../appointment/models/appointment.model';
+import { PageableResponse } from '../../../../shared/models/service.models';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, PreloaderComponent],
+  imports: [CommonModule, PreloaderComponent, FormsModule],
   templateUrl: './profile.component.html'
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
   private readonly userService = inject(UserService);
   private readonly authService = inject(AuthService);
   private readonly urlService = inject(UrlService);
@@ -24,6 +28,7 @@ export class ProfileComponent implements OnInit {
   private readonly notificationService = inject(NotificationService);
   private readonly appointmentService = inject(AppointmentService);
 
+  private destroy$ = new Subject<void>();
   user: UserResponse | null = null;
   loading = false;
   upcomingAppointments: AppointmentResponse[] = [];
@@ -31,10 +36,6 @@ export class ProfileComponent implements OnInit {
   cancellingAppointment: string | null = null;
 
   constructor() { }
-
-  ngOnInit(): void {
-    this.loadUserProfile();
-  }
 
   /**
    * Carga el perfil del usuario actual
@@ -71,6 +72,8 @@ export class ProfileComponent implements OnInit {
         console.log('Usuario cargado exitosamente:', user);
         // Cargar las citas próximas después de cargar el usuario
         this.loadUpcomingAppointments();
+        // Cargar el historial de citas después de cargar el usuario
+        this.loadAppointmentHistory();
       },
       error: (error) => {
         this.notificationService.error(error.message || 'Error al cargar el perfil del usuario');
@@ -200,47 +203,7 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  formatAppointmentDate(dateTime: string): string {
-    const date = new Date(dateTime);
-    return date.toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  }
 
-  formatAppointmentTime(dateTime: string): string {
-    const date = new Date(dateTime);
-    return date.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
-
-  getStatusText(status: string): string {
-    const statusMap: { [key: string]: string } = {
-      'SCHEDULED': 'Programada',
-      'CONFIRMED': 'Confirmada',
-      'IN_PROGRESS': 'En Progreso',
-      'COMPLETED': 'Completada',
-      'CANCELLED': 'Cancelada',
-      'NO_SHOW': 'No se presentó'
-    };
-    return statusMap[status] || status;
-  }
-
-  getStatusClass(status: string): string {
-    switch (status) {
-      case 'SCHEDULED': return 'badge-info';
-      case 'CONFIRMED': return 'badge-success';
-      case 'COMPLETED': return 'badge-success';
-      case 'IN_PROGRESS': return 'badge-warning';
-      case 'CANCELLED': return 'badge-error';
-      case 'NO_SHOW': return 'badge-error';
-      default: return 'badge-ghost';
-    }
-  }
 
   /**
    * Cancela una cita con confirmación del usuario
@@ -268,5 +231,213 @@ export class ProfileComponent implements OnInit {
         this.cancellingAppointment = null;
       }
     });
+  }
+
+  // Historial de citas
+  appointmentHistory: AppointmentResponse[] = [];
+  isLoadingHistory = false;
+  historyError: string | null = null;
+
+  // Paginación del historial
+  currentHistoryPage = 0;
+  historyPageSize = 5;
+  totalHistoryPages = 0;
+  totalHistoryElements = 0;
+
+  // Filtros del historial
+  selectedStatusFilter: AppointmentStatus | 'ALL' = 'ALL';
+  statusFilterOptions = [
+    { value: 'ALL', label: 'Todos los estados' },
+    { value: AppointmentStatus.COMPLETED, label: 'Completadas' },
+    { value: AppointmentStatus.CANCELLED, label: 'Canceladas' },
+    { value: AppointmentStatus.NO_SHOW, label: 'No asistió' }
+  ];
+
+  /**
+   * Carga el historial de citas del usuario con paginación y filtrado
+   */
+  loadAppointmentHistory(page: number = 0): void {
+    console.log('🔍 [DEBUG] Iniciando loadAppointmentHistory con página:', page);
+    console.log('🔍 [DEBUG] Usuario actual:', this.user);
+    console.log('🔍 [DEBUG] UserId disponible:', this.user?.userId);
+
+    if (!this.user?.userId) {
+      console.error('❌ [ERROR] No hay userId disponible para cargar el historial');
+      return;
+    }
+
+    console.log('🔍 [DEBUG] Configurando estado de carga...');
+    this.isLoadingHistory = true;
+    this.historyError = null;
+
+    console.log('🔍 [DEBUG] Llamando al servicio de citas con parámetros:', {
+      userId: this.user.userId,
+      page: page,
+      size: this.historyPageSize,
+      sortBy: 'appointmentDateTime',
+      sortDir: 'desc'
+    });
+
+    this.appointmentService.getAppointmentsByClient(
+      this.user.userId,
+      page,
+      this.historyPageSize,
+      'appointmentDateTime',
+      'desc'
+    ).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => {
+        console.log('🔍 [DEBUG] Finalizando petición, cambiando isLoadingHistory a false');
+        this.isLoadingHistory = false;
+      })
+    ).subscribe({
+      next: (response: any) => {
+        console.log('✅ [SUCCESS] Respuesta recibida del servicio:', response);
+
+        if (response && response.data) {
+          const pageableData = response.data as PageableResponse<AppointmentResponse>;
+          let appointments = pageableData.content || [];
+
+          console.log('🔍 [DEBUG] Citas obtenidas antes del filtro:', appointments);
+          console.log('🔍 [DEBUG] Filtro de estado seleccionado:', this.selectedStatusFilter);
+
+          // Filtrar por estado si es necesario
+          if (this.selectedStatusFilter !== 'ALL') {
+            appointments = appointments.filter(
+              appointment => appointment.status === this.selectedStatusFilter
+            );
+            console.log('🔍 [DEBUG] Citas después del filtro:', appointments);
+          }
+
+          this.appointmentHistory = appointments;
+          this.currentHistoryPage = pageableData.pageable?.pageNumber || 0;
+          this.totalHistoryPages = pageableData.totalPages || 0;
+          this.totalHistoryElements = pageableData.totalElements || 0;
+          this.historyError = null;
+
+          console.log('🔍 [DEBUG] Estado final actualizado:', {
+            appointmentHistory: this.appointmentHistory,
+            currentHistoryPage: this.currentHistoryPage,
+            totalHistoryPages: this.totalHistoryPages,
+            totalHistoryElements: this.totalHistoryElements
+          });
+        } else {
+          console.log('⚠️ [WARNING] Respuesta vacía del servicio');
+          this.appointmentHistory = [];
+          this.totalHistoryPages = 0;
+          this.totalHistoryElements = 0;
+        }
+      },
+      error: (error) => {
+        console.error('❌ [ERROR] Error loading appointment history:', error);
+        console.error('❌ [ERROR] Detalles del error:', {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.message,
+          error: error.error
+        });
+
+        this.historyError = 'Error al cargar el historial de citas. Por favor, inténtalo de nuevo.';
+        this.appointmentHistory = [];
+        this.totalHistoryPages = 0;
+        this.totalHistoryElements = 0;
+      }
+    });
+  }
+
+  /**
+   * Cambia la página del historial
+   */
+  onHistoryPageChange(page: number): void {
+    if (page >= 0 && page < this.totalHistoryPages) {
+      this.loadAppointmentHistory(page);
+    }
+  }
+
+  /**
+   * Aplica filtro por estado
+   */
+  onStatusFilterChange(): void {
+    this.currentHistoryPage = 0;
+    this.loadAppointmentHistory(0);
+  }
+
+  /**
+   * Obtiene el texto del estado de la cita
+   */
+  getStatusText(status: AppointmentStatus): string {
+    switch (status) {
+      case AppointmentStatus.COMPLETED:
+        return 'Completada';
+      case AppointmentStatus.CANCELLED:
+        return 'Cancelada';
+      case AppointmentStatus.NO_SHOW:
+        return 'No asistió';
+      case AppointmentStatus.CONFIRMED:
+        return 'Confirmada';
+      case AppointmentStatus.SCHEDULED:
+        return 'Programada';
+      case AppointmentStatus.IN_PROGRESS:
+        return 'En progreso';
+      default:
+        return status;
+    }
+  }
+
+  /**
+   * Obtiene la clase CSS para el badge del estado
+   */
+  getStatusClass(status: AppointmentStatus): string {
+    switch (status) {
+      case AppointmentStatus.COMPLETED:
+        return 'badge-success';
+      case AppointmentStatus.CANCELLED:
+        return 'badge-error';
+      case AppointmentStatus.NO_SHOW:
+        return 'badge-warning';
+      case AppointmentStatus.CONFIRMED:
+        return 'badge-info';
+      case AppointmentStatus.SCHEDULED:
+        return 'badge-primary';
+      case AppointmentStatus.IN_PROGRESS:
+        return 'badge-accent';
+      default:
+        return 'badge-neutral';
+    }
+  }
+
+  /**
+   * Formatea la fecha de la cita
+   */
+  formatAppointmentDate(dateTime: string): string {
+    const date = new Date(dateTime);
+    return date.toLocaleDateString('es-ES', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+
+  /**
+   * Formatea la hora de la cita
+   */
+  formatAppointmentTime(dateTime: string): string {
+    const date = new Date(dateTime);
+    return date.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  ngOnInit(): void {
+    this.loadUserProfile();
+    // Removemos la carga independiente del historial ya que ahora se carga después del usuario
+    // this.loadAppointmentHistory();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
