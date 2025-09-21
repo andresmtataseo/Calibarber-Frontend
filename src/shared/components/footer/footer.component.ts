@@ -108,9 +108,7 @@ export class FooterComponent implements OnInit, OnDestroy {
    */
   legalLinks = [
     { label: 'Términos y condiciones', route: '/terminos' },
-    { label: 'Política de privacidad', route: '/privacidad' },
-    { label: 'Política de reembolso', route: '/reembolso' },
-    { label: 'FAQ', route: '/faq' }
+    { label: 'Política de privacidad', route: '/privacidad' }
   ];
 
   ngOnInit(): void {
@@ -199,7 +197,7 @@ export class FooterComponent implements OnInit, OnDestroy {
     // Process each day of the week
     this.displayOperatingHours = this.daysOfWeek.map(day => {
       const existingHour = existingHours.get(day.key);
-      
+
       if (existingHour) {
         return {
           dayName: day.name,
@@ -236,9 +234,9 @@ export class FooterComponent implements OnInit, OnDestroy {
 
     // Verificar si todos los días de semana tienen el mismo horario
     const firstWeekdayHour = weekdayHours[0];
-    const sameWeekdayHours = weekdayHours.every(day => 
-      day.isOpen === firstWeekdayHour.isOpen && 
-      day.openTime === firstWeekdayHour.openTime && 
+    const sameWeekdayHours = weekdayHours.every(day =>
+      day.isOpen === firstWeekdayHour.isOpen &&
+      day.openTime === firstWeekdayHour.openTime &&
       day.closeTime === firstWeekdayHour.closeTime
     );
 
@@ -270,12 +268,12 @@ export class FooterComponent implements OnInit, OnDestroy {
    */
   private formatTime(time: string): string {
     if (!time || time === 'No disponible') return 'No disponible';
-    
+
     const [hours, minutes] = time.split(':');
     const hour = parseInt(hours, 10);
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour % 12 || 12;
-    
+
     return `${displayHour}:${minutes} ${ampm}`;
   }
 

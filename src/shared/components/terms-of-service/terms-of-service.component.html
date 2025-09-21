@@ -1,0 +1,97 @@
+<div class="min-h-screen bg-base-100">
+  <!-- Header de la página -->
+  <div class="bg-primary text-primary-content py-12">
+    <div class="container mx-auto px-4 text-center">
+      <h1 class="text-3xl font-bold mb-2">Términos y Condiciones</h1>
+      <p class="text-sm opacity-75">Última actualización: {{ lastUpdated }}</p>
+    </div>
+  </div>
+
+  <!-- Contenido principal -->
+  <div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto prose prose-lg">
+
+      <!-- Introducción -->
+      <section class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4">Introducción</h2>
+        <p class="mb-4">
+          Bienvenido a CaliBarber. Al usar nuestros servicios, aceptas estos términos y condiciones.
+          Por favor, léelos cuidadosamente antes de utilizar nuestra plataforma.
+        </p>
+      </section>
+
+      <!-- Uso del servicio -->
+      <section class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4">Uso del Servicio</h2>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>Debes ser mayor de 18 años para usar nuestros servicios</li>
+          <li>Proporciona información veraz y actualizada</li>
+          <li>Mantén la confidencialidad de tu cuenta</li>
+          <li>No uses el servicio para actividades ilegales</li>
+        </ul>
+      </section>
+
+      <!-- Reservas y citas -->
+      <section class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4">Reservas y Citas</h2>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>Las citas deben confirmarse con al menos 2 horas de anticipación</li>
+          <li>Las cancelaciones deben realizarse con 24 horas de antelación</li>
+          <li>Los no-shows pueden resultar en cargos adicionales</li>
+          <li>Nos reservamos el derecho de reprogramar citas por causas de fuerza mayor</li>
+        </ul>
+      </section>
+
+      <!-- Pagos -->
+      <section class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4">Pagos</h2>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>Los pagos se procesan de forma segura</li>
+          <li>Los precios pueden cambiar sin previo aviso</li>
+          <li>Los reembolsos están sujetos a nuestra política de reembolsos</li>
+          <li>Todos los precios incluyen impuestos aplicables</li>
+        </ul>
+      </section>
+
+      <!-- Responsabilidades -->
+      <section class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4">Responsabilidades</h2>
+        <p class="mb-4">
+          CaliBarber se compromete a proporcionar servicios de calidad, pero no garantiza
+          resultados específicos. Los usuarios son responsables de comunicar claramente
+          sus preferencias y necesidades.
+        </p>
+      </section>
+
+      <!-- Limitación de responsabilidad -->
+      <section class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4">Limitación de Responsabilidad</h2>
+        <p class="mb-4">
+          CaliBarber no será responsable por daños indirectos, incidentales o consecuentes
+          que puedan surgir del uso de nuestros servicios, excepto donde la ley lo prohíba.
+        </p>
+      </section>
+
+      <!-- Modificaciones -->
+      <section class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4">Modificaciones</h2>
+        <p class="mb-4">
+          Nos reservamos el derecho de modificar estos términos en cualquier momento.
+          Los cambios serán efectivos inmediatamente después de su publicación en la plataforma.
+        </p>
+      </section>
+
+
+
+      <!-- Botón para volver arriba -->
+      <div class="text-center mt-8">
+        <button
+          (click)="scrollToTop()"
+          class="btn btn-primary"
+        >
+          Volver Arriba
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

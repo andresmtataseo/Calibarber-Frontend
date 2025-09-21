@@ -1,0 +1,1 @@
+export { TermsOfServiceComponent } from './terms-of-service.component';

@@ -9,6 +9,8 @@ import { ProfileComponent } from '../features/user/pages/profile/profile.compone
 import { EditProfileComponent } from '../features/user/pages/edit-profile/edit-profile.component';
 import { AdminDashboardComponent } from '../features/admin/pages/admin-dashboard/admin-dashboard.component';
 import { DashboardHomeComponent } from '../features/admin/pages/dashboard-home/dashboard-home.component';
+import { PrivacyPolicyComponent } from '../shared/components/privacy-policy';
+import { TermsOfServiceComponent } from '../shared/components/terms-of-service';
 import { guestGuard, authGuard, adminGuard } from '../core/guards/auth.guard';
 
 export const routes: Routes = [
@@ -101,6 +103,16 @@ export const routes: Routes = [
         loadChildren: () => import('../features/admin/pages/payments/payments.routes').then(m => m.paymentsRoutes)
       }
     ]
+  },
+  {
+    path: 'privacidad',
+    component: PrivacyPolicyComponent,
+    title: 'Política de Privacidad - CaliBarber'
+  },
+  {
+    path: 'terminos',
+    component: TermsOfServiceComponent,
+    title: 'Términos y Condiciones - CaliBarber'
   },
   {
     path: '**',

@@ -52,7 +52,7 @@ export class AppointmentListComponent implements OnInit {
       this.router.navigate(['/auth/login']);
       return;
     }
-    
+
     if (currentUser.role !== 'ROLE_ADMIN') {
       this.notificationService.error('Solo los administradores pueden acceder a esta sección.');
       this.router.navigate(['/dashboard']);
@@ -151,7 +151,7 @@ export class AppointmentListComponent implements OnInit {
     const clientName = `${appointment.user.firstName} ${appointment.user.lastName}`;
     const appointmentDate = new Date(appointment.appointmentDateTime);
     const formattedDate = appointmentDate.toLocaleDateString() + ' ' + appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    
+
     if (confirm(`¿Estás seguro de que deseas cancelar la cita de "${clientName}" programada para el ${formattedDate}?`)) {
       this.appointmentService.cancelAppointment(appointment.appointmentId).subscribe({
         next: () => {
@@ -170,7 +170,7 @@ export class AppointmentListComponent implements OnInit {
     const clientName = `${appointment.user.firstName} ${appointment.user.lastName}`;
     const appointmentDate = new Date(appointment.appointmentDateTime);
     const formattedDate = appointmentDate.toLocaleDateString() + ' ' + appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    
+
     if (confirm(`¿Estás seguro de que deseas confirmar la cita de "${clientName}" programada para el ${formattedDate}?`)) {
       this.appointmentService.confirmAppointment(appointment.appointmentId).subscribe({
         next: () => {
@@ -189,7 +189,7 @@ export class AppointmentListComponent implements OnInit {
     const clientName = `${appointment.user.firstName} ${appointment.user.lastName}`;
     const appointmentDate = new Date(appointment.appointmentDateTime);
     const formattedDate = appointmentDate.toLocaleDateString() + ' ' + appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    
+
     if (confirm(`¿Estás seguro de que deseas marcar como completada la cita de "${clientName}" programada para el ${formattedDate}?`)) {
       this.appointmentService.completeAppointment(appointment.appointmentId).subscribe({
         next: () => {
