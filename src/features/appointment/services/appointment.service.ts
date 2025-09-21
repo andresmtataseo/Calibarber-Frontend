@@ -130,7 +130,7 @@ export class AppointmentService {
 
   /**
    * Obtiene todas las citas de un barbero específico con paginación
-   * @param barberId ID único del barbero
+   * @param userId ID único del usuario (barbero)
    * @param page Número de página (0-indexed)
    * @param size Tamaño de página
    * @param sortBy Campo por el cual ordenar
@@ -138,14 +138,14 @@ export class AppointmentService {
    * @returns Observable con la respuesta paginada de las citas del barbero
    */
   getAppointmentsByBarber(
-    barberId: string,
+    userId: string,
     page: number = 0,
     size: number = 10,
     sortBy: string = 'appointmentDatetimeStart',
     sortDir: string = 'desc'
   ): Observable<any> {
     const params = new HttpParams()
-      .set('barberId', barberId)
+      .set('userId', userId)
       .set('page', page.toString())
       .set('size', size.toString())
       .set('sortBy', sortBy)
@@ -194,11 +194,11 @@ export class AppointmentService {
 
   /**
    * Obtiene las próximas citas de un barbero específico
-   * @param barberId ID único del barbero
+   * @param userId ID único del usuario (barbero)
    * @returns Observable con las próximas citas del barbero
    */
-  getUpcomingAppointmentsByBarber(barberId: string): Observable<any> {
-    const params = new HttpParams().set('barberId', barberId);
+  getUpcomingAppointmentsByBarber(userId: string): Observable<any> {
+    const params = new HttpParams().set('userId', userId);
     return this.http.get<any>(this.urlService.getAppointmentUrl('UPCOMING_BARBER'), { params });
   }
 

@@ -34,6 +34,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   upcomingAppointments: AppointmentResponse[] = [];
   loadingAppointments = false;
   cancellingAppointment: string | null = null;
+  confirmingAppointment: string | null = null;
+  completingAppointment: string | null = null;
 
   constructor() { }
 
@@ -149,6 +151,17 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Verifica si el usuario actual es un barbero
+   */
+  isBarber(): boolean {
+    return this.user?.role === UserRole.ROLE_BARBER;
+  }
+
+  isClientOrAdmin(): boolean {
+    return this.user?.role === UserRole.ROLE_CLIENT || this.user?.role === UserRole.ROLE_ADMIN;
+  }
+
+  /**
    * Formatea la fecha de creación de la cuenta
    */
   getFormattedCreatedDate(): string {
@@ -182,12 +195,25 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   loadUpcomingAppointments(): void {
+    // Solo cargar citas si el usuario es cliente, administrador o barbero
+    if (!this.isClientOrAdmin() && !this.isBarber()) {
+      console.log('Usuario no autorizado para cargar citas próximas');
+      return;
+    }
+
     if (!this.user?.userId) {
+      console.error('No user ID available for loading upcoming appointments');
       return;
     }
 
     this.loadingAppointments = true;
-    this.appointmentService.getUpcomingAppointmentsByClient(this.user.userId).subscribe({
+
+    // Usar endpoint específico según el rol del usuario
+    const appointmentObservable = this.isBarber()
+      ? this.appointmentService.getUpcomingAppointmentsByBarber(this.user.userId)
+      : this.appointmentService.getUpcomingAppointmentsByClient(this.user.userId);
+
+    appointmentObservable.subscribe({
       next: (response) => {
         // Manejar la respuesta paginada
         this.upcomingAppointments = response.data?.content || response.data || [];
@@ -209,6 +235,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
    * Cancela una cita con confirmación del usuario
    */
   cancelAppointment(appointmentId: string): void {
+    // Solo permitir cancelación si el usuario es cliente, administrador o barbero
+    if (!this.isClientOrAdmin() && !this.isBarber()) {
+      console.log('Usuario no autorizado para cancelar citas');
+      return;
+    }
+
     // Mostrar confirmación antes de cancelar
     const confirmed = confirm('¿Estás seguro de que deseas cancelar esta cita? Esta acción no se puede deshacer.');
 
@@ -233,6 +265,74 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Confirma una cita programada (solo para barberos)
+   */
+  confirmAppointment(appointmentId: string): void {
+    // Solo permitir confirmación si el usuario es barbero o administrador
+    if (!this.isBarber() && this.user?.role !== UserRole.ROLE_ADMIN) {
+      console.log('Usuario no autorizado para confirmar citas');
+      return;
+    }
+
+    // Mostrar confirmación antes de confirmar
+    const confirmed = confirm('¿Estás seguro de que deseas confirmar esta cita?');
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.confirmingAppointment = appointmentId;
+
+    this.appointmentService.confirmAppointment(appointmentId).subscribe({
+      next: (response) => {
+        this.notificationService.success('Cita confirmada exitosamente');
+        // Recargar las citas para reflejar el cambio
+        this.loadUpcomingAppointments();
+        this.confirmingAppointment = null;
+      },
+      error: (error) => {
+        console.error('Error al confirmar la cita:', error);
+        this.notificationService.error('Error al confirmar la cita. Por favor, inténtalo de nuevo.');
+        this.confirmingAppointment = null;
+      }
+    });
+  }
+
+  /**
+   * Marca una cita como completada (solo para barberos)
+   */
+  completeAppointment(appointmentId: string): void {
+    // Solo permitir completar si el usuario es barbero o administrador
+    if (!this.isBarber() && this.user?.role !== UserRole.ROLE_ADMIN) {
+      console.log('Usuario no autorizado para completar citas');
+      return;
+    }
+
+    // Mostrar confirmación antes de completar
+    const confirmed = confirm('¿Estás seguro de que deseas marcar esta cita como completada?');
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.completingAppointment = appointmentId;
+
+    this.appointmentService.completeAppointment(appointmentId).subscribe({
+      next: (response) => {
+        this.notificationService.success('Cita completada exitosamente');
+        // Recargar las citas para reflejar el cambio
+        this.loadUpcomingAppointments();
+        this.completingAppointment = null;
+      },
+      error: (error) => {
+        console.error('Error al completar la cita:', error);
+        this.notificationService.error('Error al completar la cita. Por favor, inténtalo de nuevo.');
+        this.completingAppointment = null;
+      }
+    });
+  }
+
   // Historial de citas
   appointmentHistory: AppointmentResponse[] = [];
   isLoadingHistory = false;
@@ -248,6 +348,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
   selectedStatusFilter: AppointmentStatus | 'ALL' = 'ALL';
   statusFilterOptions = [
     { value: 'ALL', label: 'Todos los estados' },
+    { value: AppointmentStatus.SCHEDULED, label: 'Programadas' },
+    { value: AppointmentStatus.CONFIRMED, label: 'Confirmadas' },
+    { value: AppointmentStatus.IN_PROGRESS, label: 'En progreso' },
     { value: AppointmentStatus.COMPLETED, label: 'Completadas' },
     { value: AppointmentStatus.CANCELLED, label: 'Canceladas' },
     { value: AppointmentStatus.NO_SHOW, label: 'No asistió' }
@@ -257,9 +360,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
    * Carga el historial de citas del usuario con paginación y filtrado
    */
   loadAppointmentHistory(page: number = 0): void {
-    console.log('🔍 [DEBUG] Iniciando loadAppointmentHistory con página:', page);
-    console.log('🔍 [DEBUG] Usuario actual:', this.user);
-    console.log('🔍 [DEBUG] UserId disponible:', this.user?.userId);
+    // Solo cargar historial si el usuario es cliente, administrador o barbero
+    if (!this.isClientOrAdmin() && !this.isBarber()) {
+      console.log('Usuario no autorizado para cargar historial de citas');
+      return;
+    }
 
     if (!this.user?.userId) {
       console.error('❌ [ERROR] No hay userId disponible para cargar el historial');
@@ -278,13 +383,24 @@ export class ProfileComponent implements OnInit, OnDestroy {
       sortDir: 'desc'
     });
 
-    this.appointmentService.getAppointmentsByClient(
-      this.user.userId,
-      page,
-      this.historyPageSize,
-      'appointmentDateTime',
-      'desc'
-    ).pipe(
+    // Usar endpoint específico según el rol del usuario
+    const appointmentObservable = this.isBarber()
+      ? this.appointmentService.getAppointmentsByBarber(
+          this.user.userId,
+          page,
+          this.historyPageSize,
+          'appointmentDateTime',
+          'desc'
+        )
+      : this.appointmentService.getAppointmentsByClient(
+          this.user.userId,
+          page,
+          this.historyPageSize,
+          'appointmentDateTime',
+          'desc'
+        );
+
+    appointmentObservable.pipe(
       takeUntil(this.destroy$),
       finalize(() => {
         console.log('🔍 [DEBUG] Finalizando petición, cambiando isLoadingHistory a false');
