@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { ServiceResponseDto } from '../../../shared/models/service.models';
 
 @Component({
@@ -10,6 +11,8 @@ import { ServiceResponseDto } from '../../../shared/models/service.models';
 })
 export class ServiceCardComponent {
   @Input() service!: ServiceResponseDto;
+
+  constructor(private router: Router) { }
 
   formatDuration(minutes: number): string {
     if (minutes < 60) {
@@ -26,5 +29,12 @@ export class ServiceCardComponent {
 
   formatPrice(price: number): string {
     return `$ ${price.toFixed(2)}`;
+  }
+
+  /**
+   * Navega a la página de reserva de citas
+   */
+  navigateToBookAppointment(): void {
+    this.router.navigate(['/book-appointment']);
   }
 }

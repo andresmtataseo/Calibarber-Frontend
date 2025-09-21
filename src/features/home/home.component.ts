@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, finalize } from 'rxjs';
 import { ServiceCardComponent } from '../service/components';
 import { ServiceService } from '../service/services/service.service';
 import { ServiceResponseDto } from '../../shared/models/service.models';
@@ -9,9 +9,20 @@ import { BarberCardComponent } from '../barber/components/barber-card.component'
 import { BarberService } from '../barber/services/barber.service';
 import { BarberResponse } from '../barber/models/barber.model';
 import { GalleryCardComponent, GalleryPhoto } from './components/gallery-card.component';
+import { BarbershopService, BarbershopOperatingHoursService } from '../barbershop/services';
+import { BarbershopResponse } from '../barbershop/models/barbershop.model';
+import { BarbershopOperatingHours } from '../barbershop/models/operating-hours.model';
 
 // Importar Swiper
 import { register } from 'swiper/element/bundle';
+
+interface DaySchedule {
+  dayName: string;
+  isOpen: boolean;
+  openTime: string;
+  closeTime: string;
+  notes?: string;
+}
 
 /**
  * Componente Home - Página de inicio
@@ -36,6 +47,8 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   private readonly serviceService = inject(ServiceService);
   private readonly barberService = inject(BarberService);
+  private readonly barbershopService = inject(BarbershopService);
+  private readonly operatingHoursService = inject(BarbershopOperatingHoursService);
   private readonly destroy$ = new Subject<void>();
 
   /**
@@ -103,12 +116,53 @@ export class HomeComponent implements OnInit, OnDestroy {
   hasError = false;
   errorMessage = '';
 
+  /**
+   * Datos de la barbería (se cargarán desde la API)
+   */
+  barbershop: BarbershopResponse | null = null;
+  operatingHours: BarbershopOperatingHours[] = [];
+  displayOperatingHours: DaySchedule[] = [];
+  isContactLoading = false;
+
+  /**
+   * Días de la semana para mapear horarios
+   */
+  daysOfWeek = [
+    { key: 'MONDAY', name: 'Lunes' },
+    { key: 'TUESDAY', name: 'Martes' },
+    { key: 'WEDNESDAY', name: 'Miércoles' },
+    { key: 'THURSDAY', name: 'Jueves' },
+    { key: 'FRIDAY', name: 'Viernes' },
+    { key: 'SATURDAY', name: 'Sábado' },
+    { key: 'SUNDAY', name: 'Domingo' }
+  ];
+
+  /**
+   * Información de contacto (se actualizará con datos reales)
+   */
+  contactInfo = {
+    name: 'No disponible',
+    address: 'Dirección no disponible',
+    phone: 'Teléfono no disponible',
+    email: 'Email no disponible'
+  };
+
+  /**
+   * Información de horarios formateada
+   */
+  scheduleInfo = {
+    weekdays: 'Horarios no disponibles',
+    saturday: 'Horarios no disponibles',
+    sunday: 'Horarios no disponibles'
+  };
+
   ngOnInit(): void {
     // Registrar elementos personalizados de Swiper
     register();
 
     this.loadServices();
     this.loadBarbers();
+    this.loadBarbershopData();
   }
 
   ngOnDestroy(): void {
@@ -204,8 +258,23 @@ export class HomeComponent implements OnInit, OnDestroy {
     const email = formData.get('email') as string;
     const mensaje = formData.get('mensaje') as string;
 
-    // Email de la barbería (puedes cambiarlo por el email real)
-    const barberiaEmail = 'contacto@calibarber.com';
+    // Validar que todos los campos estén completos
+    if (!nombre || !apellido || !email || !mensaje) {
+      alert('Por favor, completa todos los campos del formulario.');
+      return;
+    }
+
+    // Usar el email real de la barbería
+    const barberiaEmail = this.contactInfo.email;
+
+    // Verificar que el email de la barbería esté disponible
+    if (!barberiaEmail || barberiaEmail === 'Email no disponible') {
+      alert('Lo sentimos, el email de contacto no está disponible en este momento. Por favor, intenta más tarde o contacta directamente por teléfono.');
+      return;
+    }
+
+    console.log('Enviando email a:', barberiaEmail);
+    console.log('Datos del formulario:', { nombre, apellido, email, mensaje });
 
     // Construir el asunto y cuerpo del email
     const asunto = encodeURIComponent(`Contacto desde la web - ${nombre} ${apellido}`);
@@ -219,9 +288,172 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     // Crear el enlace mailto
     const mailtoLink = `mailto:${barberiaEmail}?subject=${asunto}&body=${cuerpo}`;
+    
+    console.log('Enlace mailto generado:', mailtoLink);
 
-    // Abrir el cliente de email
-    window.location.href = mailtoLink;
+    try {
+      // Abrir el cliente de email sin cambiar la página actual
+      window.open(mailtoLink, '_self');
+      
+      // Mostrar mensaje de confirmación
+      alert('Se ha abierto tu cliente de email. Si no se abrió automáticamente, por favor copia el email: ' + barberiaEmail);
+      
+      // Limpiar el formulario después de enviar
+      form.reset();
+    } catch (error) {
+      console.error('Error al abrir el cliente de email:', error);
+      alert('Error al abrir el cliente de email. Email de contacto: ' + barberiaEmail);
+    }
+  }
+
+  /**
+   * Carga los datos de la barbería
+   */
+  private loadBarbershopData(): void {
+    this.isContactLoading = true;
+    
+    // Obtener todas las barberías y tomar la primera (igual que en footer)
+    this.barbershopService.getAllBarbershops()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isContactLoading = false;
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          if (response?.data?.content && response.data.content.length > 0) {
+            this.barbershop = response.data.content[0]; // Tomar la primera barbería
+            this.updateContactInfo();
+            this.loadOperatingHours();
+          }
+        },
+        error: (error) => {
+          console.error('Error loading barbershop data:', error);
+          // Mantener los datos por defecto en caso de error
+        }
+      });
+  }
+
+  /**
+   * Actualiza la información de contacto con los datos de la barbería
+   */
+  private updateContactInfo(): void {
+    if (this.barbershop) {
+      this.contactInfo = {
+        name: this.barbershop.name,
+        address: this.barbershop.addressText || 'Dirección no disponible',
+        phone: this.barbershop.phoneNumber || 'Teléfono no disponible',
+        email: this.barbershop.email || 'Email no disponible'
+      };
+    }
+  }
+
+  /**
+   * Carga los horarios de atención desde la API
+   */
+  private loadOperatingHours(): void {
+    if (!this.barbershop?.barbershopId) return;
+
+    this.operatingHoursService.getOperatingHoursByBarbershopId(this.barbershop.barbershopId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.operatingHours = response;
+          this.processOperatingHours(this.operatingHours);
+          this.updateScheduleInfo();
+        },
+        error: (error) => {
+          console.error('Error cargando horarios:', error);
+        }
+      });
+  }
+
+  /**
+   * Procesa los horarios de atención para mostrarlos correctamente
+   */
+  private processOperatingHours(operatingHours: BarbershopOperatingHours[] = []): void {
+    this.displayOperatingHours = this.daysOfWeek.map(day => {
+      const dayHours = operatingHours.find(oh => oh.dayOfWeek === day.key);
+      
+      if (dayHours && !dayHours.isClosed) {
+        return {
+          dayName: day.name,
+          isOpen: true,
+          openTime: dayHours.openingTime ? this.formatTime(dayHours.openingTime) : 'No disponible',
+          closeTime: dayHours.closingTime ? this.formatTime(dayHours.closingTime) : 'No disponible',
+          notes: dayHours.notes
+        };
+      } else {
+        return {
+          dayName: day.name,
+          isOpen: false,
+          openTime: '',
+          closeTime: '',
+          notes: dayHours?.notes
+        };
+      }
+    });
+  }
+
+  /**
+   * Actualiza la información de horarios formateada
+   */
+  private updateScheduleInfo(): void {
+    const weekdayHours = this.displayOperatingHours.filter(day => 
+      ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'].includes(day.dayName) && day.isOpen
+    );
+    
+    const saturdayHours = this.displayOperatingHours.find(day => day.dayName === 'Sábado');
+    const sundayHours = this.displayOperatingHours.find(day => day.dayName === 'Domingo');
+
+    // Formatear horarios de lunes a viernes
+    if (weekdayHours.length > 0) {
+      const firstWeekday = weekdayHours[0];
+      const allSameHours = weekdayHours.every(day => 
+        day.openTime === firstWeekday.openTime && day.closeTime === firstWeekday.closeTime
+      );
+      
+      if (allSameHours) {
+        this.scheduleInfo.weekdays = `• Lunes a Viernes: ${firstWeekday.openTime} - ${firstWeekday.closeTime}`;
+      } else {
+        this.scheduleInfo.weekdays = '• Lunes a Viernes: Horarios variables';
+      }
+    } else {
+      this.scheduleInfo.weekdays = '• Lunes a Viernes: Cerrado';
+    }
+
+    // Formatear horario de sábado
+    if (saturdayHours && saturdayHours.isOpen) {
+      this.scheduleInfo.saturday = `• Sábados: ${saturdayHours.openTime} - ${saturdayHours.closeTime}`;
+    } else {
+      this.scheduleInfo.saturday = '• Sábados: Cerrado';
+    }
+
+    // Formatear horario de domingo
+    if (sundayHours && sundayHours.isOpen) {
+      this.scheduleInfo.sunday = `• Domingos: ${sundayHours.openTime} - ${sundayHours.closeTime}`;
+    } else {
+      this.scheduleInfo.sunday = '• Domingos: Cerrado';
+    }
+  }
+
+  /**
+   * Formatea la hora de 24h a 12h con AM/PM
+   */
+  private formatTime(time: string): string {
+    if (!time) return '';
+    
+    try {
+      const [hours, minutes] = time.split(':').map(Number);
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+      
+      return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+    } catch (error) {
+      console.error('Error formateando hora:', error);
+      return time;
+    }
   }
 
   /**

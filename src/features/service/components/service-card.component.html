@@ -1,4 +1,4 @@
-<div class="card bg-base-100 border-1 border-base-200">
+<div class="card bg-base-100 border-1 border-base-200 cursor-pointer hover:shadow-lg transition-shadow" (click)="navigateToBookAppointment()">
   <div class="card-body p-6">
     <!-- Header con título -->
     <div class="mb-4">
@@ -22,12 +22,6 @@
       <div class="text-lg font-bold text-green-600">
         {{ formatPrice(service.price) }}
       </div>
-
-      <button class="btn btn-sm btn-circle bg-gray-800 hover:bg-gray-700 text-white border-none transition-all duration-200 hover:scale-105">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
     </div>
   </div>
 </div>
