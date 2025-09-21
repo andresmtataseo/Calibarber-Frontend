@@ -36,10 +36,10 @@
             <div
               *ngFor="let day of calendarDays"
               class="card border-2 cursor-pointer transition-all duration-200 hover:shadow-lg min-w-[80px] flex flex-col items-center p-3"
-              [class.border-primary]="selectedDate?.fullDate?.toDateString() === day.fullDate?.toDateString()"
-              [class.border-base-300]="selectedDate?.fullDate?.toDateString() !== day.fullDate?.toDateString()"
-              [class.bg-primary]="selectedDate?.fullDate?.toDateString() === day.fullDate?.toDateString()"
-              [class.text-primary-content]="selectedDate?.fullDate?.toDateString() === day.fullDate?.toDateString()"
+              [class.border-primary]="selectedDate?.fullDate?.toDateString() === day.fullDate.toDateString()"
+              [class.border-base-300]="selectedDate?.fullDate?.toDateString() !== day.fullDate.toDateString()"
+              [class.bg-primary]="selectedDate?.fullDate?.toDateString() === day.fullDate.toDateString()"
+              [class.text-primary-content]="selectedDate?.fullDate?.toDateString() === day.fullDate.toDateString()"
               [class.opacity-50]="!day.available"
               [class.cursor-not-allowed]="!day.available || isLoading"
               (click)="selectDate(day)">
