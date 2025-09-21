@@ -2,21 +2,18 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppointmentService } from '../services/appointment.service';
-import { AvailabilityResponse, DayAvailability, AvailabilityStatus, DayAvailabilityResponse, DayAvailabilitySlot } from '../models/appointment.model';
+import { AvailabilityResponse, DayAvailability, AvailabilityStatus, DayAvailabilityResponse, DayAvailabilitySlot, BarbersAvailabilityResponse, BarberAvailability, CreateAppointmentRequest } from '../models/appointment.model';
+import { ServiceService } from '../../service/services/service.service';
+import { ServiceResponseDto } from '../../../shared/models/service.models';
+import { AuthService } from '../../../core/services/auth.service';
+import { NotificationService } from '../../../shared/components/notification/notification.service';
+import { NotificationContainerComponent } from '../../../shared/components/notification/notification-container.component';
+import { PreloaderComponent } from '../../../shared/components/preloader/preloader.component';
 
 interface TimeSlot {
   time: string;
   available: boolean;
   displayTime: string; // Para mostrar en formato 12h
-}
-
-interface Service {
-  id: string;
-  name: string;
-  duration: string;
-  price: number;
-  employee: string;
-  personalized: boolean;
 }
 
 interface CalendarDay {
@@ -31,18 +28,17 @@ interface CalendarDay {
 @Component({
   selector: 'app-book-appointment',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NotificationContainerComponent, PreloaderComponent],
   templateUrl: './book-appointment.component.html'
 })
 export class BookAppointmentComponent implements OnInit {
   selectedDate: CalendarDay | null = null;
-  selectedServices: Service[] = [];
+  selectedServices: ServiceResponseDto[] = [];
 
   // Calendar navigation
   currentDate: Date = new Date();
   calendarDays: CalendarDay[] = [];
   isLoading: boolean = false;
-  error: string | null = null;
 
   // Time slots management
   timeSlots: TimeSlot[] = [];
@@ -51,35 +47,35 @@ export class BookAppointmentComponent implements OnInit {
   timePeriods: ('Mañana' | 'Tarde' | 'Noche')[] = ['Mañana', 'Tarde', 'Noche'];
   currentTimePeriodIndex: number = 0;
   isLoadingTimeSlots: boolean = false;
-  timeSlotsError: string | null = null;
+
+  // Barbers availability management
+  barbersAvailability: BarberAvailability[] = [];
+  selectedBarber: BarberAvailability | null = null;
+  isLoadingBarbers: boolean = false;
+  currentBarberIndex: number = 0;
+  barbersPerPage: number = 3; // Número de barberos a mostrar por página
 
   // Hardcoded barberId for now - in a real app this would come from user selection
   private readonly BARBER_ID = '1';
 
-  availableServices: Service[] = [
-    {
-      id: '1',
-      name: 'Corte de cabello regular',
-      duration: '35 min',
-      price: 35.00,
-      employee: 'Cualquiera',
-      personalized: false
-    },
-    {
-      id: '2',
-      name: 'Corte de cabello regular',
-      duration: '35 min',
-      price: 35.00,
-      employee: 'Cualquiera',
-      personalized: false
-    }
-  ];
+  availableServices: ServiceResponseDto[] = [];
+  isLoadingServices: boolean = false;
+  currentServiceIndex: number = 0;
+  servicesPerPage: number = 3; // Número de servicios a mostrar por página
 
-  constructor(private appointmentService: AppointmentService) {}
+  // Appointment creation state
+  isCreatingAppointment: boolean = false;
+
+  constructor(
+    private appointmentService: AppointmentService,
+    private serviceService: ServiceService,
+    private authService: AuthService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
-    // Initialize with first available service
-    this.selectedServices = [this.availableServices[0]];
+    // Load available services
+    this.loadAvailableServices();
 
     // Initialize current date to start from today
     const today = new Date();
@@ -88,6 +84,64 @@ export class BookAppointmentComponent implements OnInit {
 
     // Load initial availability
     this.loadWeekAvailability();
+  }
+
+  /**
+   * Extrae el mensaje de error de la respuesta de la API
+   * @param error - Error de la API
+   * @param defaultMessage - Mensaje por defecto si no se encuentra mensaje específico
+   * @returns Mensaje de error a mostrar
+   */
+  private getErrorMessage(error: any, defaultMessage: string): string {
+    // Intentar extraer el mensaje de diferentes estructuras de error comunes
+    if (error?.error?.message) {
+      return error.error.message;
+    }
+    if (error?.message) {
+      return error.message;
+    }
+    if (error?.error?.error) {
+      return error.error.error;
+    }
+    if (error?.error && typeof error.error === 'string') {
+      return error.error;
+    }
+    if (typeof error === 'string') {
+      return error;
+    }
+
+    // Si no se encuentra mensaje específico, retornar el mensaje por defecto
+    return defaultMessage;
+  }
+
+  /**
+   * Carga los servicios disponibles usando el ServiceService
+   */
+  async loadAvailableServices(): Promise<void> {
+    this.isLoadingServices = true;
+
+    try {
+      const response = await this.serviceService.getAllServices().toPromise();
+      console.log('Respuesta de servicios:', response);
+
+      if (response && response.data && response.data.content) {
+        this.availableServices = response.data.content;
+        console.log('Servicios cargados:', this.availableServices.length);
+
+        // No preseleccionar ningún servicio automáticamente
+        // El usuario debe seleccionar manualmente los servicios que desee
+      } else {
+        console.log('No se encontraron servicios en la respuesta');
+        this.availableServices = [];
+      }
+    } catch (error) {
+      console.error('Error loading services:', error);
+      const errorMessage = this.getErrorMessage(error, 'Error al cargar los servicios disponibles');
+      this.notificationService.error(errorMessage);
+      this.availableServices = [];
+    } finally {
+      this.isLoadingServices = false;
+    }
   }
 
   /**
@@ -112,7 +166,7 @@ export class BookAppointmentComponent implements OnInit {
     for (let i = 0; i < 7; i++) {
       const date = new Date(this.currentDate);
       date.setDate(this.currentDate.getDate() + i);
-      
+
       const dayOfWeek = date.getDay(); // 0 = Domingo, 1 = Lunes, etc.
 
       days.push({
@@ -132,7 +186,6 @@ export class BookAppointmentComponent implements OnInit {
    */
   public loadWeekAvailability(): void {
     this.isLoading = true;
-    this.error = null;
 
     // Generar los días de la semana
     this.calendarDays = this.generateWeekDays();
@@ -153,7 +206,8 @@ export class BookAppointmentComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error al cargar disponibilidad:', error);
-          this.error = 'Error al cargar la disponibilidad. Intenta nuevamente.';
+          const errorMessage = this.getErrorMessage(error, 'Error al cargar la disponibilidad. Intenta nuevamente.');
+          this.notificationService.error(errorMessage);
           this.isLoading = false;
           // En caso de error, mantener los días generados con estado por defecto
         }
@@ -305,6 +359,9 @@ export class BookAppointmentComponent implements OnInit {
     if (day.available && !this.isLoading) {
       this.selectedDate = day;
       this.selectedTimeSlot = ''; // Reset selected time slot
+      this.selectedBarber = null; // Reset selected barber
+      this.selectedServices = []; // Reset selected services
+      this.barbersAvailability = []; // Clear barbers list
       this.loadDayTimeSlots(); // Load time slots for the selected date
     }
   }
@@ -319,15 +376,14 @@ export class BookAppointmentComponent implements OnInit {
     }
 
     this.isLoadingTimeSlots = true;
-    this.timeSlotsError = null;
 
     try {
       const dateString = this.selectedDate.fullDate.toISOString().split('T')[0];
       console.log('Cargando slots para fecha:', dateString);
-      
+
       const response = await this.appointmentService.getDayAvailabilityBySlots('1', dateString).toPromise();
       console.log('Respuesta recibida en componente:', response);
-      
+
       if (response && response.slots) {
         console.log('Slots encontrados:', response.slots.length);
         this.processTimeSlots(response.slots);
@@ -337,7 +393,8 @@ export class BookAppointmentComponent implements OnInit {
       }
     } catch (error) {
       console.error('Error loading day time slots:', error);
-      this.timeSlotsError = 'Error al cargar los horarios disponibles';
+      const errorMessage = this.getErrorMessage(error, 'Error al cargar los horarios disponibles');
+      this.notificationService.error(errorMessage);
       this.timeSlots = [];
     } finally {
       this.isLoadingTimeSlots = false;
@@ -349,7 +406,7 @@ export class BookAppointmentComponent implements OnInit {
    */
   private processTimeSlots(slots: DayAvailabilitySlot[]): void {
     console.log('Procesando slots recibidos:', slots);
-    
+
     const processedSlots: TimeSlot[] = slots.map(slot => ({
       time: slot.time,
       available: slot.available,
@@ -370,7 +427,7 @@ export class BookAppointmentComponent implements OnInit {
   private filterSlotsByTimePeriod(slots: TimeSlot[], period: 'Mañana' | 'Tarde' | 'Noche'): TimeSlot[] {
     return slots.filter(slot => {
       const hour = parseInt(slot.time.split(':')[0]);
-      
+
       switch (period) {
         case 'Mañana':
           return hour >= 6 && hour < 12;
@@ -399,7 +456,10 @@ export class BookAppointmentComponent implements OnInit {
     this.selectedTimePeriod = period;
     this.currentTimePeriodIndex = this.timePeriods.indexOf(period);
     this.selectedTimeSlot = ''; // Reset selected time slot
-    
+    this.selectedBarber = null; // Reset selected barber
+    this.selectedServices = []; // Reset selected services
+    this.barbersAvailability = []; // Clear barbers list
+
     // Si hay una fecha seleccionada, recargar los slots para el nuevo período
     if (this.selectedDate) {
       this.loadDayTimeSlots();
@@ -442,33 +502,266 @@ export class BookAppointmentComponent implements OnInit {
 
   selectTimeSlot(time: string): void {
     this.selectedTimeSlot = time;
+    this.selectedBarber = null; // Reset selected barber
+    this.selectedServices = []; // Reset selected services
+    // Cargar disponibilidad de barberos cuando se selecciona un horario
+    this.loadBarbersAvailability();
+  }
+
+  /**
+   * Carga la disponibilidad de barberos para la fecha y hora seleccionada
+   */
+  async loadBarbersAvailability(): Promise<void> {
+    if (!this.selectedDate?.fullDate || !this.selectedTimeSlot) {
+      this.barbersAvailability = [];
+      this.selectedBarber = null;
+      return;
+    }
+
+    this.isLoadingBarbers = true;
+
+    try {
+      // Construir el dateTime en formato ISO
+      const dateStr = this.selectedDate.fullDate.toISOString().split('T')[0];
+      const timeStr = this.selectedTimeSlot + ':00'; // Agregar segundos
+      const dateTime = `${dateStr}T${timeStr}`;
+
+      console.log('Cargando disponibilidad de barberos para:', dateTime);
+
+      const response = await this.appointmentService.getBarbersAvailability(dateTime).toPromise();
+      console.log('Respuesta de disponibilidad de barberos:', response);
+
+      if (response && response.barbers) {
+        this.barbersAvailability = response.barbers;
+        console.log('Barberos disponibles:', this.barbersAvailability.length);
+      } else {
+        console.log('No se encontraron barberos en la respuesta');
+        this.barbersAvailability = [];
+      }
+    } catch (error) {
+      console.error('Error loading barbers availability:', error);
+      const errorMessage = this.getErrorMessage(error, 'Error al cargar la disponibilidad de barberos');
+      this.notificationService.error(errorMessage);
+      this.barbersAvailability = [];
+    } finally {
+      this.isLoadingBarbers = false;
+    }
+  }
+
+  /**
+   * Selecciona un barbero específico
+   */
+  selectBarber(barber: BarberAvailability): void {
+    if (barber.available) {
+      this.selectedBarber = barber;
+      this.selectedServices = []; // Reset selected services
+      console.log('Barbero seleccionado:', barber);
+    }
+  }
+
+  /**
+   * Obtiene el ID único de un servicio (maneja tanto id como serviceId)
+   */
+  private getServiceId(service: ServiceResponseDto): string {
+    return service.serviceId || service.id || '';
+  }
+
+  /**
+   * Verifica si un servicio está seleccionado
+   */
+  isServiceSelected(service: ServiceResponseDto): boolean {
+    if (this.selectedServices.length === 0) return false;
+    const serviceId = this.getServiceId(service);
+    const selectedServiceId = this.getServiceId(this.selectedServices[0]);
+    return serviceId === selectedServiceId;
+  }
+
+  /**
+   * Selecciona un servicio (solo uno a la vez)
+   */
+  selectService(service: ServiceResponseDto): void {
+    const isSelected = this.isServiceSelected(service);
+
+    if (isSelected) {
+      // Si está seleccionado, lo deseleccionamos
+      this.selectedServices = [];
+    } else {
+      // Si no está seleccionado, reemplazamos la selección actual
+      this.selectedServices = [service];
+    }
+
+    console.log('Servicio seleccionado:', this.selectedServices);
   }
 
   addService(): void {
-    // Logic to add another service
+    // Logic to add another service - show modal or dropdown to select from available services
     console.log('Add service clicked');
+    // TODO: Implement service selection modal/dropdown
   }
 
-  changeEmployee(serviceId: string): void {
-    // Logic to change employee for a service
-    console.log('Change employee for service:', serviceId);
+  /**
+   * Elimina un servicio de la lista de servicios seleccionados
+   * (Ya no es necesario con selección única)
+   */
+  removeService(index: number): void {
+    // Método obsoleto - con selección única se puede deseleccionar haciendo clic en el servicio
+    console.log('removeService is deprecated - use selectService to toggle selection');
   }
 
   getTotalPrice(): number {
-    return this.selectedServices.reduce((total, service) => total + service.price, 0);
+    return this.selectedServices.length > 0 ? this.selectedServices[0].price : 0;
   }
 
-  makeReservation(): void {
-    if (this.selectedDate && this.selectedTimeSlot && this.selectedServices.length > 0) {
-      console.log('Making reservation:', {
-        date: this.selectedDate,
-        timeSlot: this.selectedTimeSlot,
-        timePeriod: this.selectedTimePeriod,
-        services: this.selectedServices,
-        total: this.getTotalPrice()
-      });
-      // Here you would call the appointment service to create the reservation
+  async makeReservation(): Promise<void> {
+    // Validar que todos los campos necesarios estén seleccionados
+    if (!this.selectedDate || !this.selectedTimeSlot || !this.selectedServices.length || !this.selectedBarber) {
+      this.notificationService.warning('Por favor, selecciona todos los campos requeridos: fecha, hora, servicio y barbero.');
+      return;
     }
+
+    // Obtener el usuario actual
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser || !currentUser.id) {
+      this.notificationService.error('No se pudo obtener la información del usuario. Por favor, inicia sesión nuevamente.');
+      return;
+    }
+
+    // Activar loading
+    this.isCreatingAppointment = true;
+
+    try {
+      // Crear el objeto de solicitud de cita
+      const appointmentRequest: CreateAppointmentRequest = {
+        userId: currentUser.id,
+        barberId: this.selectedBarber.id,
+        serviceId: this.selectedServices[0].id || this.selectedServices[0].serviceId || '', // Manejar ambos casos
+        appointmentDateTime: `${this.formatDateForApi(this.selectedDate.fullDate)}T${this.selectedTimeSlot}:00`, // Formato ISO LocalDateTime
+        durationMinutes: this.selectedServices[0].durationMinutes,
+        price: this.selectedServices[0].price
+      };
+
+      console.log('Creando cita con los siguientes datos:', appointmentRequest);
+
+      // Llamar al servicio para crear la cita
+      const createdAppointment = await this.appointmentService.createAppointment(appointmentRequest).toPromise();
+
+      console.log('Cita creada exitosamente:', createdAppointment);
+
+      // Resetear el formulario después de crear la cita exitosamente
+      this.resetForm();
+
+      // Mostrar mensaje de éxito usando notificaciones
+      this.notificationService.success('¡Cita creada exitosamente!');
+
+    } catch (error) {
+      console.error('Error al crear la cita:', error);
+      const errorMessage = this.getErrorMessage(error, 'Error al crear la cita. Por favor, inténtalo de nuevo.');
+      this.notificationService.error(errorMessage);
+    } finally {
+      this.isCreatingAppointment = false;
+    }
+  }
+
+  /**
+   * Resetea el formulario después de crear una cita exitosamente
+   */
+  private resetForm(): void {
+    this.selectedDate = null;
+    this.selectedTimeSlot = null;
+    this.selectedServices = [];
+    this.selectedBarber = null;
+    this.timeSlots = [];
+    this.barbersAvailability = [];
+  }
+
+  // Métodos de navegación para barberos
+  /**
+   * Obtiene los barberos visibles en la página actual
+   */
+  getVisibleBarbers(): BarberAvailability[] {
+    const startIndex = this.currentBarberIndex;
+    const endIndex = startIndex + this.barbersPerPage;
+    return this.barbersAvailability.slice(startIndex, endIndex);
+  }
+
+  /**
+   * Navega a la página anterior de barberos
+   */
+  goToPreviousBarbers(): void {
+    if (this.canGoToPreviousBarbers()) {
+      this.currentBarberIndex = Math.max(0, this.currentBarberIndex - this.barbersPerPage);
+    }
+  }
+
+  /**
+   * Navega a la página siguiente de barberos
+   */
+  goToNextBarbers(): void {
+    if (this.canGoToNextBarbers()) {
+      this.currentBarberIndex = Math.min(
+        this.barbersAvailability.length - this.barbersPerPage,
+        this.currentBarberIndex + this.barbersPerPage
+      );
+    }
+  }
+
+  /**
+   * Verifica si se puede navegar a la página anterior de barberos
+   */
+  canGoToPreviousBarbers(): boolean {
+    return this.currentBarberIndex > 0;
+  }
+
+  /**
+   * Verifica si se puede navegar a la página siguiente de barberos
+   */
+  canGoToNextBarbers(): boolean {
+    return this.currentBarberIndex + this.barbersPerPage < this.barbersAvailability.length;
+  }
+
+  // Métodos de navegación para servicios
+  /**
+   * Obtiene los servicios visibles en la página actual
+   */
+  getVisibleServices(): ServiceResponseDto[] {
+    const startIndex = this.currentServiceIndex;
+    const endIndex = startIndex + this.servicesPerPage;
+    return this.availableServices.slice(startIndex, endIndex);
+  }
+
+  /**
+   * Navega a la página anterior de servicios
+   */
+  goToPreviousServices(): void {
+    if (this.canGoToPreviousServices()) {
+      this.currentServiceIndex = Math.max(0, this.currentServiceIndex - this.servicesPerPage);
+    }
+  }
+
+  /**
+   * Navega a la página siguiente de servicios
+   */
+  goToNextServices(): void {
+    if (this.canGoToNextServices()) {
+      this.currentServiceIndex = Math.min(
+        this.availableServices.length - this.servicesPerPage,
+        this.currentServiceIndex + this.servicesPerPage
+      );
+    }
+  }
+
+  /**
+   * Verifica si se puede navegar a la página anterior de servicios
+   */
+  canGoToPreviousServices(): boolean {
+    return this.currentServiceIndex > 0;
+  }
+
+  /**
+   * Verifica si se puede navegar a la página siguiente de servicios
+   */
+  canGoToNextServices(): boolean {
+    return this.currentServiceIndex + this.servicesPerPage < this.availableServices.length;
   }
 
   getStatusClass(status: string): string {

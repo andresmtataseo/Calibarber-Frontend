@@ -1,4 +1,7 @@
 <div class="min-h-screen bg-base-100 p-4">
+  <!-- Notification Container -->
+  <app-notification-container></app-notification-container>
+
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
     <div class="text-center mb-8">
@@ -9,19 +12,11 @@
     <!-- Calendar Section -->
     <div class="card bg-base-100 shadow-xl mb-6">
       <div class="card-body">
-        <!-- Error message -->
-        <div *ngIf="error" class="alert alert-error mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>{{ error }}</span>
-          <button class="btn btn-sm btn-ghost" (click)="loadWeekAvailability()">
-            Reintentar
-          </button>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="card-title text-xl">Selecciona la fecha</h2>
         </div>
-
-        <!-- Calendar navigation and days - only show when no error -->
-        <div *ngIf="!error" class="flex items-center justify-between mb-4">
+        <!-- Calendar navigation and days -->
+        <div class="flex items-center justify-between mb-4">
           <!-- Previous week button -->
           <button
             class="btn btn-ghost btn-sm"
@@ -35,15 +30,16 @@
 
           <!-- Calendar days -->
           <div class="flex gap-2 flex-wrap justify-center relative">
-            <!-- Loading overlay -->
-            <div *ngIf="isLoading" class="absolute inset-0 bg-base-100 bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
-              <span class="loading loading-spinner loading-md"></span>
-            </div>
+            <!-- Preloader overlay -->
+            <app-preloader [show]="isLoading" size="md"></app-preloader>
 
             <div
               *ngFor="let day of calendarDays"
-              class="flex flex-col items-center p-3 rounded-lg cursor-pointer transition-all duration-200 min-w-[80px]"
-              [class]="selectedDate?.fullDate?.toDateString() === day.fullDate?.toDateString() ? 'bg-primary text-primary-content' : 'bg-base-200 hover:bg-base-300'"
+              class="card border-2 cursor-pointer transition-all duration-200 hover:shadow-lg min-w-[80px] flex flex-col items-center p-3"
+              [class.border-primary]="selectedDate?.fullDate?.toDateString() === day.fullDate?.toDateString()"
+              [class.border-base-300]="selectedDate?.fullDate?.toDateString() !== day.fullDate?.toDateString()"
+              [class.bg-primary]="selectedDate?.fullDate?.toDateString() === day.fullDate?.toDateString()"
+              [class.text-primary-content]="selectedDate?.fullDate?.toDateString() === day.fullDate?.toDateString()"
               [class.opacity-50]="!day.available"
               [class.cursor-not-allowed]="!day.available || isLoading"
               (click)="selectDate(day)">
@@ -72,18 +68,22 @@
           </button>
         </div>
 
-        <!-- Week indicator - only show when no error -->
-        <div *ngIf="!error" class="text-center text-sm opacity-75 mb-2">
+        <!-- Week indicator -->
+        <div class="text-center text-sm opacity-75 mb-2">
           {{ getWeekRangeText() }}
         </div>
       </div>
     </div>
 
     <!-- Time Period Selection -->
-    <div class="card bg-base-100 shadow-xl mb-6">
+    <div class="card bg-base-100 shadow-xl mb-6" *ngIf="selectedDate">
       <div class="card-body">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="card-title text-xl">Selecciona la hora</h2>
+        </div>
+
         <div class="flex justify-center mb-4">
-          <div class="tabs tabs-boxed">
+          <div class="tabs tabs-boxed bg-base-300 rounded">
             <button
               class="tab"
               [class.tab-active]="selectedTimePeriod === 'Mañana'"
@@ -110,7 +110,7 @@
 
         <!-- Time Slots -->
         <div class="flex items-center justify-between">
-          <button 
+          <button
             class="btn btn-ghost btn-sm"
             [disabled]="!canGoToPreviousTimePeriod() || isLoadingTimeSlots"
             (click)="goToPreviousTimePeriod()">
@@ -119,12 +119,9 @@
             </svg>
           </button>
 
-          <div class="flex gap-3 flex-wrap justify-center min-h-[3rem] items-center">
-            <!-- Loading state -->
-            <div *ngIf="isLoadingTimeSlots" class="flex items-center gap-2">
-              <span class="loading loading-spinner loading-sm"></span>
-              <span class="text-sm text-gray-500">Cargando horarios...</span>
-            </div>
+          <div class="flex gap-3 flex-wrap justify-center min-h-[3rem] items-center relative">
+            <!-- Preloader for time slots -->
+            <app-preloader [show]="isLoadingTimeSlots" size="sm"></app-preloader>
 
             <!-- No slots available -->
             <div *ngIf="!isLoadingTimeSlots && timeSlots.length === 0" class="text-center text-gray-500">
@@ -145,7 +142,7 @@
             </button>
           </div>
 
-          <button 
+          <button
             class="btn btn-ghost btn-sm"
             [disabled]="!canGoToNextTimePeriod() || isLoadingTimeSlots"
             (click)="goToNextTimePeriod()">
@@ -154,77 +151,246 @@
             </svg>
           </button>
         </div>
+      </div>
+    </div>
 
-        <!-- Error message -->
-        <div *ngIf="timeSlotsError" class="alert alert-error mt-4">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>{{ timeSlotsError }}</span>
-          <button class="btn btn-sm btn-ghost" (click)="loadDayTimeSlots()">
-            Reintentar
-          </button>
+    <!-- Barbers Availability Section -->
+    <div class="card bg-base-100 shadow-xl mb-6" *ngIf="selectedDate && selectedTimeSlot">
+      <div class="card-body">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="card-title text-xl">Selecciona tu barbero</h2>
+
+          <!-- Navigation buttons for barbers -->
+          <div class="flex gap-2" *ngIf="!isLoadingBarbers && barbersAvailability.length > barbersPerPage">
+            <!-- Previous barbers button -->
+            <button
+              class="btn btn-ghost btn-sm"
+              [disabled]="!canGoToPreviousBarbers() || isLoadingBarbers"
+              (click)="goToPreviousBarbers()"
+              title="Barberos anteriores">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+            </button>
+
+            <!-- Next barbers button -->
+            <button
+              class="btn btn-ghost btn-sm"
+              [disabled]="!canGoToNextBarbers() || isLoadingBarbers"
+              (click)="goToNextBarbers()"
+              title="Siguientes barberos">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Preloader for barbers -->
+        <div *ngIf="isLoadingBarbers" class="flex justify-center items-center py-8">
+          <app-preloader [show]="isLoadingBarbers" size="lg"></app-preloader>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="!isLoadingBarbers && barbersAvailability.length === 0 && selectedTimeSlot" class="text-center py-8">
+          <div class="text-base-content/50 mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <p class="text-base-content/70">No hay barberos disponibles para este horario</p>
+          <p class="text-sm text-base-content/50 mt-1">Intenta seleccionar otro horario</p>
+        </div>
+
+        <!-- Barbers List -->
+        <div *ngIf="!isLoadingBarbers && barbersAvailability.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div
+            *ngFor="let barber of getVisibleBarbers()"
+            class="card border-2 cursor-pointer transition-all duration-200 hover:shadow-lg"
+            [class.border-primary]="selectedBarber?.id === barber.id"
+            [class.border-base-300]="selectedBarber?.id !== barber.id"
+            [class.bg-base-200]="!barber.available"
+            [class.cursor-not-allowed]="!barber.available"
+            [class.opacity-60]="!barber.available"
+            (click)="selectBarber(barber)">
+
+            <div class="card-body p-4">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="font-semibold text-lg">{{ barber.name }}</h3>
+                <div class="badge"
+                     [class.badge-success]="barber.available"
+                     [class.badge-error]="!barber.available">
+                  {{ barber.available ? 'Disponible' : 'Ocupado' }}
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-base-content/70">Tiempo libre:</span>
+                <span class="font-medium"
+                      [class.text-success]="barber.freeMinutes > 30"
+                      [class.text-warning]="barber.freeMinutes <= 30 && barber.freeMinutes > 0"
+                      [class.text-error]="barber.freeMinutes === 0">
+                  {{ barber.freeMinutes }} min
+                </span>
+              </div>
+
+              <!-- Selected indicator -->
+              <div *ngIf="selectedBarber?.id === barber.id" class="mt-2 flex items-center text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-sm font-medium">Seleccionado</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- No barbers available -->
+        <div *ngIf="!isLoadingBarbers && barbersAvailability.length === 0" class="text-center py-8">
+          <div class="text-base-content/50 mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <p class="text-base-content/70">No hay barberos disponibles para esta fecha y hora</p>
+          <p class="text-sm text-base-content/50 mt-1">Intenta seleccionar otro horario</p>
+        </div>
+
+        <!-- Info message when no date/time selected -->
+        <div *ngIf="!selectedDate || !selectedTimeSlot" class="text-center py-8">
+          <div class="text-base-content/50 mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p class="text-base-content/70">Selecciona una fecha y hora para ver los barberos disponibles</p>
         </div>
       </div>
     </div>
 
     <!-- Service Selection -->
-    <div class="card bg-base-100 shadow-xl mb-6">
+    <div class="card bg-base-100 shadow-xl mb-6" *ngIf="selectedDate && selectedTimeSlot && selectedBarber">
       <div class="card-body">
-        <h2 class="card-title text-xl mb-4">Selecciona el servicio</h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="card-title text-xl">Selecciona el servicio</h2>
 
-        <div class="space-y-4">
-          <div *ngFor="let service of selectedServices; let i = index" class="border border-base-300 rounded-lg p-4">
-            <div class="flex justify-between items-start mb-3">
-              <div class="flex-1">
+          <!-- Navigation buttons for services -->
+          <div class="flex gap-2" *ngIf="!isLoadingServices && availableServices.length > servicesPerPage">
+            <!-- Previous services button -->
+            <button
+              class="btn btn-ghost btn-sm"
+              [disabled]="!canGoToPreviousServices() || isLoadingServices"
+              (click)="goToPreviousServices()"
+              title="Servicios anteriores">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+            </button>
+
+            <!-- Next services button -->
+            <button
+              class="btn btn-ghost btn-sm"
+              [disabled]="!canGoToNextServices() || isLoadingServices"
+              (click)="goToNextServices()"
+              title="Siguientes servicios">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Preloader for services -->
+        <div *ngIf="isLoadingServices" class="flex justify-center items-center py-8">
+          <app-preloader [show]="isLoadingServices" size="lg"></app-preloader>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="!isLoadingServices && availableServices.length === 0" class="text-center py-8">
+          <div class="text-base-content/50 mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <p class="text-base-content/70">No hay servicios disponibles</p>
+          <p class="text-sm text-base-content/50 mt-1">Intenta recargar la página</p>
+        </div>
+
+        <!-- Services Grid -->
+        <div *ngIf="!isLoadingServices && availableServices.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div
+            *ngFor="let service of getVisibleServices()"
+            class="card border-2 cursor-pointer transition-all duration-200 hover:shadow-lg"
+            [class.border-primary]="isServiceSelected(service)"
+            [class.border-base-300]="!isServiceSelected(service)"
+            (click)="selectService(service)">
+
+            <div class="card-body p-4">
+              <div class="flex items-center justify-between mb-2">
                 <h3 class="font-semibold text-lg">{{ service.name }}</h3>
-                <p class="text-warning font-medium">{{ service.duration }}</p>
-                <p class="text-sm text-base-content/70 mt-1">• No personalizado</p>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="font-medium text-warning ml-2">
+                    {{ service.durationMinutes }} min
+                  </span>
+                </div>
               </div>
-              <div class="text-right">
-                <p class="text-2xl font-bold text-success">USD {{ service.price.toFixed(2) }}</p>
-              </div>
-            </div>
 
-            <div class="flex justify-between items-center">
-              <div class="flex items-center gap-2">
-                <span class="text-sm text-base-content/70">Empleado:</span>
-                <span class="font-medium">{{ service.employee }}</span>
+              <div class="mb-3">
+                <p *ngIf="service.description" class="text-sm text-base-content/70">{{ service.description }}</p>
+                <p *ngIf="!service.description" class="text-sm text-base-content/50 italic">Sin descripción</p>
               </div>
-              <button
-                class="btn btn-sm btn-outline"
-                (click)="changeEmployee(service.id)">
-                Cambiar
-              </button>
+
+              <div class="flex items-center justify-between">
+                <span class="text-2xl font-bold text-success">USD {{ service.price.toFixed(2) }}</span>
+
+                <!-- Selected indicator -->
+                <div *ngIf="isServiceSelected(service)" class="flex items-center text-primary">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span class="text-sm font-medium">Seleccionado</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Add Another Service -->
-        <button
-          class="btn btn-ghost btn-sm mt-4 self-start"
-          (click)="addService()">
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-          </svg>
-          Añadir otro servicio
-        </button>
+        <!-- No services available -->
+        <div *ngIf="!isLoadingServices && availableServices.length === 0" class="text-center py-8">
+          <div class="text-base-content/50 mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          </div>
+          <p class="text-base-content/70">No hay servicios disponibles</p>
+          <p class="text-sm text-base-content/50 mt-1">Contacta con la barbería para más información</p>
+        </div>
       </div>
     </div>
 
     <!-- Total and Reserve Button -->
-    <div class="card bg-base-100 shadow-xl">
+    <div class="card bg-base-100 shadow-xl" *ngIf="selectedDate && selectedTimeSlot && selectedBarber && selectedServices.length > 0">
       <div class="card-body">
         <div class="flex justify-between items-center mb-4">
           <span class="text-xl font-semibold">Total:</span>
           <span class="text-2xl font-bold">{{ getTotalPrice().toFixed(2) }} $</span>
         </div>
 
+
+
         <button
           class="btn btn-primary btn-lg w-full"
-          [disabled]="!selectedDate || !selectedTimeSlot || selectedServices.length === 0"
+          [disabled]="!selectedDate || !selectedTimeSlot || selectedServices.length === 0 || !selectedBarber || isCreatingAppointment"
           (click)="makeReservation()">
-          Reservar
+
+          <!-- Loading state with preloader -->
+          <app-preloader *ngIf="isCreatingAppointment" [show]="isCreatingAppointment" size="sm"></app-preloader>
+
+          <!-- Button text based on state -->
+          <span *ngIf="!isCreatingAppointment && !selectedBarber && selectedDate && selectedTimeSlot">Selecciona un barbero</span>
+          <span *ngIf="!isCreatingAppointment && selectedBarber">Reservar con {{ selectedBarber.name }}</span>
+          <span *ngIf="!isCreatingAppointment && (!selectedDate || !selectedTimeSlot)">Reservar</span>
+          <span *ngIf="isCreatingAppointment">Creando cita...</span>
         </button>
       </div>
     </div>

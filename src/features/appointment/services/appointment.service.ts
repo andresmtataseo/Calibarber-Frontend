@@ -425,7 +425,7 @@ export class AppointmentService {
     const params = new HttpParams().set('dateTime', dateTime);
 
     return this.http.get<BarbersAvailabilityResponse>(
-      this.urlService.getAppointmentUrl('AVAILABILITY_BARBERS'), 
+      this.urlService.getAppointmentUrl('AVAILABILITY_BARBERS'),
       { params }
     ).pipe(
       catchError((error) => {
