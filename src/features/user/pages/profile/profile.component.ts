@@ -51,7 +51,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
         if (authState.user?.id) {
           this.loadUserById(authState.user.id);
         } else {
-          this.notificationService.error('No se pudo obtener la información del usuario autenticado');
           this.loading = false;
         }
       },
@@ -184,7 +183,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
    * Navega a la página de cambio de contraseña
    */
   navigateToChangePassword(): void {
-    this.router.navigate(['/change-password']);
+    this.router.navigate(['/auth/change-password']);
   }
 
   /**

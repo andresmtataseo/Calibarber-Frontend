@@ -153,11 +153,7 @@ export class AppointmentListComponent implements OnInit {
     const formattedDate = appointmentDate.toLocaleDateString() + ' ' + appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     
     if (confirm(`¿Estás seguro de que deseas cancelar la cita de "${clientName}" programada para el ${formattedDate}?`)) {
-      const updateRequest = {
-        status: AppointmentStatus.CANCELLED
-      };
-      
-      this.appointmentService.updateAppointment(appointment.appointmentId, updateRequest).subscribe({
+      this.appointmentService.cancelAppointment(appointment.appointmentId).subscribe({
         next: () => {
           this.notificationService.success('Cita cancelada exitosamente');
           this.loadAppointments();
@@ -165,6 +161,44 @@ export class AppointmentListComponent implements OnInit {
         error: (error: HttpErrorResponse) => {
           this.notificationService.error(this.getErrorMessage(error));
           console.error('Error cancelling appointment:', error);
+        }
+      });
+    }
+  }
+
+  confirmAppointmentAction(appointment: AppointmentResponse): void {
+    const clientName = `${appointment.user.firstName} ${appointment.user.lastName}`;
+    const appointmentDate = new Date(appointment.appointmentDateTime);
+    const formattedDate = appointmentDate.toLocaleDateString() + ' ' + appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    if (confirm(`¿Estás seguro de que deseas confirmar la cita de "${clientName}" programada para el ${formattedDate}?`)) {
+      this.appointmentService.confirmAppointment(appointment.appointmentId).subscribe({
+        next: () => {
+          this.notificationService.success('Cita confirmada exitosamente');
+          this.loadAppointments();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.notificationService.error(this.getErrorMessage(error));
+          console.error('Error confirming appointment:', error);
+        }
+      });
+    }
+  }
+
+  completeAppointmentAction(appointment: AppointmentResponse): void {
+    const clientName = `${appointment.user.firstName} ${appointment.user.lastName}`;
+    const appointmentDate = new Date(appointment.appointmentDateTime);
+    const formattedDate = appointmentDate.toLocaleDateString() + ' ' + appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    if (confirm(`¿Estás seguro de que deseas marcar como completada la cita de "${clientName}" programada para el ${formattedDate}?`)) {
+      this.appointmentService.completeAppointment(appointment.appointmentId).subscribe({
+        next: () => {
+          this.notificationService.success('Cita completada exitosamente');
+          this.loadAppointments();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.notificationService.error(this.getErrorMessage(error));
+          console.error('Error completing appointment:', error);
         }
       });
     }

@@ -8,15 +8,7 @@
       <h1 class="text-2xl sm:text-3xl font-bold text-base-content">Gestión de Citas</h1>
       <p class="text-sm sm:text-base text-base-content/70 mt-1">Administra las citas del sistema</p>
     </div>
-    <div class="flex-shrink-0">
-      <button class="btn btn-primary w-full sm:w-auto" (click)="createAppointment()">
-        <svg class="w-5 h-5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-        </svg>
-        <span class="hidden sm:inline">Crear Cita</span>
-        <span class="sm:hidden">Crear</span>
-      </button>
-    </div>
+    <!-- Botón de crear citas ocultado -->
   </div>
 
   <!-- Search and Filters -->
@@ -144,24 +136,36 @@
                 </div>
               </td>
               <td>
-                <div class="text-sm">{{ appointment.price | currency:'EUR':'symbol':'1.2-2' }}</div>
+                <div class="text-sm">{{ appointment.price | currency:'USD':'symbol':'1.2-2' }}</div>
               </td>
               <td>
                 <div class="flex gap-2">
-                  <button class="btn btn-ghost btn-xs" (click)="viewAppointment(appointment.appointmentId)" title="Ver detalles">
+                  <!-- Botón de confirmar cita -->
+                  <button
+                    class="btn btn-ghost btn-xs text-success"
+                    (click)="confirmAppointmentAction(appointment)"
+                    title="Confirmar"
+                    *ngIf="appointment.status === 'SCHEDULED'">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                   </button>
-                  <button class="btn btn-ghost btn-xs" (click)="editAppointment(appointment.appointmentId)" title="Editar">
+                  
+                  <!-- Botón de completar cita -->
+                  <button
+                    class="btn btn-ghost btn-xs text-primary"
+                    (click)="completeAppointmentAction(appointment)"
+                    title="Completar"
+                    *ngIf="appointment.status === 'CONFIRMED' || appointment.status === 'IN_PROGRESS'">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                   </button>
-                  <button 
-                    class="btn btn-ghost btn-xs text-error" 
-                    (click)="cancelAppointment(appointment)" 
+                  
+                  <!-- Botón de cancelar cita -->
+                  <button
+                    class="btn btn-ghost btn-xs text-error"
+                    (click)="cancelAppointment(appointment)"
                     title="Cancelar"
                     *ngIf="appointment.status !== 'CANCELLED' && appointment.status !== 'COMPLETED' && appointment.status !== 'NO_SHOW'">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
