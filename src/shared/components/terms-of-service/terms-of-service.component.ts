@@ -17,7 +17,7 @@ import { RouterModule } from '@angular/router';
   styleUrls: ['./terms-of-service.component.css']
 })
 export class TermsOfServiceComponent {
-
+  
   /**
    * Fecha de última actualización de los términos
    */

@@ -17,7 +17,7 @@ import { RouterModule } from '@angular/router';
   styleUrls: ['./privacy-policy.component.css']
 })
 export class PrivacyPolicyComponent {
-
+  
   /**
    * Fecha de última actualización de la política
    */
