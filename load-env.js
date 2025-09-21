@@ -9,29 +9,51 @@ const path = require('path');
 
 // Función para cargar variables de entorno
 function loadEnvironmentVariables() {
-  // Buscar archivos .env en orden de prioridad
-  // Los archivos se cargan en orden, los últimos sobrescriben a los primeros
-  const envFiles = [
-    '.env',
-    '.env.development',
-    '.env.production',
-  ];
-
+  // En producción (Render), las variables están en process.env
+  // En desarrollo, las cargamos desde archivos .env
   let envVars = {};
 
-  // Cargar variables de cada archivo encontrado
-  envFiles.forEach(file => {
-    const envPath = path.resolve(process.cwd(), file);
-    if (fs.existsSync(envPath)) {
-      console.log(`📄 Cargando variables de entorno desde: ${file}`);
-      const result = dotenv.config({ path: envPath });
-      if (result.parsed) {
-        envVars = { ...envVars, ...result.parsed };
-      }
+  // Primero intentar cargar desde process.env (para producción/Render)
+  console.log('🔍 Buscando variables de entorno en process.env...');
+  Object.keys(process.env).forEach(key => {
+    if (key.startsWith('NG_APP_')) {
+      envVars[key] = process.env[key];
+      console.log(`✅ Variable encontrada en process.env: ${key}`);
     }
   });
 
+  // Si no encontramos variables en process.env, cargar desde archivos .env
+  if (Object.keys(envVars).length === 0) {
+    console.log('📁 No se encontraron variables en process.env, cargando desde archivos .env...');
+
+    // Buscar archivos .env en orden de prioridad
+    // Los archivos se cargan en orden, los últimos sobrescriben a los primeros
+    const envFiles = [
+      '.env',
+      '.env.development',
+      '.env.production',
+    ];
+
+    // Cargar variables de cada archivo encontrado
+    envFiles.forEach(file => {
+      const envPath = path.resolve(process.cwd(), file);
+      if (fs.existsSync(envPath)) {
+        console.log(`📄 Cargando variables de entorno desde: ${file}`);
+        const result = dotenv.config({ path: envPath });
+        if (result.parsed) {
+          // Solo agregar variables que empiecen con NG_APP_
+          Object.keys(result.parsed).forEach(key => {
+            if (key.startsWith('NG_APP_')) {
+              envVars[key] = result.parsed[key];
+            }
+          });
+        }
+      }
+    });
+  }
+
   // Filtrar solo las variables que comienzan con NG_APP_
+  // (Ya se filtran en el proceso de carga, pero mantenemos por compatibilidad)
   const angularEnvVars = {};
   Object.keys(envVars).forEach(key => {
     if (key.startsWith('NG_APP_')) {
@@ -46,6 +68,7 @@ function loadEnvironmentVariables() {
     console.log(`🔧 Variables disponibles: ${loadedKeys.join(', ')}`);
   } else {
     console.log('⚠️  No se encontraron variables de entorno con prefijo NG_APP_');
+    console.log('💡 Asegúrate de que las variables estén configuradas en Render o en archivos .env');
   }
 
   // Inyectar variables en el objeto global para que estén disponibles en Angular

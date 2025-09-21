@@ -7,6 +7,7 @@
     "start": "ng serve",
     "prebuild": "node load-env.js",
     "build": "ng build",
+    "build:production": "node build-production.js",
     "prewatch": "node load-env.js",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
