@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AppointmentService } from '../services/appointment.service';
 import { AvailabilityResponse, DayAvailability, AvailabilityStatus, DayAvailabilityResponse, DayAvailabilitySlot, BarbersAvailabilityResponse, BarberAvailability, CreateAppointmentRequest } from '../models/appointment.model';
 import { ServiceService } from '../../service/services/service.service';
@@ -70,7 +71,8 @@ export class BookAppointmentComponent implements OnInit {
     private appointmentService: AppointmentService,
     private serviceService: ServiceService,
     private authService: AuthService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -652,6 +654,9 @@ export class BookAppointmentComponent implements OnInit {
 
       // Mostrar mensaje de éxito usando notificaciones
       this.notificationService.success('¡Cita creada exitosamente!');
+
+      // Redirigir al perfil del usuario después de una reserva exitosa
+      this.router.navigate(['/profile']);
 
     } catch (error) {
       console.error('Error al crear la cita:', error);

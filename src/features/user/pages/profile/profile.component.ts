@@ -7,6 +7,8 @@ import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { UrlService } from '../../../../core/services/url.service';
 import { NotificationService } from '../../../../shared/components/notification/notification.service';
+import { AppointmentService } from '../../../appointment/services/appointment.service';
+import { AppointmentResponse } from '../../../appointment/models/appointment.model';
 
 @Component({
   selector: 'app-profile',
@@ -20,9 +22,13 @@ export class ProfileComponent implements OnInit {
   private readonly urlService = inject(UrlService);
   private readonly router = inject(Router);
   private readonly notificationService = inject(NotificationService);
+  private readonly appointmentService = inject(AppointmentService);
 
   user: UserResponse | null = null;
   loading = false;
+  upcomingAppointments: AppointmentResponse[] = [];
+  loadingAppointments = false;
+  cancellingAppointment: string | null = null;
 
   constructor() { }
 
@@ -63,6 +69,8 @@ export class ProfileComponent implements OnInit {
         this.user = user;
         this.loading = false;
         console.log('Usuario cargado exitosamente:', user);
+        // Cargar las citas próximas después de cargar el usuario
+        this.loadUpcomingAppointments();
       },
       error: (error) => {
         this.notificationService.error(error.message || 'Error al cargar el perfil del usuario');
@@ -77,6 +85,7 @@ export class ProfileComponent implements OnInit {
    */
   reloadProfile(): void {
     this.loadUserProfile();
+    this.loadUpcomingAppointments();
   }
 
   /**
@@ -159,6 +168,105 @@ export class ProfileComponent implements OnInit {
    * Navega a la página de cambio de contraseña
    */
   navigateToChangePassword(): void {
-    this.router.navigate(['/auth/change-password']);
+    this.router.navigate(['/change-password']);
+  }
+
+  /**
+   * Navega a la página de reservar cita
+   */
+  navigateToBookAppointment(): void {
+    this.router.navigate(['/book-appointment']);
+  }
+
+  loadUpcomingAppointments(): void {
+    if (!this.user?.userId) {
+      return;
+    }
+
+    this.loadingAppointments = true;
+    this.appointmentService.getUpcomingAppointmentsByClient(this.user.userId).subscribe({
+      next: (response) => {
+        // Manejar la respuesta paginada
+        this.upcomingAppointments = response.data?.content || response.data || [];
+        this.loadingAppointments = false;
+        console.log('Próximas citas cargadas exitosamente:', this.upcomingAppointments);
+      },
+      error: (error) => {
+        console.error('Error loading upcoming appointments:', error);
+        this.notificationService.error('Error al cargar las próximas citas');
+        this.upcomingAppointments = [];
+        this.loadingAppointments = false;
+      }
+    });
+  }
+
+  formatAppointmentDate(dateTime: string): string {
+    const date = new Date(dateTime);
+    return date.toLocaleDateString('es-ES', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+
+  formatAppointmentTime(dateTime: string): string {
+    const date = new Date(dateTime);
+    return date.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  getStatusText(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'SCHEDULED': 'Programada',
+      'CONFIRMED': 'Confirmada',
+      'IN_PROGRESS': 'En Progreso',
+      'COMPLETED': 'Completada',
+      'CANCELLED': 'Cancelada',
+      'NO_SHOW': 'No se presentó'
+    };
+    return statusMap[status] || status;
+  }
+
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'SCHEDULED': return 'badge-info';
+      case 'CONFIRMED': return 'badge-success';
+      case 'COMPLETED': return 'badge-success';
+      case 'IN_PROGRESS': return 'badge-warning';
+      case 'CANCELLED': return 'badge-error';
+      case 'NO_SHOW': return 'badge-error';
+      default: return 'badge-ghost';
+    }
+  }
+
+  /**
+   * Cancela una cita con confirmación del usuario
+   */
+  cancelAppointment(appointmentId: string): void {
+    // Mostrar confirmación antes de cancelar
+    const confirmed = confirm('¿Estás seguro de que deseas cancelar esta cita? Esta acción no se puede deshacer.');
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.cancellingAppointment = appointmentId;
+
+    this.appointmentService.cancelAppointment(appointmentId).subscribe({
+      next: (response) => {
+        this.notificationService.success('Cita cancelada exitosamente');
+        // Recargar las citas para reflejar el cambio
+        this.loadUpcomingAppointments();
+        this.cancellingAppointment = null;
+      },
+      error: (error) => {
+        console.error('Error al cancelar la cita:', error);
+        this.notificationService.error('Error al cancelar la cita. Por favor, inténtalo de nuevo.');
+        this.cancellingAppointment = null;
+      }
+    });
   }
 }

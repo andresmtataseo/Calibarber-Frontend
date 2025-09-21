@@ -81,13 +81,83 @@
           Próximas
         </label>
         <div class="tab-content bg-base-100 border-base-300 p-6">
-          <h3 class="text-xl font-semibold mb-4 text-primary">Citas Próximas</h3>
-          <div class="space-y-4">
-            <div class="alert alert-info">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          <h3 class="text-xl font-semibold mb-4 text-primary">Próximas Citas</h3>
+
+          <!-- Loading state -->
+          <div *ngIf="loadingAppointments" class="flex flex-col items-center justify-center py-8">
+            <span class="loading loading-spinner loading-lg text-primary"></span>
+            <p class="mt-4 text-base-content/70">Cargando próximas citas...</p>
+          </div>
+
+          <!-- No appointments message -->
+          <div *ngIf="!loadingAppointments && upcomingAppointments.length === 0" class="text-center py-12">
+            <h4 class="text-xl font-semibold mb-2 text-base-content">No tienes citas próximas</h4>
+            <p class="text-base-content/70 mb-6">Cuando reserves una cita, aparecerá aquí para que puedas hacer seguimiento.</p>
+            <button
+              class="btn btn-primary gap-2"
+              (click)="navigateToBookAppointment()">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
               </svg>
-              <span>No hay citas próximas programadas. ¡Reserva una ahora!</span>
+              Reservar Cita
+            </button>
+          </div>
+
+          <!-- Appointments list -->
+          <div *ngIf="!loadingAppointments && upcomingAppointments.length > 0" class="space-y-4">
+            <div *ngFor="let appointment of upcomingAppointments" class="card bg-base-100 shadow-md border border-base-300">
+              <div class="card-body">
+                <div class="flex justify-between items-start mb-4">
+                  <div>
+                    <h4 class="card-title text-lg">{{ formatAppointmentDate(appointment.appointmentDateTime) }}</h4>
+                    <p class="text-base-content/70">{{ formatAppointmentTime(appointment.appointmentDateTime) }}</p>
+                  </div>
+                  <div class="badge" [ngClass]="{
+                    'badge-info': appointment.status === 'SCHEDULED',
+                    'badge-success': appointment.status === 'CONFIRMED' || appointment.status === 'COMPLETED',
+                    'badge-warning': appointment.status === 'IN_PROGRESS',
+                    'badge-error': appointment.status === 'CANCELLED' || appointment.status === 'NO_SHOW'
+                  }">
+                    {{ getStatusText(appointment.status) }}
+                  </div>
+                </div>
+
+                <div class="space-y-3">
+                  <div>
+                    <h5 class="font-semibold">{{ appointment.service.name }}</h5>
+                    <p class="text-sm text-base-content/70" *ngIf="appointment.service.description">
+                      {{ appointment.service.description }}
+                    </p>
+                    <div class="flex gap-4 mt-2 text-sm text-base-content/70">
+                      <span>{{ appointment.service.durationMinutes }} min</span>
+                      <span>${{ appointment.service.price }}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h6 class="font-medium">Barbero</h6>
+                    <p class="text-sm">{{ appointment.barber.firstName }} {{ appointment.barber.lastName }}</p>
+                    <p class="text-sm text-base-content/70 italic" *ngIf="appointment.barber.specialization">
+                      {{ appointment.barber.specialization }}
+                    </p>
+                  </div>
+
+                  <div *ngIf="appointment.notes">
+                    <h6 class="font-medium">Notas</h6>
+                    <p class="text-sm text-base-content/70">{{ appointment.notes }}</p>
+                  </div>
+                </div>
+
+                <div class="card-actions justify-end mt-4" *ngIf="appointment.status === 'SCHEDULED' || appointment.status === 'CONFIRMED'">
+                  <button
+                    class="btn btn-outline btn-error btn-sm"
+                    (click)="cancelAppointment(appointment.appointmentId)"
+                    [disabled]="cancellingAppointment === appointment.appointmentId">
+                    <span *ngIf="cancellingAppointment === appointment.appointmentId" class="loading loading-spinner loading-xs"></span>
+                    {{ cancellingAppointment === appointment.appointmentId ? 'Cancelando...' : 'Cancelar Cita' }}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
