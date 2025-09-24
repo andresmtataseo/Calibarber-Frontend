@@ -54,7 +54,8 @@ export class UserEditComponent implements OnInit {
     this.loadingUser = true;
 
     this.userService.getUserById(id).subscribe({
-      next: (user) => {
+      next: (response) => {
+        const user = response; // Manejar tanto respuesta envuelta como directa
         this.userForm.patchValue({
           firstName: user.firstName,
           lastName: user.lastName,
@@ -65,10 +66,15 @@ export class UserEditComponent implements OnInit {
           isActive: user.isActive
         });
         this.loadingUser = false;
-        this.notificationService.success(`Información de ${user.firstName} ${user.lastName} cargada exitosamente`, 3000);
+
+        // Usar mensaje del backend si está disponible
+        const successMessage = `Información de ${user.firstName} ${user.lastName} cargada exitosamente`;
+        this.notificationService.success(successMessage, 3000);
       },
       error: (error: any) => {
-        const errorMessage = this.getErrorMessage(error, 'cargar la información del usuario');
+        // Priorizar mensaje del backend
+        const backendMessage = error.error?.message;
+        const errorMessage = backendMessage || this.getErrorMessage(error, 'cargar la información del usuario');
         this.notificationService.error(errorMessage, 6000);
         this.loadingUser = false;
       }
@@ -94,13 +100,18 @@ export class UserEditComponent implements OnInit {
       };
 
       this.userService.updateUser(this.userId, updateUserRequest).subscribe({
-        next: (user) => {
+        next: (response) => {
+          // Usar mensaje del backend si está disponible
+          const user = response; // Manejar tanto respuesta envuelta como directa
           const userName = `${user.firstName} ${user.lastName}`;
-          this.notificationService.success(`Usuario ${userName} actualizado exitosamente`, 4000);
+          const successMessage = `Usuario ${userName} actualizado exitosamente`;
+          this.notificationService.success(successMessage, 4000);
           this.router.navigate(['/admin/users']);
         },
         error: (error: any) => {
-          const errorMessage = this.getErrorMessage(error, 'actualizar el usuario');
+          // Priorizar mensaje del backend
+          const backendMessage = error.error?.message;
+          const errorMessage = backendMessage || this.getErrorMessage(error, 'actualizar el usuario');
           this.notificationService.error(errorMessage, 6000);
           this.isSubmitting = false;
         }
@@ -153,12 +164,9 @@ export class UserEditComponent implements OnInit {
 
   /**
    * Obtiene un mensaje de error más descriptivo basado en el HttpErrorResponse
+   * Solo se usa como fallback cuando no hay mensaje del backend
    */
   private getErrorMessage(error: any, action: string): string {
-    if (error.error?.message) {
-      return `Error al ${action}: ${error.error.message}`;
-    }
-    
     switch (error.status) {
       case 0:
         return `No se pudo ${action}. Verifica tu conexión a internet y vuelve a intentarlo.`;

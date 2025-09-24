@@ -8,7 +8,7 @@
       <div class="flex justify-between items-center mb-6">
         <div>
           <h2 class="card-title text-2xl">Detalles del Usuario</h2>
-          <p class="text-base-content/70 text-sm mt-2">Información completa del usuario (solo lectura)</p>
+          <p class="text-base-content/70 text-sm mt-2">Información completa del usuario</p>
         </div>
         <div class="flex gap-3">
           <button
@@ -65,9 +65,9 @@
             <div class="form-control">
               <label class="floating-label">
                 <span>Nombre</span>
-                <input 
-                  type="text" 
-                  class="input input-md w-full input-disabled" 
+                <input
+                  type="text"
+                  class="input input-md w-full input-disabled"
                   [value]="user.firstName || 'Sin información'"
                   [disabled]="true">
               </label>
@@ -76,9 +76,9 @@
             <div class="form-control">
               <label class="floating-label">
                 <span>Apellido</span>
-                <input 
-                  type="text" 
-                  class="input input-md w-full input-disabled" 
+                <input
+                  type="text"
+                  class="input input-md w-full input-disabled"
                   [value]="user.lastName || 'Sin información'"
                   [disabled]="true">
               </label>
@@ -90,9 +90,9 @@
             <div class="form-control">
               <label class="floating-label">
                 <span>Email</span>
-                <input 
-                  type="email" 
-                  class="input input-md w-full input-disabled" 
+                <input
+                  type="email"
+                  class="input input-md w-full input-disabled"
                   [value]="user.email || 'Sin información'"
                   [disabled]="true">
               </label>
@@ -101,9 +101,9 @@
             <div class="form-control">
               <label class="floating-label">
                 <span>Teléfono</span>
-                <input 
-                  type="tel" 
-                  class="input input-md w-full input-disabled" 
+                <input
+                  type="tel"
+                  class="input input-md w-full input-disabled"
                   [value]="user.phoneNumber || 'Sin información'"
                   [disabled]="true">
               </label>
@@ -114,9 +114,9 @@
           <div class="form-control">
             <label class="floating-label">
               <span>Nombre Completo</span>
-              <input 
-                type="text" 
-                class="input input-md w-full input-disabled" 
+              <input
+                type="text"
+                class="input input-md w-full input-disabled"
                 [value]="getFullName()"
                 [disabled]="true">
             </label>
@@ -126,9 +126,9 @@
           <div class="form-control" *ngIf="user.profilePictureUrl">
             <label class="floating-label">
               <span>URL de Foto de Perfil</span>
-              <input 
-                type="text" 
-                class="input input-md w-full input-disabled" 
+              <input
+                type="text"
+                class="input input-md w-full input-disabled"
                 [value]="user.profilePictureUrl"
                 [disabled]="true">
             </label>
@@ -144,8 +144,8 @@
             <div class="form-control">
               <label class="floating-label">
                 <span>Rol</span>
-                <select 
-                  class="select select-md w-full select-disabled" 
+                <select
+                  class="select select-md w-full select-disabled"
                   [disabled]="true">
                   <option [value]="user.role" selected>
                     {{ getRoleLabel(user.role) }}
@@ -157,8 +157,8 @@
             <div class="form-control">
               <label class="floating-label">
                 <span>Estado</span>
-                <select 
-                  class="select select-md w-full select-disabled" 
+                <select
+                  class="select select-md w-full select-disabled"
                   [disabled]="true">
                   <option [value]="user.isActive" selected>
                     {{ getStatusLabel(user.isActive) }}
@@ -172,9 +172,9 @@
           <div class="form-control">
             <label class="floating-label">
               <span>ID del Usuario</span>
-              <input 
-                type="text" 
-                class="input input-md w-full input-disabled" 
+              <input
+                type="text"
+                class="input input-md w-full input-disabled"
                 [value]="user.userId || 'Sin información'"
                 [disabled]="true">
             </label>
@@ -190,9 +190,9 @@
             <div class="form-control">
               <label class="floating-label">
                 <span>Fecha de Creación</span>
-                <input 
-                  type="text" 
-                  class="input input-md w-full input-disabled" 
+                <input
+                  type="text"
+                  class="input input-md w-full input-disabled"
                   [value]="formatDate(user.createdAt)"
                   [disabled]="true">
               </label>
@@ -201,9 +201,9 @@
             <div class="form-control">
               <label class="floating-label">
                 <span>Última Actualización</span>
-                <input 
-                  type="text" 
-                  class="input input-md w-full input-disabled" 
+                <input
+                  type="text"
+                  class="input input-md w-full input-disabled"
                   [value]="formatDate(user.updatedAt)"
                   [disabled]="true">
               </label>
@@ -211,7 +211,7 @@
           </div>
 
           <!-- Información adicional que podría agregarse en el futuro -->
-          <!-- 
+          <!--
           <div class="form-control">
             <label class="label cursor-pointer justify-start gap-2">
               <input

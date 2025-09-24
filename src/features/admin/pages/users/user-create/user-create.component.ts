@@ -73,13 +73,17 @@ export class UserCreateComponent {
       };
 
       this.userService.createUser(createUserRequest).subscribe({
-        next: (user) => {
-          const userName = `${user.firstName} ${user.lastName}`;
-          this.notificationService.success(`Usuario ${userName} creado exitosamente`, 4000);
+        next: (response) => {
+          // Usar mensaje del backend si está disponible
+          const userName = `${response?.firstName || formValue.firstName} ${response?.lastName || formValue.lastName}`;
+          const successMessage = `Usuario ${userName} creado exitosamente`;
+          this.notificationService.success(successMessage, 4000);
           this.router.navigate(['/admin/users']);
         },
         error: (error: any) => {
-          const errorMessage = this.getErrorMessage(error, 'crear el usuario');
+          // Priorizar mensaje del backend
+          const backendMessage = error.error?.message;
+          const errorMessage = backendMessage || this.getErrorMessage(error, 'crear el usuario');
           this.notificationService.error(errorMessage, 6000);
           this.isSubmitting = false;
         }
@@ -133,12 +137,9 @@ export class UserCreateComponent {
 
   /**
    * Obtiene un mensaje de error más descriptivo basado en el HttpErrorResponse
+   * Solo se usa como fallback cuando no hay mensaje del backend
    */
   private getErrorMessage(error: any, action: string): string {
-    if (error.error?.message) {
-      return `Error al ${action}: ${error.error.message}`;
-    }
-    
     switch (error.status) {
       case 0:
         return `No se pudo ${action}. Verifica tu conexión a internet y vuelve a intentarlo.`;

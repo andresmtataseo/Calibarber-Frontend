@@ -54,13 +54,19 @@ export class UserViewComponent implements OnInit {
     this.error = null;
 
     this.userService.getUserById(this.userId).subscribe({
-      next: (user) => {
+      next: (response) => {
+        const user = response; // Manejar tanto respuesta envuelta como directa
         this.user = user;
         this.loading = false;
-        this.notificationService.success(`Información de ${this.getFullName()} cargada exitosamente`, 3000);
+
+        // Usar mensaje del backend si está disponible
+        const successMessage = `Información de ${this.getFullName()} cargada exitosamente`;
+        this.notificationService.success(successMessage, 3000);
       },
       error: (error: HttpErrorResponse) => {
-        const errorMessage = this.getErrorMessage(error, 'cargar la información del usuario');
+        // Priorizar mensaje del backend
+        const backendMessage = error.error?.message;
+        const errorMessage = backendMessage || this.getErrorMessage(error, 'cargar la información del usuario');
         this.notificationService.error(errorMessage, 6000);
         this.error = errorMessage;
         this.loading = false;
@@ -85,10 +91,10 @@ export class UserViewComponent implements OnInit {
 
   formatDate(date: string | Date | undefined): string {
     if (!date) return 'Sin información';
-    
+
     try {
       const dateObj = typeof date === 'string' ? new Date(date) : date;
-      
+
       if (isNaN(dateObj.getTime())) {
         return 'Fecha inválida';
       }
@@ -124,17 +130,21 @@ export class UserViewComponent implements OnInit {
 
     const userName = this.getFullName();
     const confirmMessage = `¿Estás seguro de que deseas eliminar a ${userName}? Esta acción no se puede deshacer.`;
-    
+
     if (confirm(confirmMessage)) {
       this.loading = true;
-      
+
       this.userService.deleteUser(this.user.userId).subscribe({
-        next: () => {
-          this.notificationService.success(`Usuario ${userName} eliminado exitosamente`, 4000);
+        next: (response) => {
+          // Usar mensaje del backend si está disponible
+          const successMessage = `Usuario ${userName} eliminado exitosamente`;
+          this.notificationService.success(successMessage, 4000);
           this.router.navigate(['/admin/users']);
         },
         error: (error: HttpErrorResponse) => {
-          const errorMessage = this.getErrorMessage(error, `eliminar el usuario ${userName}`);
+          // Priorizar mensaje del backend
+          const backendMessage = error.error?.message;
+          const errorMessage = backendMessage || this.getErrorMessage(error, `eliminar el usuario ${userName}`);
           this.notificationService.error(errorMessage, 6000);
           this.loading = false;
         }
@@ -152,10 +162,10 @@ export class UserViewComponent implements OnInit {
     const newStatus = !currentStatus;
     const userName = this.getFullName();
     const action = newStatus ? 'activar' : 'desactivar';
-    
+
     if (confirm(`¿Deseas ${action} a ${userName}?`)) {
       this.notificationService.warning(
-        `La funcionalidad para ${action} usuarios requiere implementación adicional en el servicio. Por favor, contacta al administrador del sistema.`, 
+        `La funcionalidad para ${action} usuarios requiere implementación adicional en el servicio. Por favor, contacta al administrador del sistema.`,
         8000
       );
     }
@@ -169,12 +179,9 @@ export class UserViewComponent implements OnInit {
 
   /**
    * Obtiene un mensaje de error más descriptivo basado en el HttpErrorResponse
+   * Solo se usa como fallback cuando no hay mensaje del backend
    */
   private getErrorMessage(error: HttpErrorResponse, action: string): string {
-    if (error.error?.message) {
-      return `Error al ${action}: ${error.error.message}`;
-    }
-    
     switch (error.status) {
       case 0:
         return `No se pudo ${action}. Verifica tu conexión a internet y vuelve a intentarlo.`;

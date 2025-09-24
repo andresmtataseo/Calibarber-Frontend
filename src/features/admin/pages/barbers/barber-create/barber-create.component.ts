@@ -107,10 +107,11 @@ export class BarberCreateComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
-         this.notificationService.error('Error al cargar las barberías');
-         this.loading = false;
-       }
-     });
+        const message = error.error?.message || 'Error al cargar las barberías';
+        this.notificationService.error(message);
+        this.loading = false;
+      }
+    });
   }
 
   private loadUsers(): void {
@@ -122,8 +123,9 @@ export class BarberCreateComponent implements OnInit {
         this.availableUsers = allUsers.filter((user: UserResponse) => user.role !== 'ROLE_BARBER');
       },
       error: (error) => {
-         this.notificationService.error('Error al cargar los usuarios');
-       }
+        const message = error.error?.message || 'Error al cargar los usuarios';
+        this.notificationService.error(message);
+      }
     });
   }
 
@@ -180,7 +182,8 @@ export class BarberCreateComponent implements OnInit {
           this.createBarberAvailabilities(barberResponse.barberId, formData.availability);
         },
         error: (error) => {
-          this.notificationService.error('Error al crear el barbero');
+          const message = error.error?.message || 'Error al crear el barbero';
+          this.notificationService.error(message);
           this.isSubmitting = false;
         }
       });
@@ -209,12 +212,9 @@ export class BarberCreateComponent implements OnInit {
 
     // Ejecutar todas las creaciones de disponibilidad en paralelo
     forkJoin(availabilityRequests).subscribe({
-      next: (responses) => {
-        this.notificationService.success('Barbero y disponibilidades creados exitosamente');
-        this.router.navigate(['/admin/barbers']);
-      },
       error: (error) => {
-        this.notificationService.error('Barbero creado, pero hubo un error al configurar las disponibilidades');
+        const message = error.error?.message || 'Barbero creado, pero hubo un error al configurar las disponibilidades';
+        this.notificationService.error(message);
         this.router.navigate(['/admin/barbers']);
       }
     });

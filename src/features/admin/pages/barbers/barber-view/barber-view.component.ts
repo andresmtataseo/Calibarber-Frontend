@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { BarberService } from '../../../../barber/services';
 import { BarbershopService } from '../../../../barbershop/services';
 import { UserService } from '../../../../user/services';
+import { NotificationService } from '../../../../../shared/components/notification/notification.service';
 import { PreloaderComponent } from '../../../../../shared/components/preloader/preloader.component';
 import { BarberResponse, BarberAvailabilityResponse } from '../../../../barber/models';
 import { BarbershopResponse } from '../../../../barbershop/models';
@@ -60,7 +61,8 @@ export class BarberViewComponent implements OnInit {
     private router: Router,
     private barberService: BarberService,
     private barbershopService: BarbershopService,
-    private userService: UserService
+    private userService: UserService,
+    private notificationService: NotificationService
   ) {
     this.barberId = this.route.snapshot.params['id'];
   }
@@ -93,9 +95,11 @@ export class BarberViewComponent implements OnInit {
       } else {
         this.error = 'Barbero no encontrado';
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading barber data:', error);
-      this.error = 'Error al cargar los datos del barbero';
+      const message = error.error?.message || 'Error al cargar los datos del barbero';
+      this.notificationService.error(message);
+      this.error = message;
     } finally {
       this.loading = false;
     }
@@ -267,13 +271,15 @@ export class BarberViewComponent implements OnInit {
 
     if (confirm(`¿Estás seguro de que deseas eliminar a ${barberName}? Esta acción no se puede deshacer.`)) {
       this.barberService.deleteBarber(this.barberId).subscribe({
-        next: () => {
-          console.log('Barber deleted successfully');
+        next: (response) => {
+          const message = 'Barbero eliminado exitosamente';
+          this.notificationService.success(message);
           this.router.navigate(['/admin/barbers']);
         },
         error: (error) => {
           console.error('Error deleting barber:', error);
-          alert('Error al eliminar el barbero. Por favor, inténtalo de nuevo.');
+          const message = error.error?.message || 'Error al eliminar el barbero. Por favor, inténtalo de nuevo.';
+          this.notificationService.error(message);
         }
       });
     }
@@ -292,11 +298,13 @@ export class BarberViewComponent implements OnInit {
       this.barberService.updateBarber(this.barberId, updatedBarber).subscribe({
         next: (updated) => {
           this.barber = updated;
-          console.log(`Barber status updated to ${newStatus}`);
+          const message = `Barbero ${newStatus ? 'activado' : 'desactivado'} exitosamente`;
+          this.notificationService.success(message);
         },
         error: (error) => {
           console.error('Error updating barber status:', error);
-          alert(`Error al ${action} el barbero. Por favor, inténtalo de nuevo.`);
+          const message = error.error?.message || `Error al ${action} el barbero. Por favor, inténtalo de nuevo.`;
+          this.notificationService.error(message);
         }
       });
     }

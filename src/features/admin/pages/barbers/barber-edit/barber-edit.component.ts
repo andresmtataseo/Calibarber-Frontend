@@ -139,8 +139,8 @@ export class BarberEditComponent implements OnInit {
         }
       },
       error: (error) => {
-
-        this.notificationService.error('Error al cargar los datos iniciales');
+        const message = error.error?.message || 'Error al cargar los datos iniciales';
+        this.notificationService.error(message);
         this.loading = false;
       }
     });
@@ -159,7 +159,7 @@ export class BarberEditComponent implements OnInit {
         console.error('Error loading barber data:', error);
 
         // Manejo específico de errores
-        let errorMessage = 'Error al cargar los datos del barbero';
+        let errorMessage = error.error?.message || 'Error al cargar los datos del barbero';
         if (error.message && error.message.includes('no encontrado')) {
           errorMessage = `Barbero con ID ${id} no encontrado`;
         } else if (error.status === 404) {
@@ -203,6 +203,7 @@ export class BarberEditComponent implements OnInit {
       },
       error: (error) => {
         console.warn('No se pudieron cargar las disponibilidades del barbero:', error);
+        const message = error.error?.message || 'Error al obtener disponibilidades del barbero';
         // No mostrar error al usuario, las disponibilidades son opcionales
       }
     });
@@ -263,7 +264,8 @@ export class BarberEditComponent implements OnInit {
 
       this.barberService.updateBarber(this.barberId, updateData).subscribe({
         next: (updatedBarber) => {
-          this.notificationService.success('Barbero actualizado exitosamente');
+          const message = 'Barbero actualizado exitosamente';
+          this.notificationService.success(message);
 
           // Actualizar disponibilidades si hay cambios
           if (availabilities && availabilities.length > 0) {
@@ -274,8 +276,8 @@ export class BarberEditComponent implements OnInit {
           }
         },
         error: (error) => {
-
-          this.notificationService.error('Error al actualizar el barbero');
+          const message = error.error?.message || 'Error al actualizar el barbero';
+          this.notificationService.error(message);
           this.isSubmitting = false;
         }
       });
@@ -323,7 +325,8 @@ export class BarberEditComponent implements OnInit {
           },
           error: (error) => {
             console.error('Error al eliminar disponibilidades existentes:', error);
-            this.notificationService.error('Error al actualizar las disponibilidades');
+            const message = error.error?.message || 'Error al actualizar las disponibilidades';
+            this.notificationService.error(message);
             this.isSubmitting = false;
           }
         });
@@ -348,7 +351,8 @@ export class BarberEditComponent implements OnInit {
       }));
 
     if (availabilityRequests.length === 0) {
-      this.notificationService.success('Barbero actualizado exitosamente');
+      const message = 'Barbero actualizado exitosamente';
+      this.notificationService.success(message);
       this.router.navigate(['/admin/barbers']);
       this.isSubmitting = false;
       return;
@@ -359,14 +363,16 @@ export class BarberEditComponent implements OnInit {
         this.barberService.createAvailability(request)
       )
     ).subscribe({
-      next: () => {
-        this.notificationService.success('Barbero y disponibilidades actualizados exitosamente');
+      next: (responses) => {
+        const message = 'Barbero y disponibilidades actualizados exitosamente';
+        this.notificationService.success(message);
         this.router.navigate(['/admin/barbers']);
         this.isSubmitting = false;
       },
       error: (error) => {
         console.error('Error al crear nuevas disponibilidades:', error);
-        this.notificationService.error('Barbero actualizado, pero hubo un error al configurar las disponibilidades');
+        const message = error.error?.message || 'Barbero actualizado, pero hubo un error al configurar las disponibilidades';
+        this.notificationService.error(message);
         this.isSubmitting = false;
       }
     });

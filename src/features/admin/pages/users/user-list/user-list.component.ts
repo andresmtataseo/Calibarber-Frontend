@@ -60,7 +60,7 @@ export class UserListComponent implements OnInit {
 
   loadUsers(): void {
     this.loading = true;
-    
+
     this.userService.getAllUsers().subscribe({
       next: (response) => {
         // Extraer datos del wrapper ApiResponseDto con estructura de paginación
@@ -68,15 +68,25 @@ export class UserListComponent implements OnInit {
         this.users = Array.isArray(userData) ? userData : [];
         this.filterUsers();
         this.loading = false;
-        
+
+        // Mostrar mensaje del backend si está disponible, sino usar mensaje por defecto
+        const backendMessage = response.message;
         if (this.users.length === 0) {
-          this.notificationService.warning('No se encontraron usuarios en el sistema', 4000);
+          this.notificationService.warning(
+            backendMessage || 'No se encontraron usuarios en el sistema',
+            4000
+          );
         } else {
-          this.notificationService.success(`Se cargaron ${this.users.length} usuarios exitosamente`, 3000);
+          this.notificationService.success(
+            backendMessage || `Se cargaron ${this.users.length} usuarios exitosamente`,
+            3000
+          );
         }
       },
       error: (error: HttpErrorResponse) => {
-        const errorMessage = this.getErrorMessage(error, 'cargar los usuarios');
+        // Priorizar mensaje del backend
+        const backendMessage = error.error?.message;
+        const errorMessage = backendMessage || this.getErrorMessage(error, 'cargar los usuarios');
         this.notificationService.error(errorMessage, 6000);
         this.users = [];
         this.filteredUsers = [];
@@ -227,7 +237,7 @@ export class UserListComponent implements OnInit {
   deleteUser(userId: string): void {
     const user = this.users.find(u => u.userId === userId);
     const userName = user ? this.getUserFullName(user) : 'este usuario';
-    
+
     // Confirmar eliminación
     const confirmed = confirm(`¿Estás seguro de que deseas eliminar a ${userName}? Esta acción no se puede deshacer.`);
 
@@ -236,14 +246,18 @@ export class UserListComponent implements OnInit {
     }
 
     this.loading = true;
-    
+
     this.userService.deleteUser(userId).subscribe({
-      next: () => {
-        this.notificationService.success(`Usuario ${userName} eliminado exitosamente`, 4000);
+      next: (response) => {
+        // Usar mensaje del backend si está disponible
+        const successMessage = `Usuario ${userName} eliminado exitosamente`;
+        this.notificationService.success(successMessage, 4000);
         this.loadUsers(); // Recargar la lista de usuarios
       },
       error: (error: HttpErrorResponse) => {
-        const errorMessage = this.getErrorMessage(error, `eliminar el usuario ${userName}`);
+        // Priorizar mensaje del backend
+        const backendMessage = error.error?.message;
+        const errorMessage = backendMessage || this.getErrorMessage(error, `eliminar el usuario ${userName}`);
         this.notificationService.error(errorMessage, 6000);
         this.loading = false;
       }
@@ -358,12 +372,9 @@ export class UserListComponent implements OnInit {
 
   /**
    * Obtiene un mensaje de error más descriptivo basado en el HttpErrorResponse
+   * Solo se usa como fallback cuando no hay mensaje del backend
    */
   private getErrorMessage(error: HttpErrorResponse, action: string): string {
-    if (error.error?.message) {
-      return `Error al ${action}: ${error.error.message}`;
-    }
-    
     switch (error.status) {
       case 0:
         return `No se pudo ${action}. Verifica tu conexión a internet y vuelve a intentarlo.`;
