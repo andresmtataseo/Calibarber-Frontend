@@ -169,9 +169,9 @@ export class UserListComponent implements OnInit {
 
   getUserRoleDisplay(role: string): string {
     const roleMap: { [key: string]: string } = {
-      'ADMIN': 'Administrador',
-      'USER': 'Usuario',
-      'BARBER': 'Barbero'
+      'ROLE_ADMIN': 'Administrador',
+      'ROLE_CLIENT': 'Cliente',
+      'ROLE_BARBER': 'Barbero'
     };
     return roleMap[role] || role;
   }
@@ -182,9 +182,9 @@ export class UserListComponent implements OnInit {
 
   getRoleBadgeClass(role: string): string {
     const classMap: { [key: string]: string } = {
-      'ADMIN': 'badge-error',
-      'USER': 'badge-primary',
-      'BARBER': 'badge-secondary'
+      'ROLE_ADMIN': 'badge-error',
+      'ROLE_CLIENT': 'badge-primary',
+      'ROLE_BARBER': 'badge-secondary'
     };
     return classMap[role] || 'badge-neutral';
   }

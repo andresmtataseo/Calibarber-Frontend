@@ -45,6 +45,21 @@
         <div class="space-y-6">
           <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Información Personal</h3>
 
+          <!-- Foto de Perfil -->
+          <div class="form-control" *ngIf="user.profilePictureUrl">
+            <label class="floating-label">
+              <span>Foto de Perfil</span>
+            </label>
+            <div class="flex justify-center mt-2">
+              <div class="avatar">
+                <div class="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                  <img [src]="user.profilePictureUrl" [alt]="'Foto de perfil de ' + getFullName()"
+                    (error)="onImageError($event)" />
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Nombre y Apellido -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="form-control">
@@ -103,6 +118,18 @@
                 type="text" 
                 class="input input-md w-full input-disabled" 
                 [value]="getFullName()"
+                [disabled]="true">
+            </label>
+          </div>
+
+          <!-- URL de Foto de Perfil -->
+          <div class="form-control" *ngIf="user.profilePictureUrl">
+            <label class="floating-label">
+              <span>URL de Foto de Perfil</span>
+              <input 
+                type="text" 
+                class="input input-md w-full input-disabled" 
+                [value]="user.profilePictureUrl"
                 [disabled]="true">
             </label>
           </div>

@@ -34,6 +34,7 @@ export class UserCreateComponent {
       lastName: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
       phoneNumber: ['', [Validators.pattern(/^\+?[1-9]\d{1,14}$/)]],
+      profilePictureUrl: ['', [Validators.pattern(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i)]],
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', [Validators.required]],
       role: [UserRole.ROLE_CLIENT, [Validators.required]]
@@ -67,6 +68,7 @@ export class UserCreateComponent {
         firstName: formValue.firstName,
         lastName: formValue.lastName,
         phoneNumber: formValue.phoneNumber || undefined,
+        profilePictureUrl: formValue.profilePictureUrl || undefined,
         role: formValue.role
       };
 
@@ -113,7 +115,13 @@ export class UserCreateComponent {
         return `Mínimo ${field.errors['minlength'].requiredLength} caracteres`;
       }
       if (field.errors['pattern']) {
-        return 'Formato de teléfono inválido';
+        if (fieldName === 'phoneNumber') {
+          return 'Formato de teléfono inválido';
+        }
+        if (fieldName === 'profilePictureUrl') {
+          return 'URL de imagen inválida. Debe ser una URL válida que termine en .jpg, .jpeg, .png, .gif o .webp';
+        }
+        return 'Formato inválido';
       }
       if (field.errors['passwordMismatch']) {
         return 'Las contraseñas no coinciden';

@@ -161,6 +161,12 @@ export class UserViewComponent implements OnInit {
     }
   }
 
+  // Handle image loading errors
+  onImageError(event: any): void {
+    event.target.style.display = 'none';
+    this.notificationService.warning('No se pudo cargar la imagen de perfil', 3000);
+  }
+
   /**
    * Obtiene un mensaje de error más descriptivo basado en el HttpErrorResponse
    */
