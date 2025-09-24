@@ -58,6 +58,7 @@ export class BarbershopListComponent implements OnInit {
 
   loadBarbershops(): void {
     this.loading = true;
+    this.notificationService.info('Cargando barberías...', 2000);
 
     this.barbershopService.getAllBarbershops(
       this.currentPage,
@@ -66,15 +67,27 @@ export class BarbershopListComponent implements OnInit {
       this.sortDir
     ).subscribe({
       next: (response) => {
-        this.barbershops = response.data.content;
-        this.totalElements = response.data.totalElements;
-        this.totalPages = response.data.totalPages;
+        if (response.data && response.data.content) {
+          this.barbershops = response.data.content;
+          this.totalElements = response.data.totalElements;
+          this.totalPages = response.data.totalPages;
+          
+          if (this.barbershops.length === 0) {
+            this.notificationService.warning('No se encontraron barberías', 3000);
+          } else {
+            this.notificationService.success(`Se cargaron ${this.barbershops.length} barberías exitosamente`, 2000);
+          }
+        } else {
+          this.barbershops = [];
+          this.totalElements = 0;
+          this.totalPages = 0;
+          this.notificationService.warning('No se encontraron datos de barberías', 3000);
+        }
         this.loading = false;
       },
       error: (error: HttpErrorResponse) => {
-        this.notificationService.error(this.getErrorMessage(error));
+        this.notificationService.error(this.getErrorMessage(error, 'cargar barberías'), 8000);
         this.loading = false;
-        console.error('Error loading barbershops:', error);
       }
     });
   }
@@ -116,15 +129,19 @@ export class BarbershopListComponent implements OnInit {
   }
 
   deleteBarbershop(barbershop: BarbershopResponse): void {
-    if (confirm(`¿Estás seguro de que deseas eliminar la barbería "${barbershop.name}"?`)) {
+    if (!barbershop) {
+      this.notificationService.warning('No se puede eliminar: información de la barbería no disponible', 4000);
+      return;
+    }
+
+    if (confirm(`¿Estás seguro de que deseas eliminar la barbería "${barbershop.name}"?\n\nEsta acción no se puede deshacer.`)) {
       this.barbershopService.deleteBarbershop(barbershop.barbershopId).subscribe({
         next: () => {
-          this.notificationService.success('Barbería eliminada exitosamente');
+          this.notificationService.success(`La barbería "${barbershop.name}" ha sido eliminada exitosamente`, 4000);
           this.loadBarbershops();
         },
         error: (error: HttpErrorResponse) => {
-          this.notificationService.error(this.getErrorMessage(error));
-          console.error('Error deleting barbershop:', error);
+          this.notificationService.error(this.getErrorMessage(error, 'eliminar barbería'), 8000);
         }
       });
     }
@@ -153,17 +170,37 @@ export class BarbershopListComponent implements OnInit {
     return pages;
   }
 
-  private getErrorMessage(error: HttpErrorResponse): string {
+  private getErrorMessage(error: HttpErrorResponse, context: string = 'realizar la operación'): string {
     if (error.error?.message) {
-      return error.error.message;
+      return `Error al ${context}: ${error.error.message}`;
     }
-    if (error.status === 0) {
-      return 'Error de conexión. Verifica tu conexión a internet.';
+    
+    switch (error.status) {
+      case 0:
+        return `Error de conexión al ${context}. Verifica tu conexión a internet.`;
+      case 400:
+        return `Solicitud inválida al ${context}. Verifica los datos enviados.`;
+      case 401:
+        return `No autorizado para ${context}. Inicia sesión nuevamente.`;
+      case 403:
+        return `No tienes permisos para ${context}.`;
+      case 404:
+        return `La barbería que intentas ${context} no fue encontrada.`;
+      case 409:
+        return `Conflicto al ${context}. La barbería puede estar siendo usada en otra operación.`;
+      case 422:
+        return `Datos inválidos para ${context}. Verifica la información proporcionada.`;
+      case 500:
+        return `Error interno del servidor al ${context}. Inténtalo más tarde.`;
+      case 502:
+        return `Error de conexión con el servidor al ${context}. Inténtalo más tarde.`;
+      case 503:
+        return `Servicio no disponible para ${context}. Inténtalo más tarde.`;
+      case 504:
+        return `Tiempo de espera agotado al ${context}. Inténtalo más tarde.`;
+      default:
+        return `Error inesperado al ${context}. Código: ${error.status}`;
     }
-    if (error.status >= 500) {
-      return 'Error interno del servidor. Inténtalo más tarde.';
-    }
-    return 'Ha ocurrido un error inesperado.';
   }
 
   // Método auxiliar para usar Math.min en el template

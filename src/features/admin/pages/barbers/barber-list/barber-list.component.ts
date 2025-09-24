@@ -62,6 +62,7 @@ export class BarberListComponent implements OnInit {
 
   loadBarbers(): void {
     this.loading = true;
+    this.notificationService.info('Cargando barberos...', 2000);
 
     this.barberService.getAllBarbers(
       this.currentPage,
@@ -74,18 +75,27 @@ export class BarberListComponent implements OnInit {
           this.barbers = response.data.content || [];
           this.totalElements = response.data.totalElements || 0;
           this.totalPages = response.data.totalPages || 0;
-          this.loadUserDataForBarbers();
+          
+          if (this.barbers.length === 0) {
+            this.notificationService.warning('No se encontraron barberos', 3000);
+            this.barbersWithUserData = [];
+            this.loading = false;
+          } else {
+            this.notificationService.success(`Se cargaron ${this.barbers.length} barberos exitosamente`, 2000);
+            this.loadUserDataForBarbers();
+          }
         } else {
           this.barbers = [];
           this.totalElements = 0;
           this.totalPages = 0;
+          this.barbersWithUserData = [];
           this.loading = false;
+          this.notificationService.warning('No se encontraron datos de barberos', 3000);
         }
       },
       error: (error: HttpErrorResponse) => {
-        this.notificationService.error(this.getErrorMessage(error));
+        this.notificationService.error(this.getErrorMessage(error, 'cargar barberos'), 8000);
         this.loading = false;
-        console.error('Error loading barbers:', error);
       }
     });
   }
@@ -114,7 +124,7 @@ export class BarberListComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading user data:', error);
+        this.notificationService.warning('No se pudieron cargar todos los datos de usuario de los barberos', 5000);
         // Si falla la carga de usuarios, mostrar barberos sin datos de usuario
         this.barbersWithUserData = this.barbers.map(barber => ({ ...barber }));
         this.loading = false;
@@ -154,16 +164,21 @@ export class BarberListComponent implements OnInit {
   }
 
   deleteBarber(barber: BarberResponse & { user?: UserResponse }): void {
+    if (!barber) {
+      this.notificationService.warning('No se puede eliminar: información del barbero no disponible', 4000);
+      return;
+    }
+
     const barberName = barber.user ? `${barber.user.firstName} ${barber.user.lastName}` : `Barbero ${barber.barberId}`;
-    if (confirm(`¿Estás seguro de que deseas eliminar al barbero "${barberName}"?`)) {
+    
+    if (confirm(`¿Estás seguro de que deseas eliminar al barbero "${barberName}"?\n\nEsta acción no se puede deshacer.`)) {
       this.barberService.deleteBarber(barber.barberId).subscribe({
         next: () => {
-          this.notificationService.success('Barbero eliminado exitosamente');
+          this.notificationService.success(`El barbero "${barberName}" ha sido eliminado exitosamente`, 4000);
           this.loadBarbers();
         },
         error: (error: HttpErrorResponse) => {
-          this.notificationService.error(this.getErrorMessage(error));
-          console.error('Error deleting barber:', error);
+          this.notificationService.error(this.getErrorMessage(error, 'eliminar barbero'), 8000);
         }
       });
     }
@@ -192,17 +207,37 @@ export class BarberListComponent implements OnInit {
     return pages;
   }
 
-  private getErrorMessage(error: HttpErrorResponse): string {
+  private getErrorMessage(error: HttpErrorResponse, context: string = 'realizar la operación'): string {
     if (error.error?.message) {
-      return error.error.message;
+      return `Error al ${context}: ${error.error.message}`;
     }
-    if (error.status === 0) {
-      return 'Error de conexión. Verifica tu conexión a internet.';
+    
+    switch (error.status) {
+      case 0:
+        return `Error de conexión al ${context}. Verifica tu conexión a internet.`;
+      case 400:
+        return `Solicitud inválida al ${context}. Verifica los datos enviados.`;
+      case 401:
+        return `No autorizado para ${context}. Inicia sesión nuevamente.`;
+      case 403:
+        return `No tienes permisos para ${context}.`;
+      case 404:
+        return `El barbero que intentas ${context} no fue encontrado.`;
+      case 409:
+        return `Conflicto al ${context}. El barbero puede estar siendo usado en otra operación.`;
+      case 422:
+        return `Datos inválidos para ${context}. Verifica la información proporcionada.`;
+      case 500:
+        return `Error interno del servidor al ${context}. Inténtalo más tarde.`;
+      case 502:
+        return `Error de conexión con el servidor al ${context}. Inténtalo más tarde.`;
+      case 503:
+        return `Servicio no disponible para ${context}. Inténtalo más tarde.`;
+      case 504:
+        return `Tiempo de espera agotado al ${context}. Inténtalo más tarde.`;
+      default:
+        return `Error inesperado al ${context}. Código: ${error.status}`;
     }
-    if (error.status >= 500) {
-      return 'Error interno del servidor. Inténtalo más tarde.';
-    }
-    return 'Ha ocurrido un error inesperado.';
   }
 
   // Método auxiliar para usar Math.min en el template

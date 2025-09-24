@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ServiceService } from '../../../../service/services/service.service';
 import { ServiceResponse } from '../../../../service/models/service.model';
 import { NotificationService } from '../../../../../shared/components/notification';
@@ -32,12 +33,15 @@ export class ServiceListComponent implements OnInit, OnDestroy {
 
   // Control de suscripciones
   private destroy$ = new Subject<void>();
+  private searchSubject = new Subject<string>();
 
   constructor(
     private router: Router,
     private serviceService: ServiceService,
-    private toastService: NotificationService
-  ) {}
+    private notificationService: NotificationService
+  ) {
+    this.setupSearch();
+  }
 
   ngOnInit(): void {
     this.loadServices();
@@ -49,10 +53,28 @@ export class ServiceListComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Configura la búsqueda con debounce
+   */
+  private setupSearch(): void {
+    this.searchSubject
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(searchTerm => {
+        this.searchTerm = searchTerm;
+        this.currentPage = 0;
+        this.loadServices();
+      });
+  }
+
+  /**
    * Carga los servicios con los filtros actuales
    */
   loadServices(): void {
     this.loading = true;
+    this.notificationService.info('Cargando servicios...');
 
     const params = {
       page: this.currentPage,
@@ -72,7 +94,8 @@ export class ServiceListComponent implements OnInit, OnDestroy {
           this.handleServicesResponse(response);
         },
         error: (error) => {
-          this.handleError(error);
+          this.notificationService.error(this.getErrorMessage(error, 'búsqueda de servicios'));
+          this.loading = false;
         }
       });
     } else {
@@ -83,7 +106,8 @@ export class ServiceListComponent implements OnInit, OnDestroy {
           this.handleServicesResponse(response);
         },
         error: (error) => {
-          this.handleError(error);
+          this.notificationService.error(this.getErrorMessage(error, 'carga de servicios'));
+          this.loading = false;
         }
       });
     }
@@ -97,15 +121,50 @@ export class ServiceListComponent implements OnInit, OnDestroy {
     this.totalPages = response.data?.totalPages || 0;
     this.totalElements = response.data?.totalElements || 0;
     this.loading = false;
+
+    if (this.services.length === 0) {
+      if (this.searchTerm) {
+        this.notificationService.warning(`No se encontraron servicios que coincidan con "${this.searchTerm}"`);
+      } else {
+        this.notificationService.warning('No hay servicios disponibles');
+      }
+    } else {
+      const message = this.searchTerm 
+        ? `Se encontraron ${this.services.length} servicios para "${this.searchTerm}"`
+        : `Se cargaron ${this.services.length} servicios correctamente`;
+      this.notificationService.success(message);
+    }
   }
 
   /**
-   * Maneja errores en las peticiones
+   * Maneja errores en las peticiones con mensajes específicos según el contexto y código de estado
    */
-  private handleError(error: any): void {
-    console.error('Error al cargar servicios:', error);
-    this.toastService.error('Error al cargar los servicios');
-    this.loading = false;
+  private getErrorMessage(error: any, context: string = 'operación'): string {
+    if (error instanceof HttpErrorResponse) {
+      switch (error.status) {
+        case 400:
+          return `Solicitud inválida durante la ${context}. Verifique los datos enviados.`;
+        case 401:
+          return `No tiene autorización para realizar esta ${context}. Inicie sesión nuevamente.`;
+        case 403:
+          return `No tiene permisos suficientes para realizar esta ${context}.`;
+        case 404:
+          return `El recurso solicitado no fue encontrado durante la ${context}.`;
+        case 409:
+          return `Conflicto detectado durante la ${context}. El recurso ya existe o está en uso.`;
+        case 422:
+          return `Los datos proporcionados no son válidos para la ${context}.`;
+        case 500:
+          return `Error interno del servidor durante la ${context}. Intente nuevamente más tarde.`;
+        case 502:
+          return `Error de conexión con el servidor durante la ${context}.`;
+        case 503:
+          return `Servicio no disponible temporalmente durante la ${context}.`;
+        default:
+          return `Error inesperado durante la ${context}. Código: ${error.status}`;
+      }
+    }
+    return `Error desconocido durante la ${context}. Intente nuevamente.`;
   }
 
   /**
@@ -133,17 +192,25 @@ export class ServiceListComponent implements OnInit, OnDestroy {
    * Elimina un servicio
    */
   deleteService(service: ServiceResponse): void {
-    if (confirm(`¿Estás seguro de que deseas eliminar el servicio "${service.name}"?`)) {
+    if (!service || !service.serviceId) {
+      this.notificationService.warning('No se puede eliminar el servicio. Información no disponible.');
+      return;
+    }
+
+    const confirmMessage = `¿Estás seguro de que deseas eliminar el servicio "${service.name}"?\n\nEsta acción no se puede deshacer.`;
+    
+    if (confirm(confirmMessage)) {
       this.loading = true;
       this.serviceService.deleteService(service.serviceId)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
-            this.toastService.success('Servicio eliminado correctamente');
+            this.notificationService.success(`El servicio "${service.name}" ha sido eliminado correctamente`);
             this.loadServices();
           },
           error: (error) => {
-            this.handleError(error);
+            this.notificationService.error(this.getErrorMessage(error, 'eliminación del servicio'));
+            this.loading = false;
           }
         });
     }
@@ -154,9 +221,7 @@ export class ServiceListComponent implements OnInit, OnDestroy {
    */
   onSearch(event: Event): void {
     const target = event.target as HTMLInputElement;
-    this.searchTerm = target.value;
-    this.currentPage = 0;
-    this.loadServices();
+    this.searchSubject.next(target.value);
   }
 
   /**

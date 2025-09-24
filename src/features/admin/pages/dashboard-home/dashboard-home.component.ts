@@ -13,8 +13,7 @@ import { AppointmentService } from '../../../appointment/services/appointment.se
   selector: 'app-dashboard-home',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './dashboard-home.component.html',
-  styleUrls: ['./dashboard-home.component.css']
+  templateUrl: './dashboard-home.component.html'
 })
 export class DashboardHomeComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -23,7 +22,7 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
   totalUsers: number = 0;
   totalBarbers: number = 0;
   todayAppointments: number = 0;
-  
+
   // Estados de carga y error
   isLoading: boolean = true;
   hasError: boolean = false;
@@ -70,7 +69,7 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
         console.error('Error al cargar datos del dashboard:', error);
         this.hasError = true;
         this.errorMessage = 'Error al cargar los datos del dashboard. Por favor, intenta nuevamente.';
-        
+
         // Valores por defecto en caso de error
         this.totalUsers = 0;
         this.totalBarbers = 0;
