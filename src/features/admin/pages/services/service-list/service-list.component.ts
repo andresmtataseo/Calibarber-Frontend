@@ -4,13 +4,12 @@ import { Router, RouterModule } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { ServiceService } from '../../../../service/services/service.service';
 import { ServiceResponse } from '../../../../service/models/service.model';
-import { PreloaderComponent } from '../../../../../shared/components/preloader/preloader.component';
 import { NotificationService } from '../../../../../shared/components/notification';
 
 @Component({
   selector: 'app-service-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, PreloaderComponent],
+  imports: [CommonModule, RouterModule],
   templateUrl: './service-list.component.html'
 })
 export class ServiceListComponent implements OnInit, OnDestroy {

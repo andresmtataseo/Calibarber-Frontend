@@ -8,12 +8,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { UrlService } from '../../../../../core/services/url.service';
 import { NotificationService } from '../../../../../shared/components/notification';
-import { PreloaderComponent } from '../../../../../shared/components/preloader';
 
 @Component({
   selector: 'app-barbershop-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, PreloaderComponent],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './barbershop-list.component.html'
 })
 export class BarbershopListComponent implements OnInit {

@@ -10,12 +10,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { debounceTime, distinctUntilChanged, Subject, forkJoin } from 'rxjs';
 import { UrlService } from '../../../../../core/services/url.service';
 import { NotificationService } from '../../../../../shared/components/notification/notification.service';
-import { PreloaderComponent } from '../../../../../shared/components/preloader/preloader.component';
 
 @Component({
   selector: 'app-barber-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, PreloaderComponent],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './barber-list.component.html'
 })
 export class BarberListComponent implements OnInit {

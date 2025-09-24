@@ -8,12 +8,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { UrlService } from '../../../../../core/services/url.service';
 import { NotificationService } from '../../../../../shared/components/notification/notification.service';
-import { PreloaderComponent } from '../../../../../shared/components/preloader/preloader.component';
 
 @Component({
   selector: 'app-user-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, PreloaderComponent],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './user-list.component.html'
 })
 export class UserListComponent implements OnInit {

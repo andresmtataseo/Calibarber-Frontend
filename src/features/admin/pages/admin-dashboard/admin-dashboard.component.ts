@@ -6,21 +6,11 @@ import { takeUntil } from 'rxjs/operators';
 import { AuthService } from '../../../../core/services/auth.service';
 import { UserDto } from '../../../../shared/models/auth.models';
 
-/**
- * Componente AdminDashboard - Panel de administración principal
- *
- * Este componente implementa el dashboard administrativo con:
- * - Sidebar de navegación entre módulos
- * - Área de contenido principal
- * - Diseño responsive con DaisyUI y Tailwind CSS
- * - Control de acceso para administradores
- */
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule, RouterOutlet],
-  templateUrl: './admin-dashboard.component.html',
-  styleUrls: ['./admin-dashboard.component.css']
+  templateUrl: './admin-dashboard.component.html'
 })
 export class AdminDashboardComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
@@ -42,7 +32,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       active: true
     },
     {
-      icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z',
+      icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
       label: 'Usuarios',
       route: '/admin/users',
       active: false
