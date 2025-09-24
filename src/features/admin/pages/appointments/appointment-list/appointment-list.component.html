@@ -187,9 +187,6 @@
         <p class="text-base-content/50 mb-4">
           {{ searchTerm || statusFilter ? 'Intenta con otros términos de búsqueda o filtros' : 'Comienza registrando tu primera cita' }}
         </p>
-        <button *ngIf="!searchTerm && !statusFilter" class="btn btn-primary" (click)="createAppointment()">
-          Registrar Primera Cita
-        </button>
       </div>
 
       <!-- Pagination -->
