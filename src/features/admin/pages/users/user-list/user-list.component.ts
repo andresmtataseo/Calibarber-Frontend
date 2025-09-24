@@ -61,6 +61,8 @@ export class UserListComponent implements OnInit {
 
   loadUsers(): void {
     this.loading = true;
+    this.notificationService.info('Cargando lista de usuarios...', 2000);
+    
     this.userService.getAllUsers().subscribe({
       next: (response) => {
         // Extraer datos del wrapper ApiResponseDto con estructura de paginación
@@ -68,11 +70,17 @@ export class UserListComponent implements OnInit {
         this.users = Array.isArray(userData) ? userData : [];
         this.filterUsers();
         this.loading = false;
+        
+        if (this.users.length === 0) {
+          this.notificationService.warning('No se encontraron usuarios en el sistema', 4000);
+        } else {
+          this.notificationService.success(`Se cargaron ${this.users.length} usuarios exitosamente`, 3000);
+        }
       },
       error: (error: HttpErrorResponse) => {
-        console.error('Error loading users:', error);
-        this.notificationService.error('Error al cargar los usuarios');
-        this.users = []; // Asegurar que users sea siempre un array
+        const errorMessage = this.getErrorMessage(error, 'cargar los usuarios');
+        this.notificationService.error(errorMessage, 6000);
+        this.users = [];
         this.filteredUsers = [];
         this.loading = false;
       }
@@ -100,7 +108,7 @@ export class UserListComponent implements OnInit {
     // Filtrar por término de búsqueda
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(user => 
+      filtered = filtered.filter(user =>
         user.firstName.toLowerCase().includes(term) ||
         user.lastName.toLowerCase().includes(term) ||
         user.email.toLowerCase().includes(term)
@@ -127,7 +135,7 @@ export class UserListComponent implements OnInit {
     this.filteredUsers = filtered;
     this.totalItems = filtered.length;
     this.totalPages = Math.ceil(this.totalItems / this.pageSize);
-    
+
     // Ajustar página actual si es necesario
     if (this.currentPage > this.totalPages && this.totalPages > 0) {
       this.currentPage = this.totalPages;
@@ -216,6 +224,33 @@ export class UserListComponent implements OnInit {
 
   createUser(): void {
     this.router.navigate(['/admin/users/create']);
+  }
+
+  deleteUser(userId: string): void {
+    const user = this.users.find(u => u.userId === userId);
+    const userName = user ? this.getUserFullName(user) : 'este usuario';
+    
+    // Confirmar eliminación
+    const confirmed = confirm(`¿Estás seguro de que deseas eliminar a ${userName}? Esta acción no se puede deshacer.`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.loading = true;
+    this.notificationService.info(`Eliminando usuario ${userName}...`, 3000);
+    
+    this.userService.deleteUser(userId).subscribe({
+      next: () => {
+        this.notificationService.success(`Usuario ${userName} eliminado exitosamente`, 4000);
+        this.loadUsers(); // Recargar la lista de usuarios
+      },
+      error: (error: HttpErrorResponse) => {
+        const errorMessage = this.getErrorMessage(error, `eliminar el usuario ${userName}`);
+        this.notificationService.error(errorMessage, 6000);
+        this.loading = false;
+      }
+    });
   }
 
   // Método para trackBy en ngFor
@@ -322,5 +357,39 @@ export class UserListComponent implements OnInit {
     this.itemsPerPage = newSize;
     this.currentPage = 1;
     this.filterUsers();
+  }
+
+  /**
+   * Obtiene un mensaje de error más descriptivo basado en el HttpErrorResponse
+   */
+  private getErrorMessage(error: HttpErrorResponse, action: string): string {
+    if (error.error?.message) {
+      return `Error al ${action}: ${error.error.message}`;
+    }
+    
+    switch (error.status) {
+      case 0:
+        return `No se pudo ${action}. Verifica tu conexión a internet y vuelve a intentarlo.`;
+      case 400:
+        return `Error al ${action}: Los datos enviados no son válidos.`;
+      case 401:
+        return `Error al ${action}: Tu sesión ha expirado. Por favor, inicia sesión nuevamente.`;
+      case 403:
+        return `Error al ${action}: No tienes permisos suficientes para realizar esta acción.`;
+      case 404:
+        return `Error al ${action}: El usuario solicitado no fue encontrado.`;
+      case 409:
+        return `Error al ${action}: Ya existe un usuario con estos datos.`;
+      case 422:
+        return `Error al ${action}: Los datos proporcionados no son válidos o están incompletos.`;
+      case 500:
+        return `Error interno del servidor al ${action}. Por favor, intenta nuevamente en unos minutos.`;
+      case 502:
+      case 503:
+      case 504:
+        return `El servicio no está disponible temporalmente. Por favor, intenta ${action} más tarde.`;
+      default:
+        return `Error inesperado al ${action}. Código de error: ${error.status}. Por favor, contacta al administrador si el problema persiste.`;
+    }
   }
 }

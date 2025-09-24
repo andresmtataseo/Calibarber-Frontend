@@ -5,7 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { PreloaderComponent } from '../../../../../shared/components/preloader/preloader.component';
 import { UserService } from '../../../../user/services/user.service';
 import { CreateUserRequest, UserRole } from '../../../../user/models/user.model';
-import { HttpErrorResponse } from '@angular/common/http';
+import { NotificationService } from '../../../../../shared/components/notification/notification.service';
 
 @Component({
   selector: 'app-user-create',
@@ -17,9 +17,6 @@ export class UserCreateComponent {
   userForm: FormGroup;
   loading = false;
   isSubmitting = false;
-  showPassword = false;
-  error: string | null = null;
-  success: string | null = null;
 
   roles = [
     { value: UserRole.ROLE_CLIENT, label: 'Cliente' },
@@ -30,7 +27,8 @@ export class UserCreateComponent {
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private userService: UserService
+    private userService: UserService,
+    private notificationService: NotificationService
   ) {
     this.userForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.minLength(2)]],
@@ -59,15 +57,9 @@ export class UserCreateComponent {
     return this.userForm.controls;
   }
 
-  togglePasswordVisibility() {
-    this.showPassword = !this.showPassword;
-  }
-
   onSubmit() {
     if (this.userForm.valid) {
       this.isSubmitting = true;
-      this.error = null;
-      this.success = null;
 
       const formValue = this.userForm.value;
       const createUserRequest: CreateUserRequest = {
@@ -81,22 +73,21 @@ export class UserCreateComponent {
 
       this.userService.createUser(createUserRequest).subscribe({
         next: (user) => {
-          this.success = 'Usuario creado exitosamente';
+          this.notificationService.success('Usuario creado exitosamente');
           console.log('Usuario creado:', user);
-          
-          // Redirigir después de un breve delay para mostrar el mensaje de éxito
-          setTimeout(() => {
-            this.router.navigate(['/admin/users']);
-          }, 1500);
+          this.router.navigate(['/admin/users']);
         },
         error: (error: Error) => {
-          this.error = error.message || 'Error al crear el usuario';
+          this.notificationService.error(
+            error.message || 'Error al crear el usuario. Por favor, verifica los datos e intenta nuevamente.'
+          );
           console.error('Error creating user:', error);
           this.isSubmitting = false;
         }
       });
     } else {
       this.markFormGroupTouched();
+      this.notificationService.warning('Por favor, completa todos los campos requeridos correctamente');
     }
   }
 

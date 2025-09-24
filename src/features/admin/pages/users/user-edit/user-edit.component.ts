@@ -5,7 +5,7 @@ import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { PreloaderComponent } from '../../../../../shared/components/preloader/preloader.component';
 import { UserService } from '../../../../user/services/user.service';
 import { UpdateUserRequest, UserRole } from '../../../../user/models/user.model';
-import { HttpErrorResponse } from '@angular/common/http';
+import { NotificationService } from '../../../../../shared/components/notification';
 
 @Component({
   selector: 'app-user-edit',
@@ -19,9 +19,6 @@ export class UserEditComponent implements OnInit {
   loadingUser = true;
   isSubmitting = false;
   userId: string | null = null;
-  showPassword = false;
-  error: string | null = null;
-  success: string | null = null;
 
   roles = [
     { value: UserRole.ROLE_CLIENT, label: 'Cliente' },
@@ -33,18 +30,17 @@ export class UserEditComponent implements OnInit {
     private fb: FormBuilder,
     private router: Router,
     private route: ActivatedRoute,
-    private userService: UserService
+    private userService: UserService,
+    private notificationService: NotificationService
   ) {
     this.userForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.minLength(2)]],
       lastName: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
       phoneNumber: ['', [Validators.pattern(/^\+?[1-9]\d{1,14}$/)]],
-      password: [''],
-      confirmPassword: [''],
       role: [UserRole.ROLE_CLIENT, [Validators.required]],
       isActive: [true, [Validators.required]]
-    }, { validators: this.passwordMatchValidator });
+    });
   }
 
   ngOnInit() {
@@ -54,21 +50,8 @@ export class UserEditComponent implements OnInit {
     }
   }
 
-  passwordMatchValidator(form: FormGroup) {
-    const password = form.get('password');
-    const confirmPassword = form.get('confirmPassword');
-
-    if (password?.value && confirmPassword?.value && password.value !== confirmPassword.value) {
-      confirmPassword.setErrors({ passwordMismatch: true });
-      return { passwordMismatch: true };
-    }
-
-    return null;
-  }
-
   loadUser(id: string) {
     this.loadingUser = true;
-    this.error = null;
 
     this.userService.getUserById(id).subscribe({
       next: (user) => {
@@ -78,14 +61,12 @@ export class UserEditComponent implements OnInit {
           email: user.email,
           phoneNumber: user.phoneNumber || '',
           role: user.role,
-          isActive: user.isActive,
-          password: '',
-          confirmPassword: ''
+          isActive: user.isActive
         });
         this.loadingUser = false;
       },
       error: (error: Error) => {
-        this.error = error.message || 'Error al cargar el usuario';
+        this.notificationService.error(`Error al cargar el usuario: ${error.message || 'Ha ocurrido un error inesperado'}`);
         console.error('Error loading user:', error);
         this.loadingUser = false;
       }
@@ -96,15 +77,9 @@ export class UserEditComponent implements OnInit {
     return this.userForm.controls;
   }
 
-  togglePasswordVisibility() {
-    this.showPassword = !this.showPassword;
-  }
-
   onSubmit() {
     if (this.userForm.valid && this.userId) {
       this.isSubmitting = true;
-      this.error = null;
-      this.success = null;
 
       const formValue = this.userForm.value;
       const updateUserRequest: UpdateUserRequest = {
@@ -117,28 +92,25 @@ export class UserEditComponent implements OnInit {
 
       // Note: UpdateUserRequest doesn't support password updates
       // Password updates would need a separate endpoint or interface
-      if (formValue.password && formValue.password.trim() !== '') {
-        console.log('Password update functionality needs separate implementation');
-        alert('La actualización de contraseña requiere implementación adicional');
-      }
 
       this.userService.updateUser(this.userId, updateUserRequest).subscribe({
         next: (user) => {
-          this.success = 'Usuario actualizado exitosamente';
+          this.notificationService.success('El usuario ha sido actualizado exitosamente');
           console.log('Usuario actualizado:', user);
-          
-          // Redirigir después de un breve delay para mostrar el mensaje de éxito
-          setTimeout(() => {
-            this.router.navigate(['/admin/users']);
-          }, 1500);
+
+          // Redirigir inmediatamente después de mostrar la notificación
+          this.router.navigate(['/admin/users']);
         },
         error: (error: Error) => {
-          this.error = error.message || 'Error al actualizar el usuario';
+          this.notificationService.error(`Error al actualizar usuario: ${error.message || 'Ha ocurrido un error inesperado al actualizar el usuario'}`);
           console.error('Error updating user:', error);
           this.isSubmitting = false;
         }
       });
     } else {
+      if (!this.userForm.valid) {
+        this.notificationService.warning('Por favor, completa todos los campos requeridos correctamente');
+      }
       this.markFormGroupTouched();
     }
   }
@@ -169,9 +141,6 @@ export class UserEditComponent implements OnInit {
       }
       if (field.errors['pattern']) {
         return 'Formato de teléfono inválido';
-      }
-      if (field.errors['passwordMismatch']) {
-        return 'Las contraseñas no coinciden';
       }
     }
 

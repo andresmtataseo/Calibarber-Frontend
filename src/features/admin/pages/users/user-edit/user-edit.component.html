@@ -88,43 +88,6 @@
           </div>
         </div>
 
-        <!-- Cambiar Contraseña (Opcional) -->
-        <div class="space-y-6">
-          <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Cambiar Contraseña (Opcional)</h3>
-          <p class="text-base-content/70 text-sm mb-4">Deja estos campos vacíos si no deseas cambiar la contraseña</p>
-
-          <!-- Contraseñas -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="form-control">
-              <label class="floating-label">
-                <span>Nueva Contraseña</span>
-                <input 
-                  [type]="showPassword ? 'text' : 'password'"
-                  class="input input-md w-full" 
-                  formControlName="password"
-                  [class.input-error]="f['password'].invalid && f['password'].touched">
-              </label>
-              <div class="label" *ngIf="getFieldError('password')">
-                <span class="label-text-alt text-error">{{ getFieldError('password') }}</span>
-              </div>
-            </div>
-
-            <div class="form-control">
-              <label class="floating-label">
-                <span>Confirmar Nueva Contraseña</span>
-                <input 
-                  [type]="showPassword ? 'text' : 'password'"
-                  class="input input-md w-full" 
-                  formControlName="confirmPassword"
-                  [class.input-error]="f['confirmPassword'].invalid && f['confirmPassword'].touched">
-              </label>
-              <div class="label" *ngIf="getFieldError('confirmPassword')">
-                <span class="label-text-alt text-error">{{ getFieldError('confirmPassword') }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- Configuración de Cuenta -->
         <div class="space-y-6">
           <h3 class="text-xl font-semibold mb-4 pb-2 border-b border-base-300">Configuración de Cuenta</h3>

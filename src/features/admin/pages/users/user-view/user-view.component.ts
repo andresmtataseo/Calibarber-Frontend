@@ -1,10 +1,11 @@
-// Remove the UserResponse interface as we're now using the User model
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { PreloaderComponent } from '../../../../../shared/components/preloader/preloader.component';
 import { UserService } from '../../../../user/services/user.service';
 import { UserResponse, UserRole } from '../../../../user/models/user.model';
+import { NotificationService } from '../../../../../shared/components/notification/notification.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-user-view',
@@ -13,6 +14,11 @@ import { UserResponse, UserRole } from '../../../../user/models/user.model';
   templateUrl: './user-view.component.html'
 })
 export class UserViewComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly userService = inject(UserService);
+  private readonly notificationService = inject(NotificationService);
+
   // Data properties
   user: UserResponse | null = null;
 
@@ -28,11 +34,7 @@ export class UserViewComponent implements OnInit {
     { value: UserRole.ROLE_BARBER, label: 'Barbero' }
   ];
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private userService: UserService
-  ) {
+  constructor() {
     this.userId = this.route.snapshot.paramMap.get('id') || '';
   }
 
@@ -40,33 +42,31 @@ export class UserViewComponent implements OnInit {
     if (this.userId) {
       this.loadUserData();
     } else {
-      this.error = 'ID de usuario no válido';
+      const errorMessage = 'ID de usuario no válido o no proporcionado';
+      this.notificationService.error(errorMessage, 5000);
+      this.error = errorMessage;
       this.loading = false;
     }
   }
 
-  private async loadUserData(): Promise<void> {
-    try {
-      this.loading = true;
-      this.error = null;
+  private loadUserData(): void {
+    this.loading = true;
+    this.error = null;
+    this.notificationService.info('Cargando información del usuario...', 2000);
 
-      this.userService.getUserById(this.userId).subscribe({
-        next: (user) => {
-          this.user = user;
-          this.loading = false;
-        },
-        error: (error: Error) => {
-          console.error('Error loading user data:', error);
-          this.error = error.message || 'Error al cargar la información del usuario';
-          this.loading = false;
-        }
-      });
-
-    } catch (error) {
-      console.error('Error loading user data:', error);
-      this.error = 'Error al cargar la información del usuario';
-      this.loading = false;
-    }
+    this.userService.getUserById(this.userId).subscribe({
+      next: (user) => {
+        this.user = user;
+        this.loading = false;
+        this.notificationService.success(`Información de ${this.getFullName()} cargada exitosamente`, 3000);
+      },
+      error: (error: HttpErrorResponse) => {
+        const errorMessage = this.getErrorMessage(error, 'cargar la información del usuario');
+        this.notificationService.error(errorMessage, 6000);
+        this.error = errorMessage;
+        this.loading = false;
+      }
+    });
   }
 
   // Helper methods for display
@@ -101,7 +101,7 @@ export class UserViewComponent implements OnInit {
         hour: '2-digit',
         minute: '2-digit'
       });
-    } catch (error) {
+    } catch {
       return 'Fecha inválida';
     }
   }
@@ -118,31 +118,82 @@ export class UserViewComponent implements OnInit {
   }
 
   deleteUser(): void {
-    if (this.user && confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
+    if (!this.user) {
+      this.notificationService.warning('No se puede eliminar: información de usuario no disponible', 4000);
+      return;
+    }
+
+    const userName = this.getFullName();
+    const confirmMessage = `¿Estás seguro de que deseas eliminar a ${userName}? Esta acción no se puede deshacer.`;
+    
+    if (confirm(confirmMessage)) {
+      this.loading = true;
+      this.notificationService.info(`Eliminando usuario ${userName}...`, 3000);
+      
       this.userService.deleteUser(this.user.userId).subscribe({
         next: () => {
-          console.log('Usuario eliminado exitosamente');
+          this.notificationService.success(`Usuario ${userName} eliminado exitosamente`, 4000);
           this.router.navigate(['/admin/users']);
         },
-        error: (error: Error) => {
-          console.error('Error deleting user:', error);
-          this.error = error.message || 'Error al eliminar el usuario';
+        error: (error: HttpErrorResponse) => {
+          const errorMessage = this.getErrorMessage(error, `eliminar el usuario ${userName}`);
+          this.notificationService.error(errorMessage, 6000);
+          this.loading = false;
         }
       });
     }
   }
 
   toggleStatus(): void {
-    if (this.user) {
-      const currentStatus = this.user.isActive;
-      const newStatus = !currentStatus;
-      
-      if (confirm(`¿Deseas ${newStatus ? 'activar' : 'desactivar'} este usuario?`)) {
-        // Note: This would require a toggleUserStatus method in UserService
-        // For now, we'll just show a message that this feature needs implementation
-        console.log('Toggle status functionality needs to be implemented in UserService');
-        alert('Esta funcionalidad requiere implementación adicional en el servicio');
-      }
+    if (!this.user) {
+      this.notificationService.warning('No se puede cambiar el estado: información de usuario no disponible', 4000);
+      return;
+    }
+
+    const currentStatus = this.user.isActive;
+    const newStatus = !currentStatus;
+    const userName = this.getFullName();
+    const action = newStatus ? 'activar' : 'desactivar';
+    
+    if (confirm(`¿Deseas ${action} a ${userName}?`)) {
+      this.notificationService.warning(
+        `La funcionalidad para ${action} usuarios requiere implementación adicional en el servicio. Por favor, contacta al administrador del sistema.`, 
+        8000
+      );
+    }
+  }
+
+  /**
+   * Obtiene un mensaje de error más descriptivo basado en el HttpErrorResponse
+   */
+  private getErrorMessage(error: HttpErrorResponse, action: string): string {
+    if (error.error?.message) {
+      return `Error al ${action}: ${error.error.message}`;
+    }
+    
+    switch (error.status) {
+      case 0:
+        return `No se pudo ${action}. Verifica tu conexión a internet y vuelve a intentarlo.`;
+      case 400:
+        return `Error al ${action}: Los datos enviados no son válidos.`;
+      case 401:
+        return `Error al ${action}: Tu sesión ha expirado. Por favor, inicia sesión nuevamente.`;
+      case 403:
+        return `Error al ${action}: No tienes permisos suficientes para realizar esta acción.`;
+      case 404:
+        return `Error al ${action}: El usuario solicitado no fue encontrado. Es posible que haya sido eliminado.`;
+      case 409:
+        return `Error al ${action}: Conflicto con los datos existentes. Verifica la información e intenta nuevamente.`;
+      case 422:
+        return `Error al ${action}: Los datos proporcionados no son válidos o están incompletos.`;
+      case 500:
+        return `Error interno del servidor al ${action}. Por favor, intenta nuevamente en unos minutos.`;
+      case 502:
+      case 503:
+      case 504:
+        return `El servicio no está disponible temporalmente. Por favor, intenta ${action} más tarde.`;
+      default:
+        return `Error inesperado al ${action}. Código de error: ${error.status}. Por favor, contacta al administrador si el problema persiste.`;
     }
   }
 }
