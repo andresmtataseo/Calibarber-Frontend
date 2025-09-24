@@ -3,13 +3,13 @@ export interface AppointmentResponse {
   barberId: string;
   userId: string;
   serviceId: string;
-  appointmentDateTime: string; // ISO LocalDateTime format: yyyy-MM-dd'T'HH:mm:ss
+  appointmentDateTime: string;
   durationMinutes: number;
   price: number;
   status: AppointmentStatus;
   notes?: string;
-  createdAt: string; // ISO LocalDateTime format: yyyy-MM-dd'T'HH:mm:ss
-  updatedAt: string; // ISO LocalDateTime format: yyyy-MM-dd'T'HH:mm:ss
+  createdAt: string;
+  updatedAt: string;
   barber: BarberInfo;
   user: UserInfo;
   service: ServiceInfo;
@@ -19,15 +19,15 @@ export interface CreateAppointmentRequest {
   barberId: string;
   userId: string;
   serviceId: string;
-  appointmentDateTime: string; // ISO LocalDateTime format: yyyy-MM-dd'T'HH:mm:ss
+  appointmentDateTime: string;
   durationMinutes: number;
-  price: number; // Will be converted to BigDecimal on backend
-  status?: AppointmentStatus; // Optional, defaults to SCHEDULED in backend
+  price: number;
+  status?: AppointmentStatus;
   notes?: string;
 }
 
 export interface UpdateAppointmentRequest {
-  appointmentDateTime?: string; // ISO LocalDateTime format: yyyy-MM-dd'T'HH:mm:ss
+  appointmentDateTime?: string;
   durationMinutes?: number;
   price?: number;
   status?: AppointmentStatus;
@@ -83,7 +83,6 @@ export enum AvailabilityStatus {
   SIN_DISPONIBILIDAD = 'SIN_DISPONIBILIDAD'
 }
 
-// Interfaces para el endpoint de disponibilidad diaria en bloques de 30 minutos
 export interface DayAvailabilityResponse {
   date: string; // ISO date format: yyyy-MM-dd
   slots: DayAvailabilitySlot[];

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AppointmentService } from '../services/appointment.service';
-import { AvailabilityResponse, DayAvailability, AvailabilityStatus, DayAvailabilityResponse, DayAvailabilitySlot, BarbersAvailabilityResponse, BarberAvailability, CreateAppointmentRequest } from '../models/appointment.model';
+import { DayAvailability, AvailabilityStatus, DayAvailabilitySlot, BarberAvailability, CreateAppointmentRequest } from '../models/appointment.model';
 import { ServiceService } from '../../service/services/service.service';
 import { ServiceResponseDto } from '../../../shared/models/service.models';
 import { AuthService } from '../../../core/services/auth.service';
@@ -14,7 +14,7 @@ import { PreloaderComponent } from '../../../shared/components/preloader/preload
 interface TimeSlot {
   time: string;
   available: boolean;
-  displayTime: string; // Para mostrar en formato 12h
+  displayTime: string; 
 }
 
 interface CalendarDay {
@@ -56,9 +56,6 @@ export class BookAppointmentComponent implements OnInit {
   currentBarberIndex: number = 0;
   barbersPerPage: number = 3; // Número de barberos a mostrar por página
 
-  // Hardcoded barberId for now - in a real app this would come from user selection
-  private readonly BARBER_ID = '1';
-
   availableServices: ServiceResponseDto[] = [];
   isLoadingServices: boolean = false;
   currentServiceIndex: number = 0;
@@ -66,6 +63,9 @@ export class BookAppointmentComponent implements OnInit {
 
   // Appointment creation state
   isCreatingAppointment: boolean = false;
+
+  // Notes for the appointment
+  appointmentNotes: string = '';
 
   constructor(
     private appointmentService: AppointmentService,
@@ -144,18 +144,6 @@ export class BookAppointmentComponent implements OnInit {
     } finally {
       this.isLoadingServices = false;
     }
-  }
-
-  /**
-   * Obtiene el inicio de la semana (lunes) para una fecha dada
-   */
-  private getStartOfWeek(date: Date): Date {
-    const startOfWeek = new Date(date);
-    const day = startOfWeek.getDay();
-    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // Ajustar para que lunes sea el primer día
-    startOfWeek.setDate(diff);
-    startOfWeek.setHours(0, 0, 0, 0);
-    return startOfWeek;
   }
 
   /**
@@ -595,21 +583,6 @@ export class BookAppointmentComponent implements OnInit {
     console.log('Servicio seleccionado:', this.selectedServices);
   }
 
-  addService(): void {
-    // Logic to add another service - show modal or dropdown to select from available services
-    console.log('Add service clicked');
-    // TODO: Implement service selection modal/dropdown
-  }
-
-  /**
-   * Elimina un servicio de la lista de servicios seleccionados
-   * (Ya no es necesario con selección única)
-   */
-  removeService(index: number): void {
-    // Método obsoleto - con selección única se puede deseleccionar haciendo clic en el servicio
-    console.log('removeService is deprecated - use selectService to toggle selection');
-  }
-
   getTotalPrice(): number {
     return this.selectedServices.length > 0 ? this.selectedServices[0].price : 0;
   }
@@ -639,7 +612,8 @@ export class BookAppointmentComponent implements OnInit {
         serviceId: this.selectedServices[0].id || this.selectedServices[0].serviceId || '', // Manejar ambos casos
         appointmentDateTime: `${this.formatDateForApi(this.selectedDate.fullDate)}T${this.selectedTimeSlot}:00`, // Formato ISO LocalDateTime
         durationMinutes: this.selectedServices[0].durationMinutes,
-        price: this.selectedServices[0].price
+        price: this.selectedServices[0].price,
+        notes: this.appointmentNotes.trim() || undefined // Incluir notas si existen, undefined si está vacío
       };
 
       console.log('Creando cita con los siguientes datos:', appointmentRequest);
@@ -675,6 +649,7 @@ export class BookAppointmentComponent implements OnInit {
     this.selectedTimeSlot = null;
     this.selectedServices = [];
     this.selectedBarber = null;
+    this.appointmentNotes = ''; // Reset notes field
     this.timeSlots = [];
     this.barbersAvailability = [];
   }

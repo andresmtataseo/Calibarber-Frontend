@@ -368,6 +368,27 @@
       </div>
     </div>
 
+    <!-- Notes Section -->
+    <div class="card bg-base-100 shadow-xl mb-6" *ngIf="selectedDate && selectedTimeSlot && selectedBarber && selectedServices.length > 0">
+      <div class="card-body">
+        <h2 class="card-title text-xl mb-4">Notas adicionales (opcional)</h2>
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">¿Tienes alguna solicitud especial o comentario sobre el servicio?</span>
+          </label>
+          <textarea
+            class="textarea textarea-bordered h-24 resize-none"
+            placeholder="Ejemplo: Prefiero un corte más conservador, tengo alergia a ciertos productos, etc."
+            [(ngModel)]="appointmentNotes"
+            maxlength="500">
+          </textarea>
+          <label class="label">
+            <span class="label-text-alt">{{ appointmentNotes.length || 0 }}/500 caracteres</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
     <!-- Total and Reserve Button -->
     <div class="card bg-base-100 shadow-xl" *ngIf="selectedDate && selectedTimeSlot && selectedBarber && selectedServices.length > 0">
       <div class="card-body">
