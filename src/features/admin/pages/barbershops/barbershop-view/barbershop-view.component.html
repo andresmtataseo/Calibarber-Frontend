@@ -37,7 +37,7 @@
           <div class="form-control">
             <label class="floating-label">
               <span>Nombre de la Barbería</span>
-              <div class="input input-md w-full bg-base-200 cursor-default flex items-center">
+              <div class="input input-md w-full input-disabled cursor-default flex items-center">
                 {{ barbershop.name || '' }}
               </div>
             </label>
@@ -48,7 +48,7 @@
             <div class="form-control">
               <label class="floating-label">
                 <span>Teléfono</span>
-                <div class="input input-md w-full bg-base-200 cursor-default flex items-center">
+                <div class="input input-md w-full input-disabled cursor-default flex items-center">
                   {{ barbershop.phoneNumber || '' }}
                 </div>
               </label>
@@ -58,7 +58,7 @@
             <div class="form-control">
               <label class="floating-label">
                 <span>Email</span>
-                <div class="input input-md w-full bg-base-200 cursor-default flex items-center">
+                <div class="input input-md w-full input-disabled cursor-default flex items-center">
                   {{ barbershop.email || '' }}
                 </div>
               </label>
@@ -69,7 +69,7 @@
           <div class="form-control">
             <label class="floating-label">
               <span>Dirección</span>
-              <div class="textarea textarea-md w-full bg-base-200 cursor-default min-h-[4rem] flex items-start pt-3">
+              <div class="textarea textarea-md w-full textarea-disabled cursor-default min-h-[4rem] flex items-start pt-3">
                 {{ barbershop.addressText || '' }}
               </div>
             </label>
@@ -107,7 +107,7 @@
                 <div class="form-control" [class.opacity-50]="!daySchedule.isOpen">
                   <label class="floating-label">
                     <span>Apertura</span>
-                    <div class="input input-sm bg-base-200 cursor-default flex items-center">
+                    <div class="input input-sm input-disabled cursor-default flex items-center">
                       {{ daySchedule.isOpen ? daySchedule.openTime : '--:--' }}
                     </div>
                   </label>
@@ -117,7 +117,7 @@
                 <div class="form-control" [class.opacity-50]="!daySchedule.isOpen">
                   <label class="floating-label">
                     <span>Cierre</span>
-                    <div class="input input-sm bg-base-200 cursor-default flex items-center">
+                    <div class="input input-sm input-disabled cursor-default flex items-center">
                       {{ daySchedule.isOpen ? daySchedule.closeTime : '--:--' }}
                     </div>
                   </label>
@@ -128,7 +128,7 @@
               <div class="form-control mt-4" *ngIf="daySchedule.notes">
                 <label class="floating-label">
                   <span>Notas</span>
-                  <div class="input input-sm w-full bg-base-200 cursor-default flex items-center">
+                  <div class="input input-sm w-full input-disabled cursor-default flex items-center">
                     {{ daySchedule.notes }}
                   </div>
                 </label>

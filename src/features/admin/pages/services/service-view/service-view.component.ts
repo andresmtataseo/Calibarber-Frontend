@@ -101,7 +101,7 @@ export class ServiceViewComponent implements OnInit {
 
   getServicePrice(): string {
     if (!this.service?.price) return 'Precio no disponible';
-    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(this.service.price);
+    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD' }).format(this.service.price);
   }
 
   getServiceDuration(): string {

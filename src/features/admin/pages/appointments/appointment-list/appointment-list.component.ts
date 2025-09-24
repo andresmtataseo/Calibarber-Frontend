@@ -51,7 +51,7 @@ export class AppointmentListComponent implements OnInit {
       this.router.navigate(['/auth/login']);
       return;
     }
-    
+
     if (currentUser.role !== 'ROLE_ADMIN') {
       this.notificationService.error('Solo los administradores pueden acceder a esta sección.');
       this.router.navigate(['/dashboard']);
@@ -94,9 +94,9 @@ export class AppointmentListComponent implements OnInit {
           this.totalElements = 0;
           this.totalPages = 0;
         }
-        
+
         this.loading = false;
-        
+
         // Mostrar notificaciones según los resultados
         if (this.appointments.length === 0) {
           if (this.searchTerm || this.statusFilter) {
@@ -105,7 +105,7 @@ export class AppointmentListComponent implements OnInit {
             this.notificationService.warning('No hay citas disponibles en el sistema');
           }
         } else {
-          const message = this.searchTerm || this.statusFilter 
+          const message = this.searchTerm || this.statusFilter
             ? `Se encontraron ${this.appointments.length} citas que coinciden con los filtros`
             : `Se cargaron ${this.appointments.length} citas correctamente`;
           this.notificationService.success(message);
@@ -169,9 +169,9 @@ export class AppointmentListComponent implements OnInit {
     const clientName = `${appointment.user.firstName} ${appointment.user.lastName}`;
     const appointmentDate = new Date(appointment.appointmentDateTime);
     const formattedDate = appointmentDate.toLocaleDateString() + ' ' + appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    
+
     const confirmMessage = `¿Estás seguro de que deseas cancelar la cita de "${clientName}" programada para el ${formattedDate}?\n\nEsta acción no se puede deshacer.`;
-    
+
     if (confirm(confirmMessage)) {
       this.appointmentService.cancelAppointment(appointment.appointmentId).subscribe({
         next: () => {
@@ -194,9 +194,9 @@ export class AppointmentListComponent implements OnInit {
     const clientName = `${appointment.user.firstName} ${appointment.user.lastName}`;
     const appointmentDate = new Date(appointment.appointmentDateTime);
     const formattedDate = appointmentDate.toLocaleDateString() + ' ' + appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    
+
     const confirmMessage = `¿Estás seguro de que deseas confirmar la cita de "${clientName}" programada para el ${formattedDate}?`;
-    
+
     if (confirm(confirmMessage)) {
       this.appointmentService.confirmAppointment(appointment.appointmentId).subscribe({
         next: () => {
@@ -219,9 +219,9 @@ export class AppointmentListComponent implements OnInit {
     const clientName = `${appointment.user.firstName} ${appointment.user.lastName}`;
     const appointmentDate = new Date(appointment.appointmentDateTime);
     const formattedDate = appointmentDate.toLocaleDateString() + ' ' + appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    
+
     const confirmMessage = `¿Estás seguro de que deseas marcar como completada la cita de "${clientName}" programada para el ${formattedDate}?`;
-    
+
     if (confirm(confirmMessage)) {
       this.appointmentService.completeAppointment(appointment.appointmentId).subscribe({
         next: () => {
@@ -262,7 +262,7 @@ export class AppointmentListComponent implements OnInit {
     if (error.error?.message) {
       return `Error en ${context}: ${error.error.message}`;
     }
-    
+
     switch (error.status) {
       case 0:
         return `Error de conexión durante la ${context}. Verifica tu conexión a internet y que el servidor esté ejecutándose.`;
