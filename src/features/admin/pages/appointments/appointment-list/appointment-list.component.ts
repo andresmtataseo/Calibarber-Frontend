@@ -94,12 +94,26 @@ export class AppointmentListComponent implements OnInit {
           this.totalElements = 0;
           this.totalPages = 0;
         }
+        
         this.loading = false;
+        
+        // Mostrar notificaciones según los resultados
+        if (this.appointments.length === 0) {
+          if (this.searchTerm || this.statusFilter) {
+            this.notificationService.warning('No se encontraron citas que coincidan con los filtros aplicados');
+          } else {
+            this.notificationService.warning('No hay citas disponibles en el sistema');
+          }
+        } else {
+          const message = this.searchTerm || this.statusFilter 
+            ? `Se encontraron ${this.appointments.length} citas que coinciden con los filtros`
+            : `Se cargaron ${this.appointments.length} citas correctamente`;
+          this.notificationService.success(message);
+        }
       },
       error: (error: HttpErrorResponse) => {
-        this.notificationService.error(this.getErrorMessage(error));
+        this.notificationService.error(this.getErrorMessage(error, 'carga de citas'));
         this.loading = false;
-        console.error('Error loading appointments:', error);
       }
     });
   }
@@ -147,57 +161,75 @@ export class AppointmentListComponent implements OnInit {
   }
 
   cancelAppointment(appointment: AppointmentResponse): void {
+    if (!appointment || !appointment.appointmentId) {
+      this.notificationService.warning('No se puede cancelar la cita. Información no disponible.');
+      return;
+    }
+
     const clientName = `${appointment.user.firstName} ${appointment.user.lastName}`;
     const appointmentDate = new Date(appointment.appointmentDateTime);
     const formattedDate = appointmentDate.toLocaleDateString() + ' ' + appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     
-    if (confirm(`¿Estás seguro de que deseas cancelar la cita de "${clientName}" programada para el ${formattedDate}?`)) {
+    const confirmMessage = `¿Estás seguro de que deseas cancelar la cita de "${clientName}" programada para el ${formattedDate}?\n\nEsta acción no se puede deshacer.`;
+    
+    if (confirm(confirmMessage)) {
       this.appointmentService.cancelAppointment(appointment.appointmentId).subscribe({
         next: () => {
-          this.notificationService.success('Cita cancelada exitosamente');
+          this.notificationService.success(`La cita de "${clientName}" ha sido cancelada exitosamente`);
           this.loadAppointments();
         },
         error: (error: HttpErrorResponse) => {
-          this.notificationService.error(this.getErrorMessage(error));
-          console.error('Error cancelling appointment:', error);
+          this.notificationService.error(this.getErrorMessage(error, 'cancelación de cita'));
         }
       });
     }
   }
 
   confirmAppointmentAction(appointment: AppointmentResponse): void {
+    if (!appointment || !appointment.appointmentId) {
+      this.notificationService.warning('No se puede confirmar la cita. Información no disponible.');
+      return;
+    }
+
     const clientName = `${appointment.user.firstName} ${appointment.user.lastName}`;
     const appointmentDate = new Date(appointment.appointmentDateTime);
     const formattedDate = appointmentDate.toLocaleDateString() + ' ' + appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     
-    if (confirm(`¿Estás seguro de que deseas confirmar la cita de "${clientName}" programada para el ${formattedDate}?`)) {
+    const confirmMessage = `¿Estás seguro de que deseas confirmar la cita de "${clientName}" programada para el ${formattedDate}?`;
+    
+    if (confirm(confirmMessage)) {
       this.appointmentService.confirmAppointment(appointment.appointmentId).subscribe({
         next: () => {
-          this.notificationService.success('Cita confirmada exitosamente');
+          this.notificationService.success(`La cita de "${clientName}" ha sido confirmada exitosamente`);
           this.loadAppointments();
         },
         error: (error: HttpErrorResponse) => {
-          this.notificationService.error(this.getErrorMessage(error));
-          console.error('Error confirming appointment:', error);
+          this.notificationService.error(this.getErrorMessage(error, 'confirmación de cita'));
         }
       });
     }
   }
 
   completeAppointmentAction(appointment: AppointmentResponse): void {
+    if (!appointment || !appointment.appointmentId) {
+      this.notificationService.warning('No se puede completar la cita. Información no disponible.');
+      return;
+    }
+
     const clientName = `${appointment.user.firstName} ${appointment.user.lastName}`;
     const appointmentDate = new Date(appointment.appointmentDateTime);
     const formattedDate = appointmentDate.toLocaleDateString() + ' ' + appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     
-    if (confirm(`¿Estás seguro de que deseas marcar como completada la cita de "${clientName}" programada para el ${formattedDate}?`)) {
+    const confirmMessage = `¿Estás seguro de que deseas marcar como completada la cita de "${clientName}" programada para el ${formattedDate}?`;
+    
+    if (confirm(confirmMessage)) {
       this.appointmentService.completeAppointment(appointment.appointmentId).subscribe({
         next: () => {
-          this.notificationService.success('Cita completada exitosamente');
+          this.notificationService.success(`La cita de "${clientName}" ha sido marcada como completada exitosamente`);
           this.loadAppointments();
         },
         error: (error: HttpErrorResponse) => {
-          this.notificationService.error(this.getErrorMessage(error));
-          console.error('Error completing appointment:', error);
+          this.notificationService.error(this.getErrorMessage(error, 'completar cita'));
         }
       });
     }
@@ -226,31 +258,46 @@ export class AppointmentListComponent implements OnInit {
     return pages;
   }
 
-  private getErrorMessage(error: HttpErrorResponse): string {
+  private getErrorMessage(error: HttpErrorResponse, context: string = 'operación'): string {
     if (error.error?.message) {
-      return error.error.message;
+      return `Error en ${context}: ${error.error.message}`;
     }
-    if (error.status === 0) {
-      return 'Error de conexión. Verifica tu conexión a internet y que el servidor esté ejecutándose.';
+    
+    switch (error.status) {
+      case 0:
+        return `Error de conexión durante la ${context}. Verifica tu conexión a internet y que el servidor esté ejecutándose.`;
+      case 400:
+        return `Solicitud inválida durante la ${context}. Verifique los datos enviados.`;
+      case 401:
+        const currentUser = this.authService.getCurrentUser();
+        if (!currentUser) {
+          return `No autorizado para realizar la ${context}. Por favor, inicia sesión.`;
+        }
+        return `Tu sesión ha expirado durante la ${context}. Por favor, inicia sesión nuevamente.`;
+      case 403:
+        const user = this.authService.getCurrentUser();
+        if (user && user.role !== 'ROLE_ADMIN') {
+          return `Acceso denegado para la ${context}. Solo los administradores pueden realizar esta acción.`;
+        }
+        return `No tienes permisos suficientes para realizar la ${context}.`;
+      case 404:
+        return `El recurso solicitado no fue encontrado durante la ${context}.`;
+      case 409:
+        return `Conflicto detectado durante la ${context}. El recurso ya existe o está en uso.`;
+      case 422:
+        return `Los datos proporcionados no son válidos para la ${context}.`;
+      case 500:
+        return `Error interno del servidor durante la ${context}. Inténtalo más tarde.`;
+      case 502:
+        return `Error de conexión con el servidor durante la ${context}.`;
+      case 503:
+        return `Servicio no disponible temporalmente durante la ${context}.`;
+      default:
+        if (error.status >= 500) {
+          return `Error interno del servidor durante la ${context}. Inténtalo más tarde.`;
+        }
+        return `Error inesperado durante la ${context}. Código: ${error.status}`;
     }
-    if (error.status === 401) {
-      const currentUser = this.authService.getCurrentUser();
-      if (!currentUser) {
-        return 'No autorizado. Por favor, inicia sesión para acceder a las citas.';
-      }
-      return 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.';
-    }
-    if (error.status === 403) {
-      const currentUser = this.authService.getCurrentUser();
-      if (currentUser && currentUser.role !== 'ROLE_ADMIN') {
-        return 'Acceso denegado. Solo los administradores pueden ver todas las citas del sistema.';
-      }
-      return 'No tienes permisos para acceder a esta información.';
-    }
-    if (error.status >= 500) {
-      return 'Error interno del servidor. Inténtalo más tarde.';
-    }
-    return 'Ha ocurrido un error inesperado al cargar las citas.';
   }
 
   // Método auxiliar para usar Math.min en el template

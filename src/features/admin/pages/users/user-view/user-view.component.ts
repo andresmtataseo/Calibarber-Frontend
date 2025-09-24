@@ -52,7 +52,6 @@ export class UserViewComponent implements OnInit {
   private loadUserData(): void {
     this.loading = true;
     this.error = null;
-    this.notificationService.info('Cargando información del usuario...', 2000);
 
     this.userService.getUserById(this.userId).subscribe({
       next: (user) => {
@@ -128,7 +127,6 @@ export class UserViewComponent implements OnInit {
     
     if (confirm(confirmMessage)) {
       this.loading = true;
-      this.notificationService.info(`Eliminando usuario ${userName}...`, 3000);
       
       this.userService.deleteUser(this.user.userId).subscribe({
         next: () => {

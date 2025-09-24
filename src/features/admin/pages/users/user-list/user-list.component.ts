@@ -60,7 +60,6 @@ export class UserListComponent implements OnInit {
 
   loadUsers(): void {
     this.loading = true;
-    this.notificationService.info('Cargando lista de usuarios...', 2000);
     
     this.userService.getAllUsers().subscribe({
       next: (response) => {
@@ -237,7 +236,6 @@ export class UserListComponent implements OnInit {
     }
 
     this.loading = true;
-    this.notificationService.info(`Eliminando usuario ${userName}...`, 3000);
     
     this.userService.deleteUser(userId).subscribe({
       next: () => {

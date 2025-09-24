@@ -58,7 +58,6 @@ export class BarbershopListComponent implements OnInit {
 
   loadBarbershops(): void {
     this.loading = true;
-    this.notificationService.info('Cargando barberías...', 2000);
 
     this.barbershopService.getAllBarbershops(
       this.currentPage,

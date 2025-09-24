@@ -74,7 +74,6 @@ export class ServiceListComponent implements OnInit, OnDestroy {
    */
   loadServices(): void {
     this.loading = true;
-    this.notificationService.info('Cargando servicios...');
 
     const params = {
       page: this.currentPage,

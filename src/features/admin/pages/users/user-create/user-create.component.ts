@@ -20,7 +20,6 @@ export class UserCreateComponent {
 
   roles = [
     { value: UserRole.ROLE_CLIENT, label: 'Cliente' },
-    { value: UserRole.ROLE_BARBER, label: 'Barbero' },
     { value: UserRole.ROLE_ADMIN, label: 'Administrador' }
   ];
 
@@ -73,21 +72,19 @@ export class UserCreateComponent {
 
       this.userService.createUser(createUserRequest).subscribe({
         next: (user) => {
-          this.notificationService.success('Usuario creado exitosamente');
-          console.log('Usuario creado:', user);
+          const userName = `${user.firstName} ${user.lastName}`;
+          this.notificationService.success(`Usuario ${userName} creado exitosamente`, 4000);
           this.router.navigate(['/admin/users']);
         },
-        error: (error: Error) => {
-          this.notificationService.error(
-            error.message || 'Error al crear el usuario. Por favor, verifica los datos e intenta nuevamente.'
-          );
-          console.error('Error creating user:', error);
+        error: (error: any) => {
+          const errorMessage = this.getErrorMessage(error, 'crear el usuario');
+          this.notificationService.error(errorMessage, 6000);
           this.isSubmitting = false;
         }
       });
     } else {
       this.markFormGroupTouched();
-      this.notificationService.warning('Por favor, completa todos los campos requeridos correctamente');
+      this.notificationService.warning('Por favor, completa todos los campos requeridos correctamente', 4000);
     }
   }
 
@@ -124,5 +121,37 @@ export class UserCreateComponent {
     }
 
     return '';
+  }
+
+  /**
+   * Obtiene un mensaje de error más descriptivo basado en el HttpErrorResponse
+   */
+  private getErrorMessage(error: any, action: string): string {
+    if (error.error?.message) {
+      return `Error al ${action}: ${error.error.message}`;
+    }
+    
+    switch (error.status) {
+      case 0:
+        return `No se pudo ${action}. Verifica tu conexión a internet y vuelve a intentarlo.`;
+      case 400:
+        return `Error al ${action}: Los datos enviados no son válidos. Verifica que el email no esté en uso y que todos los campos sean correctos.`;
+      case 401:
+        return `Error al ${action}: Tu sesión ha expirado. Por favor, inicia sesión nuevamente.`;
+      case 403:
+        return `Error al ${action}: No tienes permisos suficientes para realizar esta acción.`;
+      case 409:
+        return `Error al ${action}: Ya existe un usuario con este email. Por favor, utiliza un email diferente.`;
+      case 422:
+        return `Error al ${action}: Los datos proporcionados no son válidos. Verifica que la contraseña tenga al menos 8 caracteres y que todos los campos estén completos.`;
+      case 500:
+        return `Error interno del servidor al ${action}. Por favor, intenta nuevamente en unos minutos.`;
+      case 502:
+      case 503:
+      case 504:
+        return `El servicio no está disponible temporalmente. Por favor, intenta ${action} más tarde.`;
+      default:
+        return `Error inesperado al ${action}. Código de error: ${error.status}. Por favor, contacta al administrador si el problema persiste.`;
+    }
   }
 }

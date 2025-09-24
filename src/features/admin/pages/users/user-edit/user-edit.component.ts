@@ -22,7 +22,6 @@ export class UserEditComponent implements OnInit {
 
   roles = [
     { value: UserRole.ROLE_CLIENT, label: 'Cliente' },
-    { value: UserRole.ROLE_BARBER, label: 'Barbero' },
     { value: UserRole.ROLE_ADMIN, label: 'Administrador' }
   ];
 
@@ -64,10 +63,11 @@ export class UserEditComponent implements OnInit {
           isActive: user.isActive
         });
         this.loadingUser = false;
+        this.notificationService.success(`Información de ${user.firstName} ${user.lastName} cargada exitosamente`, 3000);
       },
-      error: (error: Error) => {
-        this.notificationService.error(`Error al cargar el usuario: ${error.message || 'Ha ocurrido un error inesperado'}`);
-        console.error('Error loading user:', error);
+      error: (error: any) => {
+        const errorMessage = this.getErrorMessage(error, 'cargar la información del usuario');
+        this.notificationService.error(errorMessage, 6000);
         this.loadingUser = false;
       }
     });
@@ -90,26 +90,21 @@ export class UserEditComponent implements OnInit {
         isActive: formValue.isActive
       };
 
-      // Note: UpdateUserRequest doesn't support password updates
-      // Password updates would need a separate endpoint or interface
-
       this.userService.updateUser(this.userId, updateUserRequest).subscribe({
         next: (user) => {
-          this.notificationService.success('El usuario ha sido actualizado exitosamente');
-          console.log('Usuario actualizado:', user);
-
-          // Redirigir inmediatamente después de mostrar la notificación
+          const userName = `${user.firstName} ${user.lastName}`;
+          this.notificationService.success(`Usuario ${userName} actualizado exitosamente`, 4000);
           this.router.navigate(['/admin/users']);
         },
-        error: (error: Error) => {
-          this.notificationService.error(`Error al actualizar usuario: ${error.message || 'Ha ocurrido un error inesperado al actualizar el usuario'}`);
-          console.error('Error updating user:', error);
+        error: (error: any) => {
+          const errorMessage = this.getErrorMessage(error, 'actualizar el usuario');
+          this.notificationService.error(errorMessage, 6000);
           this.isSubmitting = false;
         }
       });
     } else {
       if (!this.userForm.valid) {
-        this.notificationService.warning('Por favor, completa todos los campos requeridos correctamente');
+        this.notificationService.warning('Por favor, completa todos los campos requeridos correctamente', 4000);
       }
       this.markFormGroupTouched();
     }
@@ -145,5 +140,39 @@ export class UserEditComponent implements OnInit {
     }
 
     return '';
+  }
+
+  /**
+   * Obtiene un mensaje de error más descriptivo basado en el HttpErrorResponse
+   */
+  private getErrorMessage(error: any, action: string): string {
+    if (error.error?.message) {
+      return `Error al ${action}: ${error.error.message}`;
+    }
+    
+    switch (error.status) {
+      case 0:
+        return `No se pudo ${action}. Verifica tu conexión a internet y vuelve a intentarlo.`;
+      case 400:
+        return `Error al ${action}: Los datos enviados no son válidos. Verifica que todos los campos sean correctos.`;
+      case 401:
+        return `Error al ${action}: Tu sesión ha expirado. Por favor, inicia sesión nuevamente.`;
+      case 403:
+        return `Error al ${action}: No tienes permisos suficientes para realizar esta acción.`;
+      case 404:
+        return `Error al ${action}: El usuario solicitado no fue encontrado. Es posible que haya sido eliminado.`;
+      case 409:
+        return `Error al ${action}: Conflicto con los datos existentes. Verifica la información e intenta nuevamente.`;
+      case 422:
+        return `Error al ${action}: Los datos proporcionados no son válidos o están incompletos.`;
+      case 500:
+        return `Error interno del servidor al ${action}. Por favor, intenta nuevamente en unos minutos.`;
+      case 502:
+      case 503:
+      case 504:
+        return `El servicio no está disponible temporalmente. Por favor, intenta ${action} más tarde.`;
+      default:
+        return `Error inesperado al ${action}. Código de error: ${error.status}. Por favor, contacta al administrador si el problema persiste.`;
+    }
   }
 }
