@@ -131,11 +131,14 @@
             <!-- Time slots -->
             <button
               *ngFor="let slot of timeSlots"
-              class="btn btn-outline transition-all duration-200"
+              class="btn transition-all duration-200"
               [class.btn-primary]="selectedTimeSlot === slot.time"
+              [class.btn-outline]="selectedTimeSlot !== slot.time"
               [class.btn-disabled]="!slot.available"
               [class.opacity-50]="!slot.available"
               [class.cursor-not-allowed]="!slot.available"
+              [class.shadow-lg]="selectedTimeSlot === slot.time"
+              [class.scale-105]="selectedTimeSlot === slot.time"
               [disabled]="!slot.available || isLoadingTimeSlots"
               (click)="selectTimeSlot(slot.time)">
               {{ slot.displayTime }}
@@ -371,20 +374,16 @@
     <!-- Notes Section -->
     <div class="card bg-base-100 shadow-xl mb-6" *ngIf="selectedDate && selectedTimeSlot && selectedBarber && selectedServices.length > 0">
       <div class="card-body">
-        <h2 class="card-title text-xl mb-4">Notas adicionales (opcional)</h2>
+        <h2 class="card-title text-xl mb-4">Notas adicionales</h2>
         <div class="form-control">
-          <label class="label">
-            <span class="label-text">¿Tienes alguna solicitud especial o comentario sobre el servicio?</span>
-          </label>
+          <fieldset class="fieldset">
           <textarea
-            class="textarea textarea-bordered h-24 resize-none"
-            placeholder="Ejemplo: Prefiero un corte más conservador, tengo alergia a ciertos productos, etc."
+            class="textarea textarea-bordered h-24 w-auto"
             [(ngModel)]="appointmentNotes"
             maxlength="500">
           </textarea>
-          <label class="label">
-            <span class="label-text-alt">{{ appointmentNotes.length || 0 }}/500 caracteres</span>
-          </label>
+          <div class="label">{{ appointmentNotes.length || 0 }}/500 caracteres</div>
+          </fieldset>
         </div>
       </div>
     </div>

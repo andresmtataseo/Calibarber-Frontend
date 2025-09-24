@@ -37,9 +37,11 @@
           <div class="form-control">
             <label class="floating-label">
               <span>Nombre de la Barbería</span>
-              <div class="input input-md w-full input-disabled cursor-default flex items-center">
-                {{ barbershop.name || '' }}
-              </div>
+              <input 
+                type="text" 
+                class="input input-md w-full" 
+                [value]="barbershop.name || ''" 
+                disabled>
             </label>
           </div>
 
@@ -48,9 +50,11 @@
             <div class="form-control">
               <label class="floating-label">
                 <span>Teléfono</span>
-                <div class="input input-md w-full input-disabled cursor-default flex items-center">
-                  {{ barbershop.phoneNumber || '' }}
-                </div>
+                <input 
+                  type="tel" 
+                  class="input input-md w-full" 
+                  [value]="barbershop.phoneNumber || ''" 
+                  disabled>
               </label>
             </div>
 
@@ -58,9 +62,11 @@
             <div class="form-control">
               <label class="floating-label">
                 <span>Email</span>
-                <div class="input input-md w-full input-disabled cursor-default flex items-center">
-                  {{ barbershop.email || '' }}
-                </div>
+                <input 
+                  type="email" 
+                  class="input input-md w-full" 
+                  [value]="barbershop.email || ''" 
+                  disabled>
               </label>
             </div>
           </div>
@@ -69,9 +75,11 @@
           <div class="form-control">
             <label class="floating-label">
               <span>Dirección</span>
-              <div class="textarea textarea-md w-full textarea-disabled cursor-default min-h-[4rem] flex items-start pt-3">
-                {{ barbershop.addressText || '' }}
-              </div>
+              <textarea 
+                class="textarea textarea-md w-full min-h-[4rem]" 
+                [value]="barbershop.addressText || ''" 
+                disabled>
+              </textarea>
             </label>
           </div>
         </div>
@@ -107,9 +115,11 @@
                 <div class="form-control" [class.opacity-50]="!daySchedule.isOpen">
                   <label class="floating-label">
                     <span>Apertura</span>
-                    <div class="input input-sm input-disabled cursor-default flex items-center">
-                      {{ daySchedule.isOpen ? daySchedule.openTime : '--:--' }}
-                    </div>
+                    <input 
+                      type="time" 
+                      class="input input-sm" 
+                      [value]="daySchedule.isOpen ? daySchedule.openTime : ''" 
+                      disabled>
                   </label>
                 </div>
 
@@ -117,9 +127,11 @@
                 <div class="form-control" [class.opacity-50]="!daySchedule.isOpen">
                   <label class="floating-label">
                     <span>Cierre</span>
-                    <div class="input input-sm input-disabled cursor-default flex items-center">
-                      {{ daySchedule.isOpen ? daySchedule.closeTime : '--:--' }}
-                    </div>
+                    <input 
+                      type="time" 
+                      class="input input-sm" 
+                      [value]="daySchedule.isOpen ? daySchedule.closeTime : ''" 
+                      disabled>
                   </label>
                 </div>
               </div>
@@ -128,9 +140,11 @@
               <div class="form-control mt-4" *ngIf="daySchedule.notes">
                 <label class="floating-label">
                   <span>Notas</span>
-                  <div class="input input-sm w-full input-disabled cursor-default flex items-center">
-                    {{ daySchedule.notes }}
-                  </div>
+                  <input 
+                    type="text" 
+                    class="input input-sm w-full" 
+                    [value]="daySchedule.notes" 
+                    disabled>
                 </label>
               </div>
             </div>
