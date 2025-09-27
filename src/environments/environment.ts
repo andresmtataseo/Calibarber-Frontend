@@ -37,5 +37,13 @@ export const environment = {
   
   // Configuración de performance
   httpTimeout: parseInt(getEnvVar('NG_APP_HTTP_TIMEOUT', '30000')),
-  maxRetries: parseInt(getEnvVar('NG_APP_MAX_RETRIES', '3'))
+  maxRetries: parseInt(getEnvVar('NG_APP_MAX_RETRIES', '3')),
+  
+  // Imágenes de galería
+  galleryImages: {
+    image1: getEnvVar('NG_APP_GALLERY_IMAGE_1', 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'),
+    image2: getEnvVar('NG_APP_GALLERY_IMAGE_2', 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'),
+    image3: getEnvVar('NG_APP_GALLERY_IMAGE_3', 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'),
+    image4: getEnvVar('NG_APP_GALLERY_IMAGE_4', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80')
+  }
 };

@@ -12,6 +12,7 @@ import { GalleryCardComponent, GalleryPhoto } from './components/gallery-card.co
 import { BarbershopService, BarbershopOperatingHoursService } from '../barbershop/services';
 import { BarbershopResponse } from '../barbershop/models/barbershop.model';
 import { BarbershopOperatingHours } from '../barbershop/models/operating-hours.model';
+import { environment } from '../../environments/environment';
 
 // Importar Swiper
 import { register } from 'swiper/element/bundle';
@@ -69,34 +70,34 @@ export class HomeComponent implements OnInit, OnDestroy {
   barbers: BarberResponse[] = [];
 
   /**
-   * Fotos de la galería - datos de muestra
+   * Fotos de la galería - configuradas desde variables de entorno
    */
   galleryPhotos: GalleryPhoto[] = [
     {
       id: '1',
       name: 'Corte con degradado',
-      imageUrl: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+      imageUrl: environment.galleryImages.image1,
       description: 'Corte moderno con degradado perfecto',
       category: 'Cortes'
     },
     {
       id: '2',
       name: 'Corte clásico',
-      imageUrl: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+      imageUrl: environment.galleryImages.image2,
       description: 'Estilo clásico y elegante',
       category: 'Cortes'
     },
     {
       id: '5',
       name: 'Estilo vintage',
-      imageUrl: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+      imageUrl: environment.galleryImages.image3,
       description: 'Corte inspirado en los años 50',
       category: 'Vintage'
     },
     {
       id: '6',
       name: 'Corte moderno',
-      imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+      imageUrl: environment.galleryImages.image4,
       description: 'Tendencias actuales en cortes',
       category: 'Modernos'
     }

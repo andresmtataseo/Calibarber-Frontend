@@ -118,24 +118,28 @@ export const PAYMENT_URLS = {
 export const EXTERNAL_URLS = {
   // Servicio de avatares
   UI_AVATARS: {
-    BASE: 'https://ui-avatars.com/api/',
-    GENERATE: (name: string, background = '570df8', color = 'fff', size = 40) =>
-      `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${background}&color=${color}&size=${size}`
+    BASE: environment.avatarServiceUrl,
+    GENERATE: (name: string, background?: string, color?: string, size?: number) => {
+      const bg = background || environment.avatarDefaults.background;
+      const c = color || environment.avatarDefaults.color;
+      const s = size || environment.avatarDefaults.size;
+      return `${environment.avatarServiceUrl}?name=${encodeURIComponent(name)}&background=${bg}&color=${c}&size=${s}`;
+    }
   },
 
   // Redes sociales
   SOCIAL_MEDIA: {
-    INSTAGRAM: 'https://instagram.com/calibarber',
-    FACEBOOK: 'https://facebook.com/calibarber',
-    TWITTER: 'https://twitter.com/calibarber'
+    INSTAGRAM: environment.socialMedia.instagram,
+    FACEBOOK: environment.socialMedia.facebook,
+    TWITTER: environment.socialMedia.twitter
   }
 } as const;
 
 // URLs de desarrollo y testing
 export const DEV_URLS = {
-  MOCK_API: 'http://localhost:3000/api',
-  SWAGGER_DOCS: `${API_CONFIG.BASE_URL}/swagger-ui`,
-  API_DOCS: `${API_CONFIG.BASE_URL}/api-docs`
+  MOCK_API: environment.mockApiUrl,
+  SWAGGER_DOCS: environment.swaggerDocsUrl,
+  API_DOCS: environment.apiDocsUrl
 } as const;
 
 // Exportación consolidada de todas las URLs

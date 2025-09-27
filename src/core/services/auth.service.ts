@@ -13,6 +13,7 @@ import {
   CheckAuthResponseDto
 } from '../../shared/models/auth.models';
 import { UrlService } from './url.service';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -20,8 +21,8 @@ import { UrlService } from './url.service';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly urlService = inject(UrlService);
-  private readonly TOKEN_KEY = 'calibarber_token';
-  private readonly USER_KEY = 'calibarber_user';
+  private readonly TOKEN_KEY = environment.tokenKey;
+  private readonly USER_KEY = environment.userKey;
 
   // Estado de autenticación reactivo
   private authStateSubject = new BehaviorSubject<AuthState>({
